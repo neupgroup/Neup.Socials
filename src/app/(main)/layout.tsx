@@ -40,6 +40,7 @@ const navItems = [
   { href: '/analytics', icon: LayoutGrid, label: 'Analytics' },
   { href: '/schedule', icon: Calendar, label: 'Schedule' },
   { href: '/inbox', icon: Inbox, label: 'Inbox' },
+  { href: '/accounts', icon: Users, label: 'Accounts' },
   { href: '/settings', icon: Settings, label: 'Settings' },
 ];
 
