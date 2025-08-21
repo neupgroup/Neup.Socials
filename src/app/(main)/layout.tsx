@@ -9,6 +9,7 @@ import {
   Settings,
   Users,
   MessageSquareText,
+  PlusSquare,
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
@@ -39,6 +40,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 const navItems = [
   { href: '/analytics', icon: LayoutGrid, label: 'Analytics' },
   { href: '/schedule', icon: Calendar, label: 'Schedule' },
+  { href: '/create', icon: PlusSquare, label: 'Create' },
   { href: '/inbox', icon: Inbox, label: 'Inbox' },
   { href: '/accounts', icon: Users, label: 'Accounts' },
   { href: '/settings', icon: Settings, label: 'Settings' },
@@ -68,7 +70,7 @@ export default function MainLayout({
               <SidebarMenuItem key={item.href}>
                 <Link href={item.href}>
                   <SidebarMenuButton
-                    isActive={pathname === item.href}
+                    isActive={pathname.startsWith(item.href)}
                     tooltip={item.label}
                   >
                     <item.icon />
