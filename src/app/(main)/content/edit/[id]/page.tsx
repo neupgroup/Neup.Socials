@@ -14,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 
 export default function EditPostPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+  const id = params.id;
   const [content, setContent] = React.useState('');
   const [mediaFile, setMediaFile] = React.useState<File | null>(null);
   const [mediaUrl, setMediaUrl] = React.useState('');
