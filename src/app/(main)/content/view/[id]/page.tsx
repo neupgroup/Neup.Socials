@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -33,8 +33,9 @@ const PlatformIcon = ({ platform }: { platform: string }) => {
   return null;
 }
 
-export default function ViewContentPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default function ViewContentPage() {
+  const params = useParams();
+  const id = params.id as string;
   const [post, setPost] = React.useState<Post | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const router = useRouter();

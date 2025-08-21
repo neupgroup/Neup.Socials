@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ArrowLeft, CheckCircle, Clock, BarChart2, Loader2, FileText } from 'lucide-react';
@@ -28,8 +28,9 @@ type Post = {
 };
 
 
-export default function PostStatusPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default function PostStatusPage() {
+  const params = useParams();
+  const id = params.id as string;
   const [post, setPost] = React.useState<Post | null>(null);
   const [loading, setLoading] = React.useState(true);
   const router = useRouter();

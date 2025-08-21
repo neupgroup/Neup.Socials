@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -13,8 +13,9 @@ import { db, storage } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 
-export default function EditPostPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default function EditPostPage() {
+  const params = useParams();
+  const id = params.id as string;
   const [content, setContent] = React.useState('');
   const [mediaFile, setMediaFile] = React.useState<File | null>(null);
   const [mediaUrl, setMediaUrl] = React.useState('');

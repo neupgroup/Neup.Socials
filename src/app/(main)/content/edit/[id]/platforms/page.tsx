@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -31,8 +31,9 @@ const socialPlatforms = [
   { id: 'Twitter', name: 'Twitter', icon: <Twitter className="h-6 w-6 text-blue-400" /> },
 ];
 
-export default function EditPlatformsPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default function EditPlatformsPage() {
+  const params = useParams();
+  const id = params.id as string;
   const [selectedPlatforms, setSelectedPlatforms] = React.useState<string[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isSaving, setIsSaving] = React.useState(false);

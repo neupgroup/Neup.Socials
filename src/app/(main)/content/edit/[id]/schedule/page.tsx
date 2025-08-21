@@ -12,13 +12,14 @@ import { Input } from '@/components/ui/input';
 import { Calendar as CalendarIcon, Clock, Send, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { doc, getDoc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
-export default function EditSchedulePage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default function EditSchedulePage() {
+  const params = useParams();
+  const id = params.id as string;
   const [scheduleOption, setScheduleOption] = React.useState('now');
   const [postDate, setPostDate] = React.useState<Date | undefined>();
   const [postTime, setPostTime] = React.useState('10:00');
