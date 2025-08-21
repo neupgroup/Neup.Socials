@@ -18,7 +18,7 @@ import { doc, getDoc, updateDoc, serverTimestamp, Timestamp } from 'firebase/fir
 import { db } from '@/lib/firebase';
 
 export default function EditSchedulePage({ params }: { params: { id: string } }) {
-  const id = params.id;
+  const { id } = params;
   const [scheduleOption, setScheduleOption] = React.useState('now');
   const [postDate, setPostDate] = React.useState<Date | undefined>();
   const [postTime, setPostTime] = React.useState('10:00');

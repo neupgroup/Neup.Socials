@@ -32,7 +32,7 @@ const socialPlatforms = [
 ];
 
 export default function EditPlatformsPage({ params }: { params: { id: string } }) {
-  const id = params.id;
+  const { id } = params;
   const [selectedPlatforms, setSelectedPlatforms] = React.useState<string[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isSaving, setIsSaving] = React.useState(false);

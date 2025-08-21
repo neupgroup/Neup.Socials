@@ -34,7 +34,7 @@ const PlatformIcon = ({ platform }: { platform: string }) => {
 }
 
 export default function ViewContentPage({ params }: { params: { id: string } }) {
-  const id = params.id;
+  const { id } = params;
   const [post, setPost] = React.useState<Post | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const router = useRouter();
