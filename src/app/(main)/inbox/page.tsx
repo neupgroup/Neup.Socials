@@ -1,22 +1,31 @@
 'use client';
 
 import * as React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Send, Twitter, Facebook, Linkedin } from 'lucide-react';
+import { Search, Send, Twitter, Facebook, Linkedin, Loader2 } from 'lucide-react';
+import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, getDocs, limit } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { formatDistanceToNow } from 'date-fns';
 
-const messages = [
-  { id: 1, sender: 'John Doe', platform: 'Twitter', message: 'Hey, I have a question about your new feature.', avatar: 'JD', time: '2m ago' },
-  { id: 2, sender: 'Jane Smith', platform: 'Facebook', message: 'Thanks for the quick response!', avatar: 'JS', time: '1h ago', unread: true },
-  { id: 3, sender: 'Acme Corp', platform: 'LinkedIn', message: 'We\'d like to discuss a partnership.', avatar: 'AC', time: '3h ago' },
-  { id: 4, sender: 'Random User', platform: 'Twitter', message: 'How do I reset my password?', avatar: 'RU', time: 'yesterday' },
-  { id: 5, sender: 'Another User', platform: 'Facebook', message: 'This is amazing!', avatar: 'AU', time: 'yesterday' },
-  { id: 6, sender: 'Maria Garcia', platform: 'WhatsApp', message: 'Can you confirm my order #12345?', avatar: 'MG', time: '4h ago', unread: true },
-  { id: 7, sender: 'Support Team', platform: 'WhatsApp', message: 'Yes, your order has been shipped!', avatar: 'ST', time: '3h ago' },
-];
+type Message = {
+  id: string;
+  text: string;
+  sender: 'user' | 'agent';
+  timestamp: any;
+};
+
+type Conversation = {
+  id: string;
+  contactName: string;
+  platform: string;
+  lastMessage: string;
+  lastMessageAt: any;
+  avatar: string;
+  unread: boolean;
+};
 
 const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg
@@ -29,15 +38,71 @@ const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
 );
 
 const PlatformIcon = ({ platform }: { platform: string }) => {
-  if (platform === 'Twitter') return <Twitter className="h-4 w-4 text-blue-400" />;
-  if (platform === 'Facebook') return <Facebook className="h-4 w-4 text-blue-600" />;
-  if (platform === 'LinkedIn') return <Linkedin className="h-4 w-4 text-blue-700" />;
-  if (platform === 'WhatsApp') return <WhatsAppIcon className="h-4 w-4 text-green-500" />;
+  const props = {className: "h-4 w-4"};
+  if (platform === 'Twitter') return <Twitter {...props} className="text-blue-400" />;
+  if (platform === 'Facebook') return <Facebook {...props} className="text-blue-600" />;
+  if (platform === 'LinkedIn') return <Linkedin {...props} className="text-blue-700" />;
+  if (platform === 'WhatsApp') return <WhatsAppIcon {...props} className="text-green-500" />;
   return null;
 };
 
 export default function InboxPage() {
-  const [selectedMessage, setSelectedMessage] = React.useState(messages[1]);
+  const [conversations, setConversations] = React.useState<Conversation[]>([]);
+  const [selectedConversation, setSelectedConversation] = React.useState<Conversation | null>(null);
+  const [messages, setMessages] = React.useState<Message[]>([]);
+  const [reply, setReply] = React.useState('');
+  const [loading, setLoading] = React.useState(true);
+  const [sending, setSending] = React.useState(false);
+  const messagesEndRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    setLoading(true);
+    const q = query(collection(db, 'conversations'), orderBy('lastMessageAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const convos: Conversation[] = [];
+      querySnapshot.forEach((doc) => {
+        convos.push({ id: doc.id, ...doc.data() } as Conversation);
+      });
+      setConversations(convos);
+      if(!selectedConversation && convos.length > 0){
+        setSelectedConversation(convos[0]);
+      }
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  React.useEffect(() => {
+    if (selectedConversation) {
+      const q = query(collection(db, 'conversations', selectedConversation.id, 'messages'), orderBy('timestamp'));
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const msgs: Message[] = [];
+        querySnapshot.forEach((doc) => {
+          msgs.push({ id: doc.id, ...doc.data() } as Message);
+        });
+        setMessages(msgs);
+      });
+      return () => unsubscribe();
+    }
+  }, [selectedConversation]);
+  
+   React.useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+
+  const handleSendReply = async () => {
+    if (!reply.trim() || !selectedConversation) return;
+    setSending(true);
+    const messagesCol = collection(db, 'conversations', selectedConversation.id, 'messages');
+    await addDoc(messagesCol, {
+      text: reply,
+      sender: 'agent',
+      timestamp: serverTimestamp(),
+    });
+    setReply('');
+    setSending(false);
+  };
 
   return (
     <div className="h-[calc(100vh-theme(spacing.28))]">
@@ -52,72 +117,80 @@ export default function InboxPage() {
               </div>
             </div>
             <div className="flex-1 overflow-y-auto">
-              {messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`flex items-start gap-4 p-4 cursor-pointer hover:bg-accent ${selectedMessage.id === msg.id ? 'bg-accent' : ''}`}
-                  onClick={() => setSelectedMessage(msg)}
-                >
-                  <Avatar>
-                    <AvatarImage src={`https://placehold.co/40x40?text=${msg.avatar}`} />
-                    <AvatarFallback>{msg.avatar}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 overflow-hidden">
-                    <div className="flex justify-between items-center">
-                      <span className="font-semibold truncate">{msg.sender}</span>
-                      <span className="text-xs text-muted-foreground">{msg.time}</span>
+              {loading ? (
+                 <div className="flex justify-center items-center h-full"><Loader2 className="h-6 w-6 animate-spin text-primary"/></div>
+              ) : (
+                conversations.map((convo) => (
+                  <div
+                    key={convo.id}
+                    className={`flex items-start gap-4 p-4 cursor-pointer hover:bg-accent ${selectedConversation?.id === convo.id ? 'bg-accent' : ''}`}
+                    onClick={() => setSelectedConversation(convo)}
+                  >
+                    <Avatar>
+                      <AvatarImage src={`https://placehold.co/40x40?text=${convo.avatar}`} />
+                      <AvatarFallback>{convo.avatar}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 overflow-hidden">
+                      <div className="flex justify-between items-center">
+                        <span className="font-semibold truncate">{convo.contactName}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {convo.lastMessageAt ? formatDistanceToNow(convo.lastMessageAt.toDate(), { addSuffix: true }) : ''}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground truncate">{convo.lastMessage}</p>
                     </div>
-                    <p className="text-sm text-muted-foreground truncate">{msg.message}</p>
+                    {convo.unread && <div className="h-2.5 w-2.5 rounded-full bg-primary mt-1.5"></div>}
                   </div>
-                  {msg.unread && <div className="h-2.5 w-2.5 rounded-full bg-primary mt-1.5"></div>}
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
           <div className="flex flex-col h-full">
-            {selectedMessage ? (
+            {selectedConversation ? (
               <>
                 <div className="p-4 border-b flex items-center justify-between">
                   <div>
-                    <h2 className="font-semibold">{selectedMessage.sender}</h2>
+                    <h2 className="font-semibold">{selectedConversation.contactName}</h2>
                     <div className="text-sm text-muted-foreground flex items-center gap-2">
-                       <PlatformIcon platform={selectedMessage.platform} />
-                      <span>{selectedMessage.platform}</span>
+                       <PlatformIcon platform={selectedConversation.platform} />
+                      <span>{selectedConversation.platform}</span>
                     </div>
                   </div>
                 </div>
                 <div className="flex-1 p-6 overflow-y-auto space-y-6">
-                  <div className="flex items-end gap-3">
-                    <Avatar>
-                      <AvatarImage src={`https://placehold.co/40x40?text=${selectedMessage.avatar}`} />
-                      <AvatarFallback>{selectedMessage.avatar}</AvatarFallback>
-                    </Avatar>
-                    <div className="p-3 rounded-lg bg-muted max-w-xs lg:max-w-md">
-                      <p className="text-sm">{selectedMessage.message}</p>
+                  {messages.map((msg, index) => (
+                     <div key={msg.id} className={`flex items-end gap-3 ${msg.sender === 'agent' ? 'justify-end' : ''}`}>
+                      {msg.sender === 'user' && (
+                        <Avatar className="h-8 w-8">
+                           <AvatarImage src={`https://placehold.co/40x40?text=${selectedConversation.avatar}`} />
+                           <AvatarFallback>{selectedConversation.avatar}</AvatarFallback>
+                        </Avatar>
+                      )}
+                      <div className={`p-3 rounded-lg max-w-xs lg:max-w-md ${msg.sender === 'user' ? 'bg-muted' : 'bg-primary text-primary-foreground'}`}>
+                        <p className="text-sm">{msg.text}</p>
+                      </div>
+                      {msg.sender === 'agent' && (
+                        <Avatar className="h-8 w-8">
+                           <AvatarImage src="https://placehold.co/40x40" />
+                           <AvatarFallback>TS</AvatarFallback>
+                        </Avatar>
+                      )}
                     </div>
-                  </div>
-                   <div className="flex items-end gap-3 justify-end">
-                     <div className="p-3 rounded-lg bg-primary text-primary-foreground max-w-xs lg:max-w-md">
-                      <p className="text-sm">Hi {selectedMessage.sender}, thank you for reaching out! We are here to help.</p>
-                    </div>
-                     <Avatar>
-                       <AvatarImage src="https://placehold.co/40x40" />
-                       <AvatarFallback>TS</AvatarFallback>
-                     </Avatar>
-                  </div>
+                  ))}
+                  <div ref={messagesEndRef} />
                 </div>
                 <div className="p-4 border-t bg-background">
-                  <div className="relative">
-                    <Input placeholder="Type your reply..." className="pr-12" />
-                    <Button size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8">
-                      <Send className="h-4 w-4" />
+                  <form onSubmit={(e) => { e.preventDefault(); handleSendReply(); }} className="relative">
+                    <Input placeholder="Type your reply..." value={reply} onChange={(e) => setReply(e.target.value)} className="pr-12" disabled={sending} />
+                    <Button type="submit" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8" disabled={sending}>
+                      {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                     </Button>
-                  </div>
+                  </form>
                 </div>
               </>
             ) : (
               <div className="flex items-center justify-center h-full text-muted-foreground">
-                Select a message to view the conversation.
+                {loading ? <Loader2 className="h-8 w-8 animate-spin text-primary" /> : 'Select a message to view the conversation.'}
               </div>
             )}
           </div>
