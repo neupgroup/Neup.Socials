@@ -17,7 +17,7 @@ import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 const formSchema = z.object({
-  platform: z.enum(['Facebook', 'Instagram', 'Twitter', 'LinkedIn']),
+  platform: z.enum(['Facebook', 'Instagram', 'Twitter', 'LinkedIn'], {required_error: "Please select a platform."}),
   username: z.string().min(1, 'Username is required.'),
   password: z.string().min(1, 'Password is required.'),
 });
@@ -42,6 +42,10 @@ export default function AddAccountPage() {
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
+    defaultValues: {
+      username: '',
+      password: '',
+    },
   });
 
   const onSubmit = async (data: FormValues) => {
