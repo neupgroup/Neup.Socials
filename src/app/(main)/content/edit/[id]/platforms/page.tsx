@@ -2,17 +2,21 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Facebook, Instagram, Youtube, Twitter } from 'lucide-react';
+import { Facebook, Instagram, Youtube, Twitter, Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 const socialPlatforms = [
-  { id: 'facebook', name: 'Facebook', icon: <Facebook className="h-6 w-6 text-blue-600" /> },
-  { id: 'instagram', name: 'Instagram', icon: <Instagram className="h-6 w-6 text-pink-500" /> },
+  { id: 'Facebook', name: 'Facebook', icon: <Facebook className="h-6 w-6 text-blue-600" /> },
+  { id: 'Instagram', name: 'Instagram', icon: <Instagram className="h-6 w-6 text-pink-500" /> },
   {
-    id: 'threads',
+    id: 'Threads',
     name: 'Threads',
     icon: (
       <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -23,13 +27,33 @@ const socialPlatforms = [
       </svg>
     ),
   },
-  { id: 'youtube', name: 'YouTube', icon: <Youtube className="h-6 w-6 text-red-600" /> },
-  { id: 'twitter', name: 'Twitter', icon: <Twitter className="h-6 w-6 text-blue-400" /> },
+  { id: 'YouTube', name: 'YouTube', icon: <Youtube className="h-6 w-6 text-red-600" /> },
+  { id: 'Twitter', name: 'Twitter', icon: <Twitter className="h-6 w-6 text-blue-400" /> },
 ];
 
 export default function EditPlatformsPage({ params }: { params: { id: string } }) {
-  const id = params.id;
-  const [selectedPlatforms, setSelectedPlatforms] = React.useState<string[]>(['linkedin']);
+  const { id } = params;
+  const [selectedPlatforms, setSelectedPlatforms] = React.useState<string[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [isSaving, setIsSaving] = React.useState(false);
+  const router = useRouter();
+  const { toast } = useToast();
+
+  React.useEffect(() => {
+    const fetchPost = async () => {
+      setIsLoading(true);
+      const docRef = doc(db, 'content', id);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        setSelectedPlatforms(docSnap.data().platforms || []);
+      } else {
+        toast({ title: 'Post not found', variant: 'destructive' });
+        router.push('/content');
+      }
+      setIsLoading(false);
+    };
+    fetchPost();
+  }, [id, router, toast]);
 
   const handlePlatformToggle = (platformId: string) => {
     setSelectedPlatforms((prev) =>
@@ -38,6 +62,32 @@ export default function EditPlatformsPage({ params }: { params: { id: string } }
         : [...prev, platformId]
     );
   };
+
+  const handleNext = async () => {
+    if (selectedPlatforms.length === 0) {
+      toast({ title: 'Select at least one platform', variant: 'destructive' });
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const docRef = doc(db, 'content', id);
+      await updateDoc(docRef, { platforms: selectedPlatforms });
+      router.push(`/content/edit/${id}/schedule`);
+    } catch (error) {
+      console.error("Error updating platforms: ", error);
+      toast({ title: 'Failed to save platforms', variant: 'destructive' });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-full">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -75,11 +125,12 @@ export default function EditPlatformsPage({ params }: { params: { id: string } }
       </Card>
       
       <div className="flex justify-between">
-         <Button asChild variant="outline">
+         <Button asChild variant="outline" disabled={isSaving}>
           <Link href={`/content/edit/${id}`}>Previous: Edit Content</Link>
         </Button>
-        <Button asChild>
-          <Link href={`/content/edit/${id}/schedule`}>Next: Schedule Post</Link>
+        <Button onClick={handleNext} disabled={isSaving}>
+          {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          Next: Schedule Post
         </Button>
       </div>
     </div>

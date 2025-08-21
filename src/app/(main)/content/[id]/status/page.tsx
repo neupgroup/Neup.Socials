@@ -2,38 +2,82 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ArrowLeft, CheckCircle, Clock, BarChart2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Clock, BarChart2, Loader2, FileText } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Label } from '@/components/ui/label';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { useToast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
 
-const mockStatus = {
-  id: '1',
-  status: 'Published',
-  publishedAt: '2024-07-28 09:00 AM',
-  platform: 'Twitter',
-  analytics: {
-    likes: 120,
-    comments: 15,
-    shares: 45,
-    reach: 1500,
+type Post = {
+  id: string;
+  status: 'Published' | 'Scheduled' | 'Draft';
+  platform: string;
+  publishedAt?: string;
+  scheduledAt?: string;
+  analytics?: {
+    likes: number;
+    comments: number;
+    shares: number;
+    reach: number;
   }
-};
-
-const mockScheduledStatus = {
-  id: '2',
-  status: 'Scheduled',
-  scheduledAt: '2024-08-01 10:00 AM',
-  platform: 'LinkedIn'
 };
 
 
 export default function PostStatusPage({ params }: { params: { id: string } }) {
-  const id = params.id;
-  const post = id === '1' ? mockStatus : mockScheduledStatus;
+  const { id } = params;
+  const [post, setPost] = React.useState<Post | null>(null);
+  const [loading, setLoading] = React.useState(true);
+  const router = useRouter();
+  const { toast } = useToast();
+
+  React.useEffect(() => {
+    if (!id) return;
+    const fetchPost = async () => {
+      setLoading(true);
+      const docRef = doc(db, 'content', id);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setPost({
+          id: docSnap.id,
+          status: data.status,
+          platform: (data.platforms || []).join(', '),
+          publishedAt: data.publishedAt ? format(data.publishedAt.toDate(), 'PPpp') : undefined,
+          scheduledAt: data.scheduledAt ? format(data.scheduledAt.toDate(), 'PPpp') : undefined,
+          // Mock analytics for now
+          analytics: data.status === 'Published' ? { likes: 120, comments: 15, shares: 45, reach: 1500 } : undefined
+        });
+      } else {
+        toast({ title: 'Post not found', variant: 'destructive' });
+        router.push('/content');
+      }
+      setLoading(false);
+    };
+
+    fetchPost();
+  }, [id, router, toast]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-full">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!post) {
+    return <p className="text-center">Post not found.</p>;
+  }
+
   const isPublished = post.status === 'Published';
-  const progressValue = isPublished ? Math.floor((post.analytics.likes / 200) * 100) : 0;
+  const isScheduled = post.status === 'Scheduled';
+  const progressValue = isPublished ? Math.floor(((post.analytics?.likes || 0) / 200) * 100) : 0;
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -49,7 +93,7 @@ export default function PostStatusPage({ params }: { params: { id: string } }) {
         </div>
       </div>
         
-        {isPublished ? (
+        {isPublished && post.analytics ? (
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -84,7 +128,7 @@ export default function PostStatusPage({ params }: { params: { id: string } }) {
                     </Button>
                 </CardContent>
             </Card>
-        ) : (
+        ) : isScheduled ? (
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -104,6 +148,29 @@ export default function PostStatusPage({ params }: { params: { id: string } }) {
                             <Link href={`/content/edit/${id}`}>Edit Post</Link>
                         </Button>
                         <Button asChild variant="outline">
+                            <Link href={`/content/view/${id}`}>View Details</Link>
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
+        ) : (
+             <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <FileText className="h-6 w-6 text-yellow-500" />
+                        <span>Post is a Draft</span>
+                    </CardTitle>
+                    <CardDescription>
+                        This post is saved as a draft and has not been scheduled or published.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 text-center py-10">
+                    <p className="text-muted-foreground">Complete the creation process to schedule or publish this post.</p>
+                    <div className="flex justify-center gap-4 pt-4">
+                        <Button asChild>
+                            <Link href={`/content/edit/${id}/platforms`}>Continue Editing</Link>
+                        </Button>
+                         <Button asChild variant="outline">
                             <Link href={`/content/view/${id}`}>View Details</Link>
                         </Button>
                     </div>
