@@ -97,7 +97,7 @@ export default function AddAccountPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" autoComplete="off">
             <div className="space-y-2">
               <Label htmlFor="platform">Platform</Label>
                <Controller
@@ -130,7 +130,7 @@ export default function AddAccountPage() {
                <Controller
                 name="username"
                 control={control}
-                render={({ field }) => <Input id="username" {...field} placeholder="e.g., @yourhandle" />}
+                render={({ field }) => <Input id="username" {...field} placeholder="e.g., @yourhandle" autoComplete="off" />}
               />
               {errors.username && (
                 <p className="text-sm text-destructive">{errors.username.message}</p>
@@ -142,7 +142,7 @@ export default function AddAccountPage() {
               <Controller
                 name="password"
                 control={control}
-                render={({ field }) => <Input id="password" type="password" {...field} placeholder="••••••••" />}
+                render={({ field }) => <Input id="password" type="password" {...field} placeholder="••••••••" autoComplete="new-password"/>}
               />
                {errors.password && (
                 <p className="text-sm text-destructive">{errors.password.message}</p>
