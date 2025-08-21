@@ -40,7 +40,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 const navItems = [
   { href: '/analytics', icon: LayoutGrid, label: 'Analytics' },
   { href: '/schedule', icon: Calendar, label: 'Schedule' },
-  { href: '/create', icon: PlusSquare, label: 'Create' },
+  { href: '/content', icon: PlusSquare, label: 'Content' },
   { href: '/inbox', icon: Inbox, label: 'Inbox' },
   { href: '/accounts', icon: Users, label: 'Accounts' },
   { href: '/settings', icon: Settings, label: 'Settings' },

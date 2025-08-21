@@ -2,99 +2,133 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Calendar } from '@/components/ui/calendar';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Input } from '@/components/ui/input';
-import { Calendar as CalendarIcon, Clock, Send } from 'lucide-react';
-import { format } from 'date-fns';
+import {
+  Calendar,
+  Inbox,
+  LayoutGrid,
+  Settings,
+  Users,
+  MessageSquareText,
+  PlusSquare,
+} from 'lucide-react';
+import { usePathname } from 'next/navigation';
+
 import { cn } from '@/lib/utils';
+import {
+  Sidebar,
+  SidebarProvider,
+  SidebarHeader,
+  SidebarContent,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarFooter,
+  SidebarTrigger,
+  SidebarInset,
+} from '@/components/ui/sidebar';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-export default function SchedulePostPage() {
-  const [scheduleOption, setScheduleOption] = React.useState('now');
-  const [postDate, setPostDate] = React.useState<Date | undefined>();
-  const [postTime, setPostTime] = React.useState('10:00');
-  
-  const handleSchedule = () => {
-    // Logic to handle the final post scheduling/submission
-    alert('Post has been scheduled/sent!');
-  };
+const navItems = [
+  { href: '/analytics', icon: LayoutGrid, label: 'Analytics' },
+  { href: '/schedule', icon: Calendar, label: 'Schedule' },
+  { href: '/content', icon: PlusSquare, label: 'Content' },
+  { href: '/inbox', icon: Inbox, label: 'Inbox' },
+  { href: '/accounts', icon: Users, label: 'Accounts' },
+  { href: '/settings', icon: Settings, label: 'Settings' },
+];
 
+export default function MainLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const pathname = usePathname();
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Schedule Your Post</h1>
-        <p className="text-muted-foreground">Step 3 of 3: Choose when you want to publish</p>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Scheduling Options</CardTitle>
-           <CardDescription>Publish immediately or schedule for a later date and time.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <RadioGroup value={scheduleOption} onValueChange={setScheduleOption} className="space-y-4">
-             <Label htmlFor="post-now" className="flex items-center p-4 border rounded-lg cursor-pointer has-[:checked]:border-primary">
-              <RadioGroupItem value="now" id="post-now" />
-              <div className="ml-4">
-                <span className="font-semibold">Post Immediately</span>
-                <p className="text-sm text-muted-foreground">Publish your content as soon as you hit the button.</p>
-              </div>
-            </Label>
-            <Label htmlFor="schedule-later" className="flex items-center p-4 border rounded-lg cursor-pointer has-[:checked]:border-primary">
-              <RadioGroupItem value="later" id="schedule-later" />
-              <div className="ml-4">
-                <span className="font-semibold">Schedule for Later</span>
-                <p className="text-sm text-muted-foreground">Select a specific date and time to publish.</p>
-              </div>
-            </Label>
-          </RadioGroup>
-
-          {scheduleOption === 'later' && (
-            <div className="grid grid-cols-1 gap-4 p-4 border rounded-lg md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="date">Date</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      id="date"
-                      variant={'outline'}
-                      className={cn('w-full justify-start text-left font-normal', !postDate && 'text-muted-foreground')}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {postDate ? format(postDate, 'PPP') : <span>Pick a date</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar mode="single" selected={postDate} onSelect={setPostDate} initialFocus />
-                  </PopoverContent>
-                </Popover>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="time">Time</Label>
-                <div className="relative">
-                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input id="time" type="time" value={postTime} onChange={(e) => setPostTime(e.target.value)} className="pl-10" />
-                </div>
-              </div>
+    <SidebarProvider>
+      <Sidebar>
+        <SidebarHeader>
+          <div className="flex items-center gap-2 p-2 pr-0">
+            <div className="flex items-center justify-center size-8 bg-primary rounded-lg text-primary-foreground">
+              <MessageSquareText className="size-5" />
             </div>
-          )}
-        </CardContent>
-      </Card>
-      
-       <div className="flex justify-between">
-         <Button asChild variant="outline">
-          <Link href="/create/platforms">Previous: Select Platforms</Link>
-        </Button>
-        <Button onClick={handleSchedule}>
-          <Send className="mr-2 h-4 w-4" />
-          {scheduleOption === 'now' ? 'Post Now' : 'Schedule Post'}
-        </Button>
-      </div>
-    </div>
+            <span className="font-semibold text-lg">TeamSocial</span>
+          </div>
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarMenu>
+            {navItems.map((item) => (
+              <SidebarMenuItem key={item.href}>
+                <Link href={item.href}>
+                  <SidebarMenuButton
+                    isActive={pathname.startsWith(item.href)}
+                    tooltip={item.label}
+                  >
+                    <item.icon />
+                    <span>{item.label}</span>
+                  </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarContent>
+        <SidebarFooter className="p-4">
+          <div className="flex items-center gap-3">
+             <Avatar className="h-9 w-9">
+                <AvatarImage src="https://placehold.co/40x40" alt="@shadcn" />
+                <AvatarFallback>TS</AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col text-sm group-data-[collapsible=icon]:hidden">
+                <span className="font-medium">Team Admin</span>
+                <span className="text-muted-foreground">admin@teamsocial.com</span>
+              </div>
+          </div>
+        </SidebarFooter>
+      </Sidebar>
+      <SidebarInset>
+        <header className="flex h-14 items-center justify-between border-b bg-background/80 backdrop-blur-sm px-6 sticky top-0 z-10">
+          <SidebarTrigger className="md:hidden" />
+          <div className="flex items-center gap-4 ml-auto">
+            <Button variant="outline">Feedback</Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src="https://placehold.co/40x40" alt="User Avatar" />
+                    <AvatarFallback>TS</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">Team Admin</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      admin@teamsocial.com
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>Profile</DropdownMenuItem>
+                <DropdownMenuItem>Billing</DropdownMenuItem>
+                <DropdownMenuItem>Settings</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>Log out</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </header>
+        <main className="flex-1 p-6">{children}</main>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

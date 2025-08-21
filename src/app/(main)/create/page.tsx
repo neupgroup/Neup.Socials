@@ -2,51 +2,133 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import {
+  Calendar,
+  Inbox,
+  LayoutGrid,
+  Settings,
+  Users,
+  MessageSquareText,
+  PlusSquare,
+} from 'lucide-react';
+import { usePathname } from 'next/navigation';
+
+import { cn } from '@/lib/utils';
+import {
+  Sidebar,
+  SidebarProvider,
+  SidebarHeader,
+  SidebarContent,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarFooter,
+  SidebarTrigger,
+  SidebarInset,
+} from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
-import { UploadCloud } from 'lucide-react';
-import { Label } from '@/components/ui/label';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-export default function CreatePostPage() {
+const navItems = [
+  { href: '/analytics', icon: LayoutGrid, label: 'Analytics' },
+  { href: '/schedule', icon: Calendar, label: 'Schedule' },
+  { href: '/content', icon: PlusSquare, label: 'Content' },
+  { href: '/inbox', icon: Inbox, label: 'Inbox' },
+  { href: '/accounts', icon: Users, label: 'Accounts' },
+  { href: '/settings', icon: Settings, label: 'Settings' },
+];
+
+export default function MainLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const pathname = usePathname();
+
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-       <div>
-        <h1 className="text-3xl font-bold">Create a New Post</h1>
-        <p className="text-muted-foreground">Step 1 of 3: Compose your content</p>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Post Content</CardTitle>
-          <CardDescription>Write your post and upload any media you want to include.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="post-text">Text</Label>
-            <Textarea id="post-text" placeholder="What's happening?" rows={6} />
-          </div>
-          <div className="space-y-2">
-            <Label>Media (Image/Video)</Label>
-            <div className="flex items-center justify-center w-full">
-                <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer bg-muted hover:bg-muted/50">
-                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        <UploadCloud className="w-10 h-10 mb-3 text-muted-foreground" />
-                        <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Click to upload</span> or drag and drop</p>
-                        <p className="text-xs text-muted-foreground">SVG, PNG, JPG or MP4 (MAX. 800x400px)</p>
-                    </div>
-                    <input id="dropzone-file" type="file" className="hidden" />
-                </label>
+    <SidebarProvider>
+      <Sidebar>
+        <SidebarHeader>
+          <div className="flex items-center gap-2 p-2 pr-0">
+            <div className="flex items-center justify-center size-8 bg-primary rounded-lg text-primary-foreground">
+              <MessageSquareText className="size-5" />
             </div>
+            <span className="font-semibold text-lg">TeamSocial</span>
           </div>
-        </CardContent>
-      </Card>
-      
-      <div className="flex justify-end">
-        <Button asChild>
-          <Link href="/create/platforms">Next: Select Platforms</Link>
-        </Button>
-      </div>
-    </div>
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarMenu>
+            {navItems.map((item) => (
+              <SidebarMenuItem key={item.href}>
+                <Link href={item.href}>
+                  <SidebarMenuButton
+                    isActive={pathname.startsWith(item.href)}
+                    tooltip={item.label}
+                  >
+                    <item.icon />
+                    <span>{item.label}</span>
+                  </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarContent>
+        <SidebarFooter className="p-4">
+          <div className="flex items-center gap-3">
+             <Avatar className="h-9 w-9">
+                <AvatarImage src="https://placehold.co/40x40" alt="@shadcn" />
+                <AvatarFallback>TS</AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col text-sm group-data-[collapsible=icon]:hidden">
+                <span className="font-medium">Team Admin</span>
+                <span className="text-muted-foreground">admin@teamsocial.com</span>
+              </div>
+          </div>
+        </SidebarFooter>
+      </Sidebar>
+      <SidebarInset>
+        <header className="flex h-14 items-center justify-between border-b bg-background/80 backdrop-blur-sm px-6 sticky top-0 z-10">
+          <SidebarTrigger className="md:hidden" />
+          <div className="flex items-center gap-4 ml-auto">
+            <Button variant="outline">Feedback</Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src="https://placehold.co/40x40" alt="User Avatar" />
+                    <AvatarFallback>TS</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">Team Admin</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      admin@teamsocial.com
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>Profile</DropdownMenuItem>
+                <DropdownMenuItem>Billing</DropdownMenuItem>
+                <DropdownMenuItem>Settings</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>Log out</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </header>
+        <main className="flex-1 p-6">{children}</main>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
