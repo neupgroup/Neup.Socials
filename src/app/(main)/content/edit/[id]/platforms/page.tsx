@@ -28,6 +28,7 @@ const socialPlatforms = [
 ];
 
 export default function EditPlatformsPage({ params }: { params: { id: string } }) {
+  const id = params.id;
   const [selectedPlatforms, setSelectedPlatforms] = React.useState<string[]>(['linkedin']);
 
   const handlePlatformToggle = (platformId: string) => {
@@ -75,10 +76,10 @@ export default function EditPlatformsPage({ params }: { params: { id: string } }
       
       <div className="flex justify-between">
          <Button asChild variant="outline">
-          <Link href={`/content/edit/${params.id}`}>Previous: Edit Content</Link>
+          <Link href={`/content/edit/${id}`}>Previous: Edit Content</Link>
         </Button>
         <Button asChild>
-          <Link href={`/content/edit/${params.id}/schedule`}>Next: Schedule Post</Link>
+          <Link href={`/content/edit/${id}/schedule`}>Next: Schedule Post</Link>
         </Button>
       </div>
     </div>

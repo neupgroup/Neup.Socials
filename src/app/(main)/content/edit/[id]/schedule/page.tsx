@@ -16,6 +16,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 
 export default function EditSchedulePage({ params }: { params: { id: string } }) {
+  const id = params.id;
   const [scheduleOption, setScheduleOption] = React.useState('later');
   const [postDate, setPostDate] = React.useState<Date | undefined>(addDays(new Date(), 5));
   const [postTime, setPostTime] = React.useState('10:00');
@@ -27,7 +28,7 @@ export default function EditSchedulePage({ params }: { params: { id: string } })
         title: "Post Updated!",
         description: `Your post has been successfully rescheduled.`,
       });
-    router.push(`/content/view/${params.id}`);
+    router.push(`/content/view/${id}`);
   };
 
 
@@ -94,7 +95,7 @@ export default function EditSchedulePage({ params }: { params: { id: string } })
       
        <div className="flex justify-between">
          <Button asChild variant="outline">
-          <Link href={`/content/edit/${params.id}/platforms`}>Previous: Select Platforms</Link>
+          <Link href={`/content/edit/${id}/platforms`}>Previous: Select Platforms</Link>
         </Button>
         <Button onClick={handleSchedule}>
           <Send className="mr-2 h-4 w-4" />

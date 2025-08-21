@@ -18,6 +18,7 @@ const mockPost = {
 
 
 export default function ViewContentPage({ params }: { params: { id: string } }) {
+  const id = params.id;
   const isPublished = mockPost.status === 'Published';
 
   return (
@@ -30,7 +31,7 @@ export default function ViewContentPage({ params }: { params: { id: string } }) 
         </Button>
         <div>
           <h1 className="text-3xl font-bold">View Post Details</h1>
-          <p className="text-muted-foreground">Viewing post ID: {params.id}</p>
+          <p className="text-muted-foreground">Viewing post ID: {id}</p>
         </div>
       </div>
       
@@ -81,7 +82,7 @@ export default function ViewContentPage({ params }: { params: { id: string } }) 
                    {!isPublished && (
                      <>
                         <Button asChild>
-                            <Link href={`/content/edit/${params.id}`}><Edit className="mr-2 h-4 w-4"/> Edit Post</Link>
+                            <Link href={`/content/edit/${id}`}><Edit className="mr-2 h-4 w-4"/> Edit Post</Link>
                         </Button>
                         <Button variant="outline">
                             Cancel Schedule

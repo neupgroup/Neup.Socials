@@ -9,11 +9,12 @@ import { UploadCloud, ArrowLeft } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 
 export default function EditPostPage({ params }: { params: { id: string } }) {
+  const id = params.id;
   return (
     <div className="max-w-3xl mx-auto space-y-6">
        <div className="flex items-center gap-4">
         <Button asChild variant="outline" size="icon">
-          <Link href={`/content/view/${params.id}`}>
+          <Link href={`/content/view/${id}`}>
             <ArrowLeft />
           </Link>
         </Button>
@@ -51,10 +52,10 @@ export default function EditPostPage({ params }: { params: { id: string } }) {
       
       <div className="flex justify-between">
          <Button asChild variant="outline">
-          <Link href={`/content/view/${params.id}`}>Cancel</Link>
+          <Link href={`/content/view/${id}`}>Cancel</Link>
         </Button>
         <Button asChild>
-          <Link href={`/content/edit/${params.id}/platforms`}>Next: Select Platforms</Link>
+          <Link href={`/content/edit/${id}/platforms`}>Next: Select Platforms</Link>
         </Button>
       </div>
     </div>

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ArrowLeft, CheckCircle, Clock, BarChart2 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { Label } from '@/components/ui/label';
 
 const mockStatus = {
   id: '1',
@@ -29,7 +30,8 @@ const mockScheduledStatus = {
 
 
 export default function PostStatusPage({ params }: { params: { id: string } }) {
-  const post = params.id === '1' ? mockStatus : mockScheduledStatus;
+  const id = params.id;
+  const post = id === '1' ? mockStatus : mockScheduledStatus;
   const isPublished = post.status === 'Published';
   const progressValue = isPublished ? Math.floor((post.analytics.likes / 200) * 100) : 0;
 
@@ -43,7 +45,7 @@ export default function PostStatusPage({ params }: { params: { id: string } }) {
         </Button>
         <div>
             <h1 className="text-3xl font-bold">Post Status</h1>
-            <p className="text-muted-foreground">Check the status of your post ID: {params.id}</p>
+            <p className="text-muted-foreground">Check the status of your post ID: {id}</p>
         </div>
       </div>
         
@@ -99,10 +101,10 @@ export default function PostStatusPage({ params }: { params: { id: string } }) {
                     <p className="text-muted-foreground">You can still edit or cancel this post before it goes live.</p>
                     <div className="flex justify-center gap-4 pt-4">
                         <Button asChild>
-                            <Link href={`/content/edit/${params.id}`}>Edit Post</Link>
+                            <Link href={`/content/edit/${id}`}>Edit Post</Link>
                         </Button>
                         <Button asChild variant="outline">
-                            <Link href={`/content/view/${params.id}`}>View Details</Link>
+                            <Link href={`/content/view/${id}`}>View Details</Link>
                         </Button>
                     </div>
                 </CardContent>
