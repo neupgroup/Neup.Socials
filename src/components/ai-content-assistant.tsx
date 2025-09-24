@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sparkles, Clipboard, Copy, Loader2 } from 'lucide-react';
-import { generatePostVariationsAction } from '@/app/actions';
+import { generatePostVariationsAction } from '@/actions/ai/generatePostVariations';
 import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
