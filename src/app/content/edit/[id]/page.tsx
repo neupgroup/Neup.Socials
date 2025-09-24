@@ -80,7 +80,7 @@ export default function EditPostPage() {
     return new Promise((resolve, reject) => {
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('platform', 'teamsocial-content');
+      formData.append('platform', 'neupsocials-content');
       formData.append('userid', userId);
       formData.append('contentid', contentId);
       formData.append('name', file.name.split('.').slice(0, -1).join('.'));
@@ -107,7 +107,7 @@ export default function EditPostPage() {
                   fileType: file.type,
                   uploadedBy: userId,
                   filePath: result.url,
-                  platform: 'teamsocial-content',
+                  platform: 'neupsocials-content',
                   contentId: contentId,
               });
               if (selectedMediaUrls.length < 8) {

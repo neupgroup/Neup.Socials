@@ -33,17 +33,17 @@ const features = [
 const testimonials = [
     {
         ...landing.testimonials[0],
-        quote: "TeamSocial has revolutionized our social media workflow. The unified inbox saves us hours every week, and the AI assistant is a game-changer for content creation.",
+        quote: "Neup.Socials has revolutionized our social media workflow. The unified inbox saves us hours every week, and the AI assistant is a game-changer for content creation.",
         company: "Innovate Inc."
     },
     {
         ...landing.testimonials[1],
-        quote: "As a small business owner, I wear many hats. TeamSocial makes it incredibly easy to manage my social presence effectively without a dedicated team. The analytics are clear and actionable.",
+        quote: "As a small business owner, I wear many hats. Neup.Socials makes it incredibly easy to manage my social presence effectively without a dedicated team. The analytics are clear and actionable.",
         company: "QuantumLeap"
     },
     {
         ...landing.testimonials[2],
-        quote: "I've tried every social media tool out there, and TeamSocial is by far the most intuitive and powerful. The scheduling and content approval flows are seamless for our agency.",
+        quote: "I've tried every social media tool out there, and Neup.Socials is by far the most intuitive and powerful. The scheduling and content approval flows are seamless for our agency.",
         company: "StellarSolutions"
     }
 ]
@@ -55,7 +55,7 @@ export default function LandingPage() {
         <div className="container flex h-14 items-center">
           <Link href="#" className="flex items-center gap-2 font-bold">
             <MessageSquareText className="h-6 w-6 text-primary" />
-            <span>TeamSocial</span>
+            <span>Neup.Socials</span>
           </Link>
           <nav className="ml-auto flex items-center gap-4">
             <Button variant="ghost" asChild>
@@ -77,7 +77,7 @@ export default function LandingPage() {
                 Your Entire Social Media Workflow, <span className="text-primary">Simplified.</span>
               </h1>
               <p className="max-w-xl mx-auto md:mx-0 text-lg text-muted-foreground">
-                Stop juggling tabs. TeamSocial brings your content creation, scheduling, analytics, and conversations into one powerful, elegant platform.
+                Stop juggling tabs. Neup.Socials brings your content creation, scheduling, analytics, and conversations into one powerful, elegant platform.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
                 <Button size="lg" asChild>
@@ -128,7 +128,7 @@ export default function LandingPage() {
             <div className="text-center max-w-3xl mx-auto">
               <h2 className="text-3xl md:text-4xl font-bold">Everything You Need, Nothing You Don't</h2>
               <p className="mt-4 text-lg text-muted-foreground">
-                TeamSocial is packed with features designed to make your social media management smarter, faster, and more effective.
+                Neup.Socials is packed with features designed to make your social media management smarter, faster, and more effective.
               </p>
             </div>
             {features.map((feature, index) => (
@@ -168,7 +168,7 @@ export default function LandingPage() {
         <section id="testimonials" className="py-20 md:py-32 bg-muted">
             <div className="container">
                 <div className="text-center max-w-3xl mx-auto">
-                    <h2 className="text-3xl md:text-4xl font-bold">Why Marketers Love TeamSocial</h2>
+                    <h2 className="text-3xl md:text-4xl font-bold">Why Marketers Love Neup.Socials</h2>
                     <p className="mt-4 text-lg text-muted-foreground">
                         Don't just take our word for it. Here's what our customers have to say.
                     </p>
@@ -219,7 +219,7 @@ export default function LandingPage() {
            <div className="col-span-full md:col-span-2 space-y-4">
              <Link href="#" className="flex items-center gap-2 font-bold text-lg">
                 <MessageSquareText className="h-6 w-6 text-primary" />
-                <span>TeamSocial</span>
+                <span>Neup.Socials</span>
              </Link>
              <p className="text-muted-foreground">The all-in-one social media management platform.</p>
            </div>
@@ -251,7 +251,7 @@ export default function LandingPage() {
         </div>
         <div className="border-t">
             <div className="container py-4 text-center text-sm text-muted-foreground">
-                &copy; {new Date().getFullYear()} TeamSocial, Inc. All rights reserved.
+                &copy; {new Date().getFullYear()} Neup.Socials, Inc. All rights reserved.
             </div>
         </div>
       </footer>

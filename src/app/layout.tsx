@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -81,16 +82,16 @@ export default function RootLayout({
                       <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                         <Avatar className="h-8 w-8">
                           <AvatarImage src="https://placehold.co/40x40" alt="User Avatar" />
-                          <AvatarFallback>TS</AvatarFallback>
+                          <AvatarFallback>NS</AvatarFallback>
                         </Avatar>
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="w-56" align="end" forceMount>
                       <DropdownMenuLabel className="font-normal">
                         <div className="flex flex-col space-y-1">
-                          <p className="text-sm font-medium leading-none">Team Admin</p>
+                          <p className="text-sm font-medium leading-none">Neup Admin</p>
                           <p className="text-xs leading-none text-muted-foreground">
-                            admin@teamsocial.com
+                            admin@neup.socials
                           </p>
                         </div>
                       </DropdownMenuLabel>
@@ -115,7 +116,7 @@ export default function RootLayout({
                       <div className="flex items-center justify-center size-8 bg-primary rounded-lg text-primary-foreground">
                         <MessageSquareText className="size-5" />
                       </div>
-                      <span className="font-semibold text-lg">TeamSocial</span>
+                      <span className="font-semibold text-lg">Neup.Socials</span>
                     </div>
                   </SidebarHeader>
                   <SidebarContent>
@@ -139,11 +140,11 @@ export default function RootLayout({
                     <div className="flex items-center gap-3">
                       <Avatar className="h-9 w-9">
                         <AvatarImage src="https://placehold.co/40x40" alt="@shadcn" />
-                        <AvatarFallback>TS</AvatarFallback>
+                        <AvatarFallback>NS</AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col text-sm group-data-[collapsible=icon]:hidden">
-                        <span className="font-medium">Team Admin</span>
-                        <span className="text-muted-foreground">admin@teamsocial.com</span>
+                        <span className="font-medium">Neup Admin</span>
+                        <span className="text-muted-foreground">admin@neup.socials</span>
                       </div>
                     </div>
                   </SidebarFooter>
