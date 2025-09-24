@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { UploadCloud } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
 import { recordUpload } from '@/actions/uploads/recordUpload';
@@ -85,7 +85,8 @@ export default function CreatePostPage() {
       }
 
       // Update the post with the media URL
-      await db.collection('content').doc(contentId).update({ mediaUrl });
+      const contentDocRef = doc(db, 'content', contentId);
+      await updateDoc(contentDocRef, { mediaUrl });
       
       toast({
         title: 'Draft Saved!',
