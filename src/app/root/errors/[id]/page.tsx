@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Loader2, ArrowLeft, Trash2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ErrorLog } from '@/services/error-logging';
+import { ErrorLog } from '@/lib/error-logging';
 import { deleteErrorAction } from '@/actions/error-log-actions';
 import { format } from 'date-fns';
 import {
@@ -41,7 +41,7 @@ const DetailItem = ({ label, value }: { label: string, value?: string | React.Re
     )
 }
 
-const JsonBlock = ({ label, data }: { label: string, data?: object }) => {
+const JsonBlock = ({ label, data }: { label: string, data?: any }) => {
     if (!data || Object.keys(data).length === 0) return null;
     return (
         <div>
@@ -107,8 +107,12 @@ export default function ErrorDetailPage() {
     return <div className="text-center">Error log not found.</div>;
   }
   
-  const { id: errorId, timestamp, message, source, context, request, stack, userId } = errorLog;
+  const { id: errorId, timestamp, errorMessage, source, context, userId } = errorLog;
   const rawJson = { ...errorLog, timestamp: timestamp?.toDate().toISOString() };
+  // The 'request' and 'stack' might not exist on all error logs, so handle that gracefully.
+  const request = context?.request;
+  const stack = context?.stack;
+
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -149,7 +153,7 @@ export default function ErrorDetailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-destructive">{message}</CardTitle>
+          <CardTitle className="text-destructive">{errorMessage}</CardTitle>
           <CardDescription>
              An error occurred in the <span className="font-semibold text-primary">{source || 'unknown source'}</span> process.
           </CardDescription>
@@ -162,7 +166,6 @@ export default function ErrorDetailPage() {
             </dl>
 
             <JsonBlock label="Context" data={context} />
-            <JsonBlock label="Request" data={request} />
             
             {stack && (
                  <div>
