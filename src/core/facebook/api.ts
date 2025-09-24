@@ -61,6 +61,29 @@ type PublishPostResponse = {
     post_id?: string; // for photos
 }
 
+export type InsightValue = {
+  value: number;
+  end_time: string;
+};
+
+export type InsightMetric = {
+  name: string;
+  period: string;
+  values: InsightValue[];
+  title: string;
+  description: string;
+  id: string;
+};
+
+export type PageInsightsResponse = {
+  data: InsightMetric[];
+  paging: {
+    previous: string;
+    next: string;
+  };
+};
+
+
 async function handleApiResponse<T>(res: Response): Promise<T> {
     const json = await res.json();
     if (!res.ok) {
@@ -129,6 +152,39 @@ export async function validateToken(pageToken: string): Promise<DebugTokenRespon
     const res = await fetch(`${GRAPH_API_BASE_URL}/debug_token?${params.toString()}`);
     return handleApiResponse<DebugTokenResponse>(res);
 }
+
+/**
+ * Fetches insights for a specific Facebook Page.
+ * @param pageId The ID of the Facebook Page.
+ * @param pageToken The Page Access Token.
+ * @param metrics An array of metric names to fetch.
+ * @param since The start date for the query (e.g., 'YYYY-MM-DD').
+ * @param until The end date for the query (e.g., 'YYYY-MM-DD').
+ * @returns The response from the Facebook API containing the insights data.
+ */
+export async function getPageInsights(
+  pageId: string,
+  pageToken: string,
+  metrics: string[],
+  since?: string,
+  until?: string
+): Promise<PageInsightsResponse> {
+  const params = new URLSearchParams({
+    access_token: pageToken,
+    metric: metrics.join(','),
+  });
+
+  if (since) {
+    params.append('since', since);
+  }
+  if (until) {
+    params.append('until', until);
+  }
+
+  const res = await fetch(`${GRAPH_API_BASE_URL}/${pageId}/insights?${params.toString()}`);
+  return handleApiResponse<PageInsightsResponse>(res);
+}
+
 
 const getFullMediaUrl = (url: string) => {
     return url && !url.startsWith('http') ? `https://neupgroup.com${url}` : url;
