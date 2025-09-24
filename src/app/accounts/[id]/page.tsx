@@ -8,13 +8,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, ArrowLeft, Users, ThumbsUp, Share2, ExternalLink, Twitter, Facebook, Linkedin, Instagram } from 'lucide-react';
+import { Loader2, ArrowLeft, Users, ThumbsUp, Share2, ExternalLink, Twitter, Facebook, Linkedin, Instagram, RefreshCw } from 'lucide-react';
 import { doc, getDoc, collection, query, where, orderBy, limit, startAfter, getDocs, DocumentData, QueryDocumentSnapshot, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { getPageInsightsAction } from '@/actions/facebook/insights';
 import { format } from 'date-fns';
 import { logError } from '@/lib/error-logging';
+import { syncPostsAction } from '@/actions/facebook/sync-posts';
 
 type Account = {
   id: string;
@@ -62,47 +63,18 @@ export default function AccountDetailPage() {
   const [loading, setLoading] = React.useState(true);
   const [loadingPosts, setLoadingPosts] = React.useState(true);
   const [loadingMorePosts, setLoadingMorePosts] = React.useState(false);
+  const [isSyncing, setIsSyncing] = React.useState(false);
 
   const [lastVisible, setLastVisible] = React.useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [hasMore, setHasMore] = React.useState(true);
 
-  React.useEffect(() => {
-    if (!id) return;
-
-    const fetchAccountDetails = async () => {
-      setLoading(true);
-      try {
-        const docRef = doc(db, 'connected_accounts', id);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          const acc = { id: docSnap.id, ...data } as Account;
-          setAccount(acc);
-
-          if (acc.platform === 'Facebook') {
-            const insightsResult = await getPageInsightsAction(id);
-            if (insightsResult.success && insightsResult.data) {
-              setInsights(insightsResult.data);
-            }
-          }
-        } else {
-          toast({ title: 'Account not found', variant: 'destructive' });
-          router.push('/accounts');
-        }
-      } catch (error) {
-        toast({ title: 'Failed to fetch account details', variant: 'destructive' });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAccountDetails();
-  }, [id, router, toast]);
-
   const fetchPosts = React.useCallback(async (loadMore = false) => {
     if (!id) return;
-    if (!loadMore) setLoadingPosts(true);
+    if (!loadMore) {
+        setLoadingPosts(true);
+        setLastVisible(null); // Reset for a fresh fetch
+        setPosts([]);
+    }
     else setLoadingMorePosts(true);
 
     try {
@@ -139,10 +111,75 @@ export default function AccountDetailPage() {
   }, [id, toast, lastVisible]);
   
   React.useEffect(() => {
-    if (id) {
-        fetchPosts();
+    if (!id) return;
+
+    const fetchAccountDetails = async () => {
+      setLoading(true);
+      try {
+        const docRef = doc(db, 'connected_accounts', id);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          const acc = { id: docSnap.id, ...data } as Account;
+          setAccount(acc);
+
+          if (acc.platform === 'Facebook') {
+            const insightsResult = await getPageInsightsAction(id);
+            if (insightsResult.success && insightsResult.data) {
+              setInsights(insightsResult.data);
+            }
+          }
+          fetchPosts(); // Initial post fetch
+        } else {
+          toast({ title: 'Account not found', variant: 'destructive' });
+          router.push('/accounts');
+        }
+      } catch (error) {
+        toast({ title: 'Failed to fetch account details', variant: 'destructive' });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAccountDetails();
+  }, [id, router, toast, fetchPosts]);
+
+  const handleSyncPosts = async () => {
+    if (!id) return;
+    setIsSyncing(true);
+    try {
+        const result = await syncPostsAction(id);
+        if (result.success) {
+            toast({
+                title: 'Sync Complete',
+                description: `${result.postsSynced} new posts were synced.`,
+            });
+            // Refresh the posts list
+            fetchPosts(false);
+        } else {
+            throw new Error(result.error || 'Unknown error during sync.');
+        }
+    } catch(error: any) {
+        await logError({
+            process: 'handleSyncPosts',
+            location: 'AccountDetailPage',
+            errorMessage: error.message,
+            context: { accountId: id }
+        });
+        toast({
+            title: 'Sync Failed',
+            description: error.message,
+            variant: 'destructive',
+        });
+    } finally {
+        setIsSyncing(false);
     }
-  }, [id, fetchPosts]);
+  };
+
+  const handleRefreshProfile = () => {
+      toast({ title: 'Coming Soon!', description: 'This feature is not yet implemented.' });
+  }
 
   if (loading) {
     return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
@@ -154,18 +191,29 @@ export default function AccountDetailPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button asChild variant="outline" size="icon">
-          <Link href="/accounts">
-            <ArrowLeft />
-          </Link>
-        </Button>
+      <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-            <PlatformIcon platform={account.platform} />
-            <div>
-                <h1 className="text-3xl font-bold">{account.name}</h1>
-                <p className="text-muted-foreground">@{account.username}</p>
+            <Button asChild variant="outline" size="icon">
+            <Link href="/accounts">
+                <ArrowLeft />
+            </Link>
+            </Button>
+            <div className="flex items-center gap-4">
+                <PlatformIcon platform={account.platform} />
+                <div>
+                    <h1 className="text-3xl font-bold">{account.name}</h1>
+                    <p className="text-muted-foreground">@{account.username}</p>
+                </div>
             </div>
+        </div>
+        <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={handleSyncPosts} disabled={isSyncing}>
+                {isSyncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <RefreshCw className="mr-2 h-4 w-4"/>}
+                Sync Posts
+            </Button>
+             <Button variant="outline" onClick={handleRefreshProfile}>
+                Refresh Profile
+            </Button>
         </div>
       </div>
 
@@ -248,3 +296,5 @@ export default function AccountDetailPage() {
     </div>
   );
 }
+
+      
