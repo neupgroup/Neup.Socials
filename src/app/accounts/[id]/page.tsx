@@ -139,8 +139,10 @@ export default function AccountDetailPage() {
   }, [id, toast, lastVisible]);
   
   React.useEffect(() => {
-    fetchPosts();
-  }, [fetchPosts]);
+    if (id) {
+        fetchPosts();
+    }
+  }, [id, fetchPosts]);
 
   if (loading) {
     return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
