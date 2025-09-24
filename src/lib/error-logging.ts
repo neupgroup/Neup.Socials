@@ -3,13 +3,11 @@ import { collection, addDoc, serverTimestamp, query, where, getDocs, updateDoc, 
 import { db } from './firebase';
 
 interface ErrorDetails {
-  request?: any;
-  response?: any;
   process: string;
   location: string;
-  user?: string;
+  userId?: string;
   context?: any;
-  errorMessage: string;
+  message: string;
 }
 
 export async function logError(details: ErrorDetails) {
@@ -19,7 +17,7 @@ export async function logError(details: ErrorDetails) {
     // Check if an identical error has already been logged
     const q = query(
       errorsCollection,
-      where('errorMessage', '==', details.errorMessage),
+      where('message', '==', details.message),
       where('location', '==', details.location),
       where('process', '==', details.process)
     );

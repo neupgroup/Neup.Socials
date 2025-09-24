@@ -130,6 +130,32 @@ export async function validateToken(pageToken: string): Promise<DebugTokenRespon
     return handleApiResponse<DebugTokenResponse>(res);
 }
 
+const getFullMediaUrl = (url: string) => {
+    return url && !url.startsWith('http') ? `https://neupgroup.com${url}` : url;
+};
+
+/**
+ * Uploads a single photo to be attached to a post later.
+ * @returns The ID of the uploaded photo.
+ */
+async function uploadPhotoForAttachment(pageId: string, pageToken: string, photoUrl: string): Promise<string> {
+    const endpoint = `${GRAPH_API_BASE_URL}/${pageId}/photos`;
+    const params = new URLSearchParams({
+        access_token: pageToken,
+        url: getFullMediaUrl(photoUrl),
+        published: 'false', // We are not publishing it directly
+    });
+
+    const res = await fetch(endpoint, {
+        method: 'POST',
+        body: params,
+    });
+
+    const response = await handleApiResponse<{ id: string }>(res);
+    return response.id;
+}
+
+
 /**
  * Publishes content to a Facebook Page.
  * @param pageId The ID of the Facebook Page.
@@ -149,30 +175,43 @@ export async function publishToPage(
   ctaLink?: string,
 ): Promise<PublishPostResponse> {
   
-  // TODO: Handle multiple media URLs. For now, we'll just use the first one.
-  const mediaUrl = mediaUrls && mediaUrls.length > 0 ? mediaUrls[0] : undefined;
+  const hasMedia = mediaUrls && mediaUrls.length > 0;
 
-  const fullMediaUrl = mediaUrl && !mediaUrl.startsWith('http') ? `https://neupgroup.com${mediaUrl}` : mediaUrl;
+  // Handle multi-photo posts
+  if (hasMedia && mediaUrls.length > 1) {
+    const photoIds = await Promise.all(
+        mediaUrls.map(url => uploadPhotoForAttachment(pageId, pageToken, url))
+    );
 
+    const feedEndpoint = `${GRAPH_API_BASE_URL}/${pageId}/feed`;
+    const feedParams = new URLSearchParams({
+        access_token: pageToken,
+        message: content,
+    });
+    
+    photoIds.forEach(id => feedParams.append('attached_media[]', `{"media_fbid":"${id}"}`));
+
+    if (ctaType && ctaLink) {
+        feedParams.append('call_to_action', JSON.stringify({ type: ctaType, value: { link: ctaLink } }));
+    }
+
+    const res = await fetch(feedEndpoint, {
+        method: 'POST',
+        body: feedParams,
+    });
+    return handleApiResponse<PublishPostResponse>(res);
+  }
+
+  // Handle single media post or text-only post
+  const mediaUrl = hasMedia ? mediaUrls[0] : undefined;
+  const fullMediaUrl = mediaUrl ? getFullMediaUrl(mediaUrl) : undefined;
   const mimeType = fullMediaUrl ? mime.lookup(fullMediaUrl) : false;
 
   let endpoint = `${GRAPH_API_BASE_URL}/${pageId}/feed`;
-  const params = new URLSearchParams({
-    access_token: pageToken,
-  });
+  const params = new URLSearchParams({ access_token: pageToken });
 
   if (ctaType && ctaLink) {
-    if (ctaType === 'SEND_MESSAGE') {
-        params.append('call_to_action', JSON.stringify({
-            type: 'MESSAGE',
-            value: { link: ctaLink }
-        }));
-    } else {
-        params.append('call_to_action', JSON.stringify({
-            type: ctaType,
-            value: { link: ctaLink }
-        }));
-    }
+      params.append('call_to_action', JSON.stringify({ type: ctaType, value: { link: ctaLink } }));
   }
 
   if (mimeType && mimeType.startsWith('image/')) {
