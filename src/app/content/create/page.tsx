@@ -138,7 +138,7 @@ export default function CreatePostPage() {
         createdAt: serverTimestamp(),
         platforms: [],
         accountIds: [],
-        ctaType: ctaType || null,
+        ctaType: ctaType === 'NONE' ? null : ctaType,
         ctaLink: ctaLink || null,
       });
       
@@ -294,7 +294,7 @@ export default function CreatePostPage() {
                         <SelectValue placeholder="None" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="">None</SelectItem>
+                        <SelectItem value="NONE">None</SelectItem>
                         <SelectItem value="SHOP_NOW">Shop Now</SelectItem>
                         <SelectItem value="LEARN_MORE">Learn More</SelectItem>
                         <SelectItem value="SIGN_UP">Sign Up</SelectItem>
@@ -311,7 +311,7 @@ export default function CreatePostPage() {
                     placeholder="https://example.com/product"
                     value={ctaLink}
                     onChange={(e) => setCtaLink(e.target.value)}
-                    disabled={!ctaType}
+                    disabled={!ctaType || ctaType === 'NONE'}
                 />
             </div>
         </CardContent>

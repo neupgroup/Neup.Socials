@@ -55,7 +55,7 @@ export default function EditPostPage() {
         const data = docSnap.data();
         setContent(data.content);
         setSelectedMediaUrls(data.mediaUrls || (data.mediaUrl ? [data.mediaUrl] : []));
-        setCtaType(data.ctaType || '');
+        setCtaType(data.ctaType || 'NONE');
         setCtaLink(data.ctaLink || '');
       } else {
         toast({ title: 'Post not found', variant: 'destructive' });
@@ -145,7 +145,7 @@ export default function EditPostPage() {
       await updateDoc(doc(db, 'content', id), {
         content,
         mediaUrls: selectedMediaUrls,
-        ctaType: ctaType || null,
+        ctaType: ctaType === 'NONE' ? null : ctaType,
         ctaLink: ctaLink || null,
       });
 
@@ -280,7 +280,7 @@ export default function EditPostPage() {
                         <SelectValue placeholder="None" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="">None</SelectItem>
+                        <SelectItem value="NONE">None</SelectItem>
                         <SelectItem value="SHOP_NOW">Shop Now</SelectItem>
                         <SelectItem value="LEARN_MORE">Learn More</SelectItem>
                         <SelectItem value="SIGN_UP">Sign Up</SelectItem>
@@ -297,7 +297,7 @@ export default function EditPostPage() {
                     placeholder="https://example.com/product"
                     value={ctaLink}
                     onChange={(e) => setCtaLink(e.target.value)}
-                    disabled={!ctaType}
+                    disabled={!ctaType || ctaType === 'NONE'}
                 />
             </div>
         </CardContent>
