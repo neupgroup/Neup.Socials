@@ -15,6 +15,7 @@ import { ArrowLeft, Loader2, Facebook, Instagram, Twitter, Linkedin } from 'luci
 import { useToast } from '@/hooks/use-toast';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { getFacebookAuthUrl } from '@/actions/facebook/auth';
 
 const formSchema = z.object({
   platform: z.enum(['Facebook', 'Instagram', 'Twitter', 'LinkedIn'], {required_error: "Please select a platform."}),
@@ -25,30 +26,50 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const platformDetails = {
-    Facebook: { icon: <Facebook className="h-5 w-5 text-blue-600" /> },
-    Instagram: { icon: <Instagram className="h-5 w-5 text-pink-500" /> },
-    Twitter: { icon: <Twitter className="h-5 w-5 text-blue-400" /> },
-    LinkedIn: { icon: <Linkedin className="h-5 w-5 text-blue-700" /> },
+    Facebook: { icon: <Facebook className="h-5 w-5 text-blue-600" />, isOauth: true },
+    Instagram: { icon: <Instagram className="h-5 w-5 text-pink-500" />, isOauth: false },
+    Twitter: { icon: <Twitter className="h-5 w-5 text-blue-400" />, isOauth: false },
+    LinkedIn: { icon: <Linkedin className="h-5 w-5 text-blue-700" />, isOauth: false },
 }
 
 export default function AddAccountPage() {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const router = useRouter();
   const { toast } = useToast();
+  
+  // This should be replaced with the actual logged-in user's ID
+  const userId = 'neupkishor';
 
   const {
     control,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      platform: undefined,
       username: '',
       password: '',
     },
   });
 
+  const selectedPlatform = watch('platform');
+
+  const handleFacebookConnect = () => {
+    setIsSubmitting(true);
+    // This assumes the user ID is available. In a real app, you'd get this from your auth context.
+    const authUrl = getFacebookAuthUrl(userId);
+    // Redirect the user to Facebook's auth dialog
+    window.location.href = authUrl;
+  };
+  
   const onSubmit = async (data: FormValues) => {
+    if (data.platform === 'Facebook') {
+        handleFacebookConnect();
+        return;
+    }
+
     setIsSubmitting(true);
     try {
       await addDoc(collection(db, 'connected_accounts'), {
@@ -58,7 +79,7 @@ export default function AddAccountPage() {
         name: data.platform === 'LinkedIn' ? `${data.username}'s Company` : data.username,
         status: 'Active',
         connectedOn: serverTimestamp(),
-        owner: 'neupkishor', // This should be dynamic in a real app
+        owner: userId,
       });
       toast({ title: `${data.platform} account connected successfully!` });
       router.push('/accounts');
@@ -72,6 +93,8 @@ export default function AddAccountPage() {
       setIsSubmitting(false);
     }
   };
+
+  const isOauthFlow = selectedPlatform && platformDetails[selectedPlatform]?.isOauth;
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -93,7 +116,7 @@ export default function AddAccountPage() {
         <CardHeader>
           <CardTitle>Account Details</CardTitle>
           <CardDescription>
-            We will securely connect to your account. We do not store your passwords.
+            We will securely connect to your account. We do not store your passwords for most platforms.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -125,36 +148,51 @@ export default function AddAccountPage() {
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="username">Username or Email</Label>
-               <Controller
-                name="username"
-                control={control}
-                render={({ field }) => <Input id="username" {...field} placeholder="e.g., @yourhandle" autoComplete="off" />}
-              />
-              {errors.username && (
-                <p className="text-sm text-destructive">{errors.username.message}</p>
-              )}
-            </div>
+            {selectedPlatform && (
+              isOauthFlow ? (
+                <div className="text-center p-4 border-dashed border-2 rounded-lg">
+                  <p className="text-muted-foreground mb-4">
+                    You will be redirected to {selectedPlatform} to authorize the connection.
+                  </p>
+                   <Button type="submit" disabled={isSubmitting}>
+                      {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Continue to {selectedPlatform}
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="username">Username or Email</Label>
+                    <Controller
+                      name="username"
+                      control={control}
+                      render={({ field }) => <Input id="username" {...field} placeholder="e.g., @yourhandle" autoComplete="off" />}
+                    />
+                    {errors.username && (
+                      <p className="text-sm text-destructive">{errors.username.message}</p>
+                    )}
+                  </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Controller
-                name="password"
-                control={control}
-                render={({ field }) => <Input id="password" type="password" {...field} placeholder="••••••••" autoComplete="new-password"/>}
-              />
-               {errors.password && (
-                <p className="text-sm text-destructive">{errors.password.message}</p>
-              )}
-            </div>
-
-            <div className="flex justify-end pt-4">
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Connect Account
-              </Button>
-            </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <Controller
+                      name="password"
+                      control={control}
+                      render={({ field }) => <Input id="password" type="password" {...field} placeholder="••••••••" autoComplete="new-password"/>}
+                    />
+                    {errors.password && (
+                      <p className="text-sm text-destructive">{errors.password.message}</p>
+                    )}
+                  </div>
+                   <div className="flex justify-end pt-4">
+                      <Button type="submit" disabled={isSubmitting}>
+                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Connect Account
+                      </Button>
+                    </div>
+                </>
+              )
+            )}
           </form>
         </CardContent>
       </Card>
