@@ -75,11 +75,6 @@ export default function AddAccountPage() {
   };
   
   const onSubmit = async (data: FormValues) => {
-    if (data.platform === 'Facebook') {
-        await handleFacebookConnect();
-        return;
-    }
-
     setIsSubmitting(true);
     try {
       await addDoc(collection(db, 'connected_accounts'), {
@@ -130,7 +125,7 @@ export default function AddAccountPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" autoComplete="off">
+          <div className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="platform">Platform</Label>
                <Controller
@@ -164,13 +159,13 @@ export default function AddAccountPage() {
                   <p className="text-muted-foreground mb-4">
                     You will be redirected to {selectedPlatform} to authorize the connection.
                   </p>
-                   <Button type="submit" disabled={isSubmitting}>
+                   <Button onClick={handleFacebookConnect} disabled={isSubmitting}>
                       {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                       Continue to {selectedPlatform}
                   </Button>
                 </div>
               ) : (
-                <>
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" autoComplete="off">
                   <div className="space-y-2">
                     <Label htmlFor="username">Username or Email</Label>
                     <Controller
@@ -200,10 +195,10 @@ export default function AddAccountPage() {
                         Connect Account
                       </Button>
                     </div>
-                </>
+                </form>
               )
             )}
-          </form>
+          </div>
         </CardContent>
       </Card>
     </div>
