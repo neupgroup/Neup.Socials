@@ -3,16 +3,18 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Twitter, Linkedin, Edit, Trash, ArrowLeft, Loader2, Facebook, Instagram, Youtube, Repeat } from 'lucide-react';
+import { Edit, Trash, ArrowLeft, Loader2, Repeat } from 'lucide-react';
 import { doc, getDoc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { repostAction } from '@/actions/content/repost';
+import { PublicationStatus } from '@/components/publication-status';
 
 type Post = {
   id: string;
@@ -25,16 +27,6 @@ type Post = {
   author: string;
   mediaUrls: string[];
 };
-
-const PlatformIcon = ({ platform }: { platform: string }) => {
-  const props = { className: "h-4 w-4" };
-  if (platform === 'Twitter') return <Twitter {...props} />;
-  if (platform === 'Facebook') return <Facebook {...props} />;
-  if (platform === 'LinkedIn') return <Linkedin {...props} />;
-  if (platform === 'Instagram') return <Instagram {...props} />;
-  if (platform === 'YouTube') return <Youtube {...props} />;
-  return null;
-}
 
 export default function ViewContentPage() {
   const params = useParams();
@@ -77,7 +69,7 @@ export default function ViewContentPage() {
 
   const handleDelete = async () => {
     if (!post) return;
-    if (window.confirm('Are you sure you want to delete this post?')) {
+    if (window.confirm('Are you sure you want to delete this post and all its scheduled/published instances?')) {
       setIsProcessing(true);
       try {
         await deleteDoc(doc(db, 'content', post.id));
@@ -105,17 +97,7 @@ export default function ViewContentPage() {
                 const docSnap = await getDoc(docRef);
                  const data = docSnap.data();
                  if(data) {
-                    setPost({
-                        id: docSnap.id,
-                        content: data.content,
-                        status: data.status,
-                        platforms: data.platforms || [],
-                        accountIds: data.accountIds || [],
-                        author: data.author,
-                        mediaUrls: data.mediaUrls || (data.mediaUrl ? [data.mediaUrl] : []),
-                        scheduledAt: data.scheduledAt ? format(data.scheduledAt.toDate(), 'PPpp') : '-',
-                        publishedAt: data.publishedAt ? format(data.publishedAt.toDate(), 'PPpp') : '-',
-                    });
+                    setPost(prev => prev ? { ...prev, status: 'Draft', scheduledAt: '-' } : null);
                  }
            } catch (error) {
                toast({ title: 'Failed to cancel schedule', variant: 'destructive' });
@@ -182,7 +164,10 @@ export default function ViewContentPage() {
         </Button>
         <div>
           <h1 className="text-3xl font-bold">View Post Details</h1>
-          <p className="text-muted-foreground">Viewing post ID: {id}</p>
+          <p className="text-muted-foreground flex items-center gap-2">
+            Status:
+            <Badge variant={isPublished ? 'default' : (post.status === 'Scheduled' ? 'secondary' : 'outline')}>{post.status}</Badge>
+          </p>
         </div>
       </div>
       
@@ -194,47 +179,41 @@ export default function ViewContentPage() {
             <CardContent>
                 <p className="text-muted-foreground whitespace-pre-wrap">{post.content}</p>
                 {post.mediaUrls && post.mediaUrls.length > 0 && (
-                    <div className="mt-4 grid grid-cols-2 gap-2">
+                    <div className="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                         {post.mediaUrls.map((url, index) => (
-                            <img key={index} src={getFullMediaUrl(url)} alt={`Post media ${index + 1}`} className="rounded-lg w-full h-auto max-h-[400px] object-contain" />
+                           <a href={getFullMediaUrl(url)} target="_blank" rel="noopener noreferrer" key={index}>
+                             <Image src={getFullMediaUrl(url)} alt={`Post media ${index + 1}`} className="rounded-lg w-full aspect-square object-cover" width="200" height="200" />
+                           </a>
                         ))}
                     </div>
                 )}
             </CardContent>
         </Card>
+
+        {post.accountIds && post.accountIds.length > 0 && (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Publication Status</CardTitle>
+                    <p className="text-muted-foreground">Status of this post on each platform.</p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <PublicationStatus 
+                        accountIds={post.accountIds} 
+                        postStatus={post.status} 
+                        publishedAt={post.publishedAt}
+                        scheduledAt={post.scheduledAt}
+                        postId={post.id}
+                    />
+                </CardContent>
+            </Card>
+        )}
         
         <Card>
             <CardHeader>
-                <CardTitle>Details</CardTitle>
+                <CardTitle>Global Actions</CardTitle>
+                <p className="text-muted-foreground">These actions affect the entire post across all platforms.</p>
             </CardHeader>
-            <CardContent className="space-y-4">
-                <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Status</span>
-                    <Badge variant={isPublished ? 'default' : (post.status === 'Scheduled' ? 'secondary' : 'outline')}>{post.status}</Badge>
-                </div>
-                <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Accounts</span>
-                     <div className="flex items-center gap-2">
-                       {post.platforms.map(p => <PlatformIcon key={p} platform={p} />)}
-                       <span className="truncate">{post.platforms.join(', ') || 'None'}</span>
-                     </div>
-                </div>
-                 <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Author</span>
-                    <span>{post.author}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">{isPublished ? 'Published on' : (post.status === 'Scheduled' ? 'Scheduled for' : 'Last Saved')}</span>
-                    <span>{isPublished ? post.publishedAt : post.scheduledAt}</span>
-                </div>
-            </CardContent>
-        </Card>
-
-         <Card>
-            <CardHeader>
-                <CardTitle>Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-2">
+            <CardContent className="flex flex-wrap gap-2">
                {!isPublished && (
                  <>
                     <Button asChild disabled={isProcessing}>
@@ -254,7 +233,7 @@ export default function ViewContentPage() {
                 </Button>
                 <Button variant="destructive" onClick={handleDelete} disabled={isProcessing}>
                     {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash className="mr-2 h-4 w-4"/>}
-                     Delete Post
+                     Delete Entire Post
                 </Button>
             </CardContent>
         </Card>
@@ -262,5 +241,3 @@ export default function ViewContentPage() {
     </div>
   );
 }
-
-    
