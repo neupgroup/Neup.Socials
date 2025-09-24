@@ -14,7 +14,7 @@ const FB_OAUTH_BASE_URL = 'https://www.facebook.com/v20.0/dialog/oauth';
  */
 export async function getFacebookAuthUrl(userId: string): Promise<string> {
   // The state parameter is used for security purposes to prevent CSRF attacks.
-  const state = generateRandomState(userId);
+  const state = await generateRandomState(userId);
 
   const params = new URLSearchParams({
     client_id: process.env.FB_APP_ID!,
