@@ -6,9 +6,8 @@ import { db } from '@/lib/firebase';
 import { format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { Loader2, Upload, ExternalLink } from 'lucide-react';
-import Link from 'next/link';
+import { Loader2, Upload } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 type UploadRecord = {
   id: string;
@@ -17,7 +16,6 @@ type UploadRecord = {
   uploadedBy: string;
   uploadedOn: Timestamp;
   filePath: string;
-  platform: string;
   contentId: string;
 };
 
@@ -33,6 +31,7 @@ const formatBytes = (bytes: number, decimals = 2) => {
 export default function UploadsPage() {
   const [uploads, setUploads] = React.useState<UploadRecord[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const router = useRouter();
 
   React.useEffect(() => {
     setLoading(true);
@@ -53,6 +52,10 @@ export default function UploadsPage() {
     return () => unsubscribe();
   }, []);
 
+  const handleRowClick = (uploadId: string) => {
+    router.push(`/uploads/${uploadId}`);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -68,7 +71,7 @@ export default function UploadsPage() {
       <Card>
         <CardHeader>
           <CardTitle>File Log</CardTitle>
-          <CardDescription>Latest uploads are shown at the top.</CardDescription>
+          <CardDescription>Latest uploads are shown at the top. Click a row to see details.</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
@@ -95,12 +98,13 @@ export default function UploadsPage() {
                 </TableRow>
               ) : (
                 uploads.map((upload) => (
-                  <TableRow key={upload.id}>
+                  <TableRow 
+                    key={upload.id} 
+                    onClick={() => handleRowClick(upload.id)}
+                    className="cursor-pointer"
+                  >
                     <TableCell className="font-medium max-w-sm truncate">
-                        <a href={`https://neupgroup.com${upload.filePath}`} target="_blank" rel="noopener noreferrer" className="hover:underline flex items-center gap-2">
-                            {upload.fileName}
-                            <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                        </a>
+                        {upload.fileName}
                     </TableCell>
                     <TableCell>{formatBytes(upload.fileSize)}</TableCell>
                     <TableCell>{upload.uploadedBy}</TableCell>
