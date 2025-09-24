@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -185,83 +186,81 @@ export default function ViewContentPage() {
         </div>
       </div>
       
-      <div className="grid md:grid-cols-3 gap-6">
-        <div className="md:col-span-2 space-y-6">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Content</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-muted-foreground whitespace-pre-wrap">{post.content}</p>
-                    {post.mediaUrls && post.mediaUrls.length > 0 && (
-                        <div className="mt-4 grid grid-cols-2 gap-2">
-                            {post.mediaUrls.map((url, index) => (
-                                <img key={index} src={getFullMediaUrl(url)} alt={`Post media ${index + 1}`} className="rounded-lg w-full h-auto max-h-[400px] object-contain" />
-                            ))}
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
-        </div>
+      <div className="flex flex-col gap-6">
+        <Card>
+            <CardHeader>
+                <CardTitle>Content</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <p className="text-muted-foreground whitespace-pre-wrap">{post.content}</p>
+                {post.mediaUrls && post.mediaUrls.length > 0 && (
+                    <div className="mt-4 grid grid-cols-2 gap-2">
+                        {post.mediaUrls.map((url, index) => (
+                            <img key={index} src={getFullMediaUrl(url)} alt={`Post media ${index + 1}`} className="rounded-lg w-full h-auto max-h-[400px] object-contain" />
+                        ))}
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+        
+        <Card>
+            <CardHeader>
+                <CardTitle>Details</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Status</span>
+                    <Badge variant={isPublished ? 'default' : (post.status === 'Scheduled' ? 'secondary' : 'outline')}>{post.status}</Badge>
+                </div>
+                <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Accounts</span>
+                     <div className="flex items-center gap-2">
+                       {post.platforms.map(p => <PlatformIcon key={p} platform={p} />)}
+                       <span className="truncate">{post.platforms.join(', ') || 'None'}</span>
+                     </div>
+                </div>
+                 <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Author</span>
+                    <span>{post.author}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">{isPublished ? 'Published on' : (post.status === 'Scheduled' ? 'Scheduled for' : 'Last Saved')}</span>
+                    <span>{isPublished ? post.publishedAt : post.scheduledAt}</span>
+                </div>
+            </CardContent>
+        </Card>
 
-        <div className="space-y-6">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Details</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Status</span>
-                        <Badge variant={isPublished ? 'default' : (post.status === 'Scheduled' ? 'secondary' : 'outline')}>{post.status}</Badge>
-                    </div>
-                    <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Accounts</span>
-                         <div className="flex items-center gap-2">
-                           {post.platforms.map(p => <PlatformIcon key={p} platform={p} />)}
-                           <span className="truncate">{post.platforms.join(', ') || 'None'}</span>
-                         </div>
-                    </div>
-                     <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Author</span>
-                        <span>{post.author}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">{isPublished ? 'Published on' : (post.status === 'Scheduled' ? 'Scheduled for' : 'Last Saved')}</span>
-                        <span>{isPublished ? post.publishedAt : post.scheduledAt}</span>
-                    </div>
-                </CardContent>
-            </Card>
-
-             <Card>
-                <CardHeader>
-                    <CardTitle>Actions</CardTitle>
-                </CardHeader>
-                <CardContent className="flex flex-col gap-2">
-                   {!isPublished && (
-                     <>
-                        <Button asChild disabled={isProcessing}>
-                            <Link href={`/content/edit/${id}`}><Edit className="mr-2 h-4 w-4"/> Edit Post</Link>
+         <Card>
+            <CardHeader>
+                <CardTitle>Actions</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-2">
+               {!isPublished && (
+                 <>
+                    <Button asChild disabled={isProcessing}>
+                        <Link href={`/content/edit/${id}`}><Edit className="mr-2 h-4 w-4"/> Edit Post</Link>
+                    </Button>
+                    {post.status === 'Scheduled' && (
+                        <Button variant="outline" onClick={handleCancelSchedule} disabled={isProcessing}>
+                            {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
+                            Cancel Schedule
                         </Button>
-                        {post.status === 'Scheduled' && (
-                            <Button variant="outline" onClick={handleCancelSchedule} disabled={isProcessing}>
-                                {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
-                                Cancel Schedule
-                            </Button>
-                        )}
-                     </>
-                   )}
-                   <Button variant="secondary" onClick={handleRepost} disabled={isProcessing}>
-                        {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Repeat className="mr-2 h-4 w-4"/>}
-                        Repost
-                    </Button>
-                    <Button variant="destructive" onClick={handleDelete} disabled={isProcessing}>
-                        {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash className="mr-2 h-4 w-4"/>}
-                         Delete Post
-                    </Button>
-                </CardContent>
-            </Card>
-        </div>
+                    )}
+                 </>
+               )}
+               <Button variant="secondary" onClick={handleRepost} disabled={isProcessing}>
+                    {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Repeat className="mr-2 h-4 w-4"/>}
+                    Repost
+                </Button>
+                <Button variant="destructive" onClick={handleDelete} disabled={isProcessing}>
+                    {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash className="mr-2 h-4 w-4"/>}
+                     Delete Post
+                </Button>
+            </CardContent>
+        </Card>
       </div>
     </div>
   );
 }
+
+    
