@@ -16,6 +16,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { doc, getDoc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { publishPostAction } from '@/actions/content/publish';
 
 export default function EditSchedulePage() {
   const params = useParams();
@@ -53,15 +54,11 @@ export default function EditSchedulePage() {
   const handleSchedule = async () => {
     setIsSaving(true);
     try {
-      const docRef = doc(db, 'content', id);
-      let updateData: any = {};
-
       if (scheduleOption === 'now') {
-        updateData = {
-          status: 'Published',
-          publishedAt: serverTimestamp(),
-          scheduledAt: null,
-        };
+        const result = await publishPostAction(id);
+        if (!result.success) {
+          throw new Error(result.message);
+        }
       } else {
         if (!postDate || !postTime) {
           toast({ title: 'Please select a date and time', variant: 'destructive' });
@@ -72,23 +69,27 @@ export default function EditSchedulePage() {
         const scheduledDateTime = new Date(postDate);
         scheduledDateTime.setHours(parseInt(hours, 10), parseInt(minutes, 10));
 
-        updateData = {
+        const docRef = doc(db, 'content', id);
+        await updateDoc(docRef, {
           status: 'Scheduled',
           scheduledAt: Timestamp.fromDate(scheduledDateTime),
-        };
+          publishedAt: null, // Ensure publishedAt is cleared if re-scheduling
+        });
       }
-
-      await updateDoc(docRef, updateData);
 
       toast({
         title: `Post ${scheduleOption === 'now' ? 'Published' : 'Scheduled'}!`,
-        description: `Your post has been successfully ${scheduleOption === 'now' ? 'published' : 'scheduled'}.`,
+        description: `Your post has been successfully ${scheduleOption === 'now' ? 'sent for publishing' : 'scheduled'}.`,
       });
       router.push(`/content/view/${id}`);
 
-    } catch (error) {
-      console.error("Error scheduling post: ", error);
-      toast({ title: 'Failed to schedule post', variant: 'destructive' });
+    } catch (error: any) {
+      console.error("Error scheduling/publishing post: ", error);
+      toast({ 
+          title: `Failed to ${scheduleOption === 'now' ? 'publish' : 'schedule'} post`, 
+          description: error.message || 'An unexpected error occurred.',
+          variant: 'destructive' 
+      });
       setIsSaving(false);
     }
   };

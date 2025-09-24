@@ -55,6 +55,10 @@ type DebugTokenResponse = {
     data: DebugTokenData;
 }
 
+type PublishPostResponse = {
+    id: string;
+}
+
 async function handleApiResponse<T>(res: Response): Promise<T> {
     const json = await res.json();
     if (!res.ok) {
@@ -126,13 +130,21 @@ export async function validateToken(pageToken: string): Promise<DebugTokenRespon
 
 /**
  * Publishes content to a Facebook Page.
- * (Placeholder implementation)
+ * @param pageId The ID of the Facebook Page.
+ * @param pageToken The Page Access Token.
+ * @param content The text content of the post.
+ * @returns The response from the Facebook API, typically containing the post ID.
  */
-export async function publishToPage(pageId: string, pageToken: string, content: string): Promise<any> {
-    console.log(`Publishing to page ${pageId} with content: "${content}"`);
-    // In a real implementation:
-    // const params = new URLSearchParams({ message: content, access_token: pageToken });
-    // const res = await fetch(`${GRAPH_API_BASE_URL}/${pageId}/feed`, { method: 'POST', body: params });
-    // return handleApiResponse(res);
-    return { success: true, id: `${pageId}_${Date.now()}` };
+export async function publishToPage(pageId: string, pageToken: string, content: string): Promise<PublishPostResponse> {
+    const params = new URLSearchParams({ 
+        message: content, 
+        access_token: pageToken 
+    });
+    
+    const res = await fetch(`${GRAPH_API_BASE_URL}/${pageId}/feed`, { 
+        method: 'POST', 
+        body: params 
+    });
+    
+    return handleApiResponse<PublishPostResponse>(res);
 }
