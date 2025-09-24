@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -7,11 +8,12 @@ import { doc, getDoc, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Loader2, ArrowLeft, Trash2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ErrorLog } from '@/services/error-logging';
 import { deleteErrorAction } from '@/actions/error-log-actions';
+import { format } from 'date-fns';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +30,30 @@ type FetchedErrorLog = Omit<ErrorLog, 'timestamp'> & {
   id: string;
   timestamp: Timestamp;
 };
+
+const DetailItem = ({ label, value }: { label: string, value?: string | React.ReactNode }) => {
+    if (!value) return null;
+    return (
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 border-b">
+            <dt className="text-sm font-medium text-muted-foreground">{label}</dt>
+            <dd className="mt-1 text-sm text-foreground sm:mt-0 font-mono bg-muted/50 px-2 py-1 rounded">{value}</dd>
+        </div>
+    )
+}
+
+const JsonBlock = ({ label, data }: { label: string, data?: object }) => {
+    if (!data || Object.keys(data).length === 0) return null;
+    return (
+        <div>
+            <h3 className="text-lg font-semibold mt-6 mb-2">{label}</h3>
+            <ScrollArea className="max-h-96 p-4 border rounded-lg bg-muted/50">
+                 <pre className="text-xs whitespace-pre-wrap break-all">
+                    {JSON.stringify(data, null, 2)}
+                </pre>
+            </ScrollArea>
+        </div>
+    )
+}
 
 export default function ErrorDetailPage() {
   const params = useParams();
@@ -80,6 +106,9 @@ export default function ErrorDetailPage() {
   if (!errorLog) {
     return <div className="text-center">Error log not found.</div>;
   }
+  
+  const { id: errorId, timestamp, message, source, context, request, stack, userId } = errorLog;
+  const rawJson = { ...errorLog, timestamp: timestamp?.toDate().toISOString() };
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -92,7 +121,7 @@ export default function ErrorDetailPage() {
           </Button>
           <div>
             <h1 className="text-3xl font-bold">Error Details</h1>
-            <p className="text-muted-foreground font-mono text-sm">{errorLog.id}</p>
+            <p className="text-muted-foreground font-mono text-sm">{errorId}</p>
           </div>
         </div>
         <AlertDialog>
@@ -120,24 +149,32 @@ export default function ErrorDetailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>{errorLog.errorMessage}</CardTitle>
+          <CardTitle className="text-destructive">{message}</CardTitle>
           <CardDescription>
-            An error occurred in the <span className="font-semibold text-primary">{errorLog.source || 'unknown source'}</span> process.
+             An error occurred in the <span className="font-semibold text-primary">{source || 'unknown source'}</span> process.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ScrollArea className="max-h-[70vh] p-4 border rounded-lg bg-muted/50">
-            <pre className="text-xs whitespace-pre-wrap break-all">
-              {JSON.stringify(
-                {
-                  ...errorLog,
-                  // Convert timestamp to a readable string for JSON view
-                  timestamp: errorLog.timestamp ? errorLog.timestamp.toDate().toISOString() : 'N/A',
-                },
-                null, 2
-              )}
-            </pre>
-          </ScrollArea>
+            <dl>
+                <DetailItem label="Timestamp" value={timestamp ? format(timestamp.toDate(), 'PPpp') : 'N/A'} />
+                <DetailItem label="User ID" value={userId} />
+                <DetailItem label="Source" value={source} />
+            </dl>
+
+            <JsonBlock label="Context" data={context} />
+            <JsonBlock label="Request" data={request} />
+            
+            {stack && (
+                 <div>
+                    <h3 className="text-lg font-semibold mt-6 mb-2">Stack Trace</h3>
+                    <ScrollArea className="max-h-60 p-4 border rounded-lg bg-muted/50">
+                        <pre className="text-xs whitespace-pre-wrap break-all font-mono">{stack}</pre>
+                    </ScrollArea>
+                </div>
+            )}
+            
+            <JsonBlock label="Raw Data" data={rawJson} />
+
         </CardContent>
       </Card>
     </div>
