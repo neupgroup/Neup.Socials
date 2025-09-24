@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, ArrowLeft, Users, ThumbsUp, Share2, ExternalLink, Twitter, Facebook, Linkedin, Instagram, RefreshCw } from 'lucide-react';
+import { Loader2, ArrowLeft, Users, ThumbsUp, Share2, ExternalLink, Twitter, Facebook, Linkedin, Instagram, RefreshCw, Heart, Laugh, Angry, Droplet, Annoyed } from 'lucide-react';
 import { doc, getDoc, collection, query, where, orderBy, limit, startAfter, getDocs, DocumentData, QueryDocumentSnapshot, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
@@ -23,6 +23,7 @@ type Account = {
   name: string;
   username: string;
   status: string;
+  platformId: string;
 };
 
 type Post = {
@@ -36,6 +37,7 @@ type InsightData = {
   totalFollowers?: number;
   totalEngagement?: number;
   totalReach?: number;
+  reactions?: { [key: string]: number };
 };
 
 const PAGE_SIZE = 10;
@@ -49,6 +51,18 @@ const PlatformIcon = ({ platform }: { platform: string }) => {
         default: return null;
     }
 }
+
+const ReactionIcon = ({ reaction }: { reaction: string }) => {
+    switch(reaction.toLowerCase()) {
+        case 'like': return <ThumbsUp className="h-4 w-4 text-blue-500" />;
+        case 'love': return <Heart className="h-4 w-4 text-red-500" />;
+        case 'haha': return <Laugh className="h-4 w-4 text-yellow-500" />;
+        case 'wow': return <Annoyed className="h-4 w-4 text-yellow-400" />;
+        case 'sad': return <Droplet className="h-4 w-4 text-blue-300" />;
+        case 'angry': return <Angry className="h-4 w-4 text-red-700" />;
+        default: return null;
+    }
+};
 
 export default function AccountDetailPage() {
   const params = useParams();
@@ -110,7 +124,6 @@ export default function AccountDetailPage() {
   
   React.useEffect(() => {
     if (!id) {
-        setLoading(false);
         return;
     };
 
@@ -125,15 +138,15 @@ export default function AccountDetailPage() {
           const acc = { id: docSnap.id, ...data } as Account;
           setAccount(acc);
 
-          // Fetch posts right after account details
-          await fetchPosts();
-
           if (acc.platform === 'Facebook') {
             const insightsResult = await getPageInsightsAction(id);
             if (insightsResult.success && insightsResult.data) {
               setInsights(insightsResult.data);
             }
           }
+          // Fetch posts right after account details
+          await fetchPosts();
+
         } else {
           toast({ title: 'Account not found', variant: 'destructive' });
           router.push('/accounts');
@@ -206,7 +219,10 @@ export default function AccountDetailPage() {
                 <PlatformIcon platform={account.platform} />
                 <div>
                     <h1 className="text-3xl font-bold">{account.name}</h1>
-                    <p className="text-muted-foreground">@{account.username}</p>
+                    <div className="text-muted-foreground flex items-center gap-2">
+                        <span>@{account.username}</span>
+                        <Badge variant="outline" className="font-mono">{account.platformId}</Badge>
+                    </div>
                 </div>
             </div>
         </div>
@@ -222,7 +238,7 @@ export default function AccountDetailPage() {
       </div>
 
       {insights && (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Followers</CardTitle>
@@ -250,6 +266,23 @@ export default function AccountDetailPage() {
               <div className="text-2xl font-bold">{insights.totalReach?.toLocaleString() || 0}</div>
             </CardContent>
           </Card>
+          {insights.reactions && (
+             <Card>
+                <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium">Reactions (30 days)</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                        {Object.entries(insights.reactions).map(([type, count]) => (
+                            <div key={type} className="flex flex-col items-center">
+                                <ReactionIcon reaction={type} />
+                                <span className="text-sm font-bold">{count}</span>
+                            </div>
+                        ))}
+                    </div>
+                </CardContent>
+            </Card>
+          )}
         </div>
       )}
 
@@ -298,6 +331,5 @@ export default function AccountDetailPage() {
     </div>
   );
 }
-      
 
     

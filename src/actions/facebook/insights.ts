@@ -29,6 +29,7 @@ type GetInsightsResult = {
     totalEngagement: number;
     totalReach: number;
     followerHistory: InsightValue[];
+    reactions: { [key: string]: number };
   };
   error?: string;
 };
@@ -84,13 +85,14 @@ export async function getPageInsightsAction(accountId: string): Promise<GetInsig
     const since = format(subDays(today, 30), 'yyyy-MM-dd');
     const until = format(today, 'yyyy-MM-dd');
 
-    const metrics = ['page_fans', 'page_post_engagements', 'page_impressions_unique'];
+    const metrics = ['page_fans', 'page_post_engagements', 'page_impressions_unique', 'page_actions_post_reactions_total'];
     
     const insights = await getPageInsights(pageId, pageToken, metrics, since, until);
 
     const followerMetric = insights.data.find(m => m.name === 'page_fans' && m.period === 'day');
     const engagementMetric = insights.data.find(m => m.name ==='page_post_engagements' && m.period === 'day');
     const reachMetric = insights.data.find(m => m.name === 'page_impressions_unique' && m.period === 'day');
+    const reactionsMetric = insights.data.find(m => m.name === 'page_actions_post_reactions_total');
     
     // The 'page_fans' metric gives the total count at the end of each day.
     const totalFollowers = followerMetric?.values[followerMetric.values.length - 1]?.value || 0;
@@ -99,6 +101,9 @@ export async function getPageInsightsAction(accountId: string): Promise<GetInsig
     // For total engagement and reach, we sum the daily values over the period.
     const totalEngagement = engagementMetric?.values.reduce((sum, v) => sum + v.value, 0) || 0;
     const totalReach = reachMetric?.values.reduce((sum, v) => sum + v.value, 0) || 0;
+    
+    // The reactions metric provides a breakdown.
+    const reactions = (reactionsMetric?.values[0]?.value as { [key: string]: number }) || {};
 
 
     return {
@@ -108,6 +113,7 @@ export async function getPageInsightsAction(accountId: string): Promise<GetInsig
         totalEngagement,
         totalReach,
         followerHistory,
+        reactions,
       },
     };
 
@@ -121,3 +127,5 @@ export async function getPageInsightsAction(accountId: string): Promise<GetInsig
     return { success: false, error: error.message };
   }
 }
+
+    
