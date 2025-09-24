@@ -112,12 +112,12 @@ export default function RootLayout({
               <div className="container flex p-0">
                 <Sidebar>
                   <SidebarHeader>
-                    <div className="flex items-center gap-2 p-2 pr-0">
+                    <Link href="/" className="flex items-center gap-2 p-2 pr-0">
                       <div className="flex items-center justify-center size-8 bg-primary rounded-lg text-primary-foreground">
                         <MessageSquareText className="size-5" />
                       </div>
                       <span className="font-semibold text-lg">Neup.Socials</span>
-                    </div>
+                    </Link>
                   </SidebarHeader>
                   <SidebarContent>
                     <SidebarMenu>
