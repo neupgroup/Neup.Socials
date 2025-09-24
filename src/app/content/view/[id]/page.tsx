@@ -138,7 +138,7 @@ export default function ViewContentPage() {
   }
   
   const isPublished = post.status === 'Published';
-  const fullMediaUrl = post.mediaUrl ? `https://neupgroup.com${post.mediaUrl}` : '';
+  const fullMediaUrl = post.mediaUrl && !post.mediaUrl.startsWith('http') ? `https://neupgroup.com${post.mediaUrl}` : post.mediaUrl;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">

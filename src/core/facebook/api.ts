@@ -146,11 +146,13 @@ export async function publishToPage(
 ): Promise<PublishPostResponse> {
   
   if (mediaUrl) {
-    const mimeType = mime.lookup(mediaUrl);
+    const fullMediaUrl = mediaUrl.startsWith('http') ? mediaUrl : `https://neupgroup.com${mediaUrl}`;
+    const mimeType = mime.lookup(fullMediaUrl);
+
     if (mimeType && mimeType.startsWith('image/')) {
       // It's an image
       const params = new URLSearchParams({
-        url: mediaUrl,
+        url: fullMediaUrl,
         caption: content,
         access_token: pageToken,
       });
@@ -162,7 +164,7 @@ export async function publishToPage(
     } else if (mimeType && mimeType.startsWith('video/')) {
       // It's a video
       const params = new URLSearchParams({
-        file_url: mediaUrl,
+        file_url: fullMediaUrl,
         description: content,
         access_token: pageToken,
       });
