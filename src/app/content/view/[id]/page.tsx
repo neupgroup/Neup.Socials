@@ -21,7 +21,7 @@ type Post = {
   scheduledAt: string;
   publishedAt: string;
   author: string;
-  mediaUrl: string;
+  mediaUrls: string[];
 };
 
 const PlatformIcon = ({ platform }: { platform: string }) => {
@@ -58,7 +58,7 @@ export default function ViewContentPage() {
           platforms: data.platforms || [],
           accountIds: data.accountIds || [],
           author: data.author,
-          mediaUrl: data.mediaUrl,
+          mediaUrls: data.mediaUrls || (data.mediaUrl ? [data.mediaUrl] : []),
           scheduledAt: data.scheduledAt ? format(data.scheduledAt.toDate(), 'PPpp') : '-',
           publishedAt: data.publishedAt ? format(data.publishedAt.toDate(), 'PPpp') : '-',
         });
@@ -106,7 +106,7 @@ export default function ViewContentPage() {
                         platforms: data.platforms || [],
                         accountIds: data.accountIds || [],
                         author: data.author,
-                        mediaUrl: data.mediaUrl,
+                        mediaUrls: data.mediaUrls || (data.mediaUrl ? [data.mediaUrl] : []),
                         scheduledAt: data.scheduledAt ? format(data.scheduledAt.toDate(), 'PPpp') : '-',
                         publishedAt: data.publishedAt ? format(data.publishedAt.toDate(), 'PPpp') : '-',
                     });
@@ -138,7 +138,10 @@ export default function ViewContentPage() {
   }
   
   const isPublished = post.status === 'Published';
-  const fullMediaUrl = post.mediaUrl && !post.mediaUrl.startsWith('http') ? `https://neupgroup.com${post.mediaUrl}` : post.mediaUrl;
+  
+  const getFullMediaUrl = (url: string) => {
+    return url && !url.startsWith('http') ? `https://neupgroup.com${url}` : url;
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -162,9 +165,11 @@ export default function ViewContentPage() {
                 </CardHeader>
                 <CardContent>
                     <p className="text-muted-foreground whitespace-pre-wrap">{post.content}</p>
-                    {fullMediaUrl && (
-                        <div className="mt-4">
-                            <img src={fullMediaUrl} alt="Post media" className="rounded-lg w-full h-auto max-h-[400px] object-contain" />
+                    {post.mediaUrls && post.mediaUrls.length > 0 && (
+                        <div className="mt-4 grid grid-cols-2 gap-2">
+                            {post.mediaUrls.map((url, index) => (
+                                <img key={index} src={getFullMediaUrl(url)} alt={`Post media ${index + 1}`} className="rounded-lg w-full h-auto max-h-[400px] object-contain" />
+                            ))}
                         </div>
                     )}
                 </CardContent>

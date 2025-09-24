@@ -6,16 +6,15 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { UploadCloud, Loader2, Image as ImageIcon } from 'lucide-react';
+import { UploadCloud, Loader2, Image as ImageIcon, Search, CheckCircle } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { addDoc, collection, serverTimestamp, doc, updateDoc, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { recordUpload, UploadRecord } from '@/actions/uploads/recordUpload';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
+import { Input } from '@/components/ui/input';
 
 const UPLOAD_ENDPOINT = 'https://neupgroup.com/usercontent/bridge/api/upload.php';
 
@@ -23,12 +22,12 @@ type Upload = UploadRecord & { id: string, uploadedOn: any };
 
 export default function CreatePostPage() {
   const [content, setContent] = React.useState('');
-  const [mediaFile, setMediaFile] = React.useState<File | null>(null);
-  const [selectedMediaUrl, setSelectedMediaUrl] = React.useState<string | null>(null);
+  const [selectedMediaUrls, setSelectedMediaUrls] = React.useState<string[]>([]);
   const [isLoading, setIsLoading] = React.useState(false);
   const [uploadProgress, setUploadProgress] = React.useState<number | null>(null);
   const [uploads, setUploads] = React.useState<Upload[]>([]);
   const [loadingUploads, setLoadingUploads] = React.useState(true);
+  const [searchTerm, setSearchTerm] = React.useState('');
   
   const router = useRouter();
   const { toast } = useToast();
@@ -80,7 +79,7 @@ export default function CreatePostPage() {
           try {
             const result = JSON.parse(xhr.responseText);
             if (result.success) {
-              await recordUpload({
+              const newUploadRecord = {
                   fileName: file.name,
                   fileSize: file.size,
                   fileType: file.type,
@@ -88,7 +87,12 @@ export default function CreatePostPage() {
                   filePath: result.url,
                   platform: 'teamsocial-content',
                   contentId: contentId,
-              });
+              };
+              await recordUpload(newUploadRecord);
+              // Auto-select the newly uploaded file
+              if (selectedMediaUrls.length < 8) {
+                setSelectedMediaUrls(prev => [...prev, result.url]);
+              }
               resolve(result.url);
             } else {
               reject(new Error(result.message || 'File upload failed.'));
@@ -125,23 +129,13 @@ export default function CreatePostPage() {
     try {
       const docRef = await addDoc(collection(db, "content"), {
         content,
-        mediaUrl: '',
+        mediaUrls: selectedMediaUrls, // Save array of URLs
         status: 'Draft',
         author: userId,
         createdAt: serverTimestamp(),
         platforms: [],
         accountIds: [],
       });
-      const contentId = docRef.id;
-
-      let finalMediaUrl = selectedMediaUrl;
-      
-      if (mediaFile) {
-        toast({ title: 'Uploading media...', description: 'Please wait while your file is being uploaded.' });
-        finalMediaUrl = await uploadFile(mediaFile, contentId);
-      }
-
-      await updateDoc(doc(db, 'content', contentId), { mediaUrl: finalMediaUrl || '' });
       
       toast({ title: 'Draft Saved!', description: 'Your post has been saved as a draft.' });
       router.push(`/content/edit/${docRef.id}/platforms`);
@@ -157,24 +151,50 @@ export default function CreatePostPage() {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileTrigger = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setMediaFile(e.target.files[0]);
-      setSelectedMediaUrl(null); // Clear library selection
+      const file = e.target.files[0];
+       // A temporary ID for uploads before post is created. 
+       // In a real app, might want a more robust way to handle this.
+      const tempContentId = `temp-${Date.now()}`;
+      setIsLoading(true);
+      try {
+        await uploadFile(file, tempContentId);
+      } catch (error: any) {
+         toast({ title: 'Upload Failed', description: error.message, variant: 'destructive'});
+      } finally {
+        setIsLoading(false);
+         // Clear the file input so the same file can be selected again
+        if(fileInputRef.current) fileInputRef.current.value = "";
+      }
     }
   };
 
-  const handleSelectFromLibrary = (upload: Upload) => {
-    setSelectedMediaUrl(upload.filePath);
-    setMediaFile(null); // Clear file selection
+  const handleMediaToggle = (url: string) => {
+    setSelectedMediaUrls((prev) => {
+      if (prev.includes(url)) {
+        return prev.filter((u) => u !== url);
+      } else {
+        if(prev.length >= 8) {
+          toast({ title: 'You can select up to 8 media items.', variant: 'destructive'});
+          return prev;
+        }
+        return [...prev, url];
+      }
+    });
   }
 
   const handleCancel = () => {
     router.push('/content');
   };
 
-  const previewUrl = mediaFile ? URL.createObjectURL(mediaFile) : selectedMediaUrl ? `https://neupgroup.com${selectedMediaUrl}` : null;
-  const previewName = mediaFile ? mediaFile.name : selectedMediaUrl ? selectedMediaUrl.split('/').pop() : null;
+  const filteredUploads = uploads.filter(upload => 
+    upload.fileName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -201,56 +221,50 @@ export default function CreatePostPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label>Media (Image/Video)</Label>
-             <Tabs defaultValue="upload">
-                <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="upload">Upload New</TabsTrigger>
-                    <TabsTrigger value="library">Select from Library</TabsTrigger>
-                </TabsList>
-                <TabsContent value="upload">
-                    <div className="flex items-center justify-center w-full mt-2">
-                        <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-muted hover:bg-muted/50">
-                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                <UploadCloud className="w-8 h-8 mb-3 text-muted-foreground" />
-                                <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Click to upload</span> or drag and drop</p>
-                                <p className="text-xs text-muted-foreground">SVG, PNG, JPG or MP4</p>
-                            </div>
-                            <input id="dropzone-file" type="file" className="hidden" onChange={handleFileChange} ref={fileInputRef} disabled={isLoading} />
-                        </label>
-                    </div>
-                </TabsContent>
-                <TabsContent value="library">
-                     <ScrollArea className="h-48 w-full rounded-md border p-2 mt-2">
-                        {loadingUploads ? (
-                             <div className="flex justify-center items-center h-full"><Loader2 className="h-6 w-6 animate-spin text-primary"/></div>
-                        ) : uploads.length === 0 ? (
-                            <div className="flex justify-center items-center h-full text-muted-foreground">No uploads found.</div>
-                        ) : (
-                            <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
-                                {uploads.map(upload => (
-                                    <button 
-                                        key={upload.id} 
-                                        onClick={() => handleSelectFromLibrary(upload)}
-                                        className={`relative aspect-square w-full rounded-md overflow-hidden border-2 ${selectedMediaUrl === upload.filePath ? 'border-primary' : 'border-transparent'}`}
-                                    >
-                                        <Image src={`https://neupgroup.com${upload.filePath}`} alt={upload.fileName} layout="fill" objectFit="cover" />
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </ScrollArea>
-                </TabsContent>
-            </Tabs>
-            {previewUrl && (
-                <div className="mt-4 p-4 border rounded-lg flex items-center gap-4">
-                    <ImageIcon className="h-6 w-6 text-muted-foreground" />
-                    <div className="flex-1">
-                        <p className="text-sm font-semibold">Selected Media:</p>
-                        <p className="text-xs text-muted-foreground truncate">{previewName}</p>
-                    </div>
-                    <Button variant="ghost" size="sm" onClick={() => { setMediaFile(null); setSelectedMediaUrl(null); }}>Clear</Button>
-                </div>
-            )}
+            <Label>Media (Image/Video) - Select up to 8</Label>
+             <div className="relative mb-4">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input 
+                    placeholder="Search media library..." 
+                    className="pl-10"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
+            
+            <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
+                {/* Upload Button */}
+                <button
+                    onClick={handleFileTrigger}
+                    disabled={isLoading}
+                    className="relative aspect-square w-full rounded-md border-2 border-dashed bg-muted hover:bg-muted/80 flex flex-col items-center justify-center text-muted-foreground"
+                >
+                    {isLoading && !uploadProgress ? <Loader2 className="h-6 w-6 animate-spin"/> : <UploadCloud className="h-8 w-8"/>}
+                    <span className="text-xs mt-1">Upload</span>
+                </button>
+                <input id="dropzone-file" type="file" className="hidden" onChange={handleFileChange} ref={fileInputRef} disabled={isLoading} />
+
+                {/* Media Library */}
+                {loadingUploads ? (
+                    Array.from({length: 7}).map((_, i) => <div key={i} className="aspect-square w-full rounded-md bg-muted animate-pulse" />)
+                ) : (
+                    filteredUploads.slice(0, 7).map(upload => (
+                        <button 
+                            key={upload.id} 
+                            onClick={() => handleMediaToggle(upload.filePath)}
+                            className="relative aspect-square w-full rounded-md overflow-hidden border-2 border-transparent focus:outline-none focus:ring-2 focus:ring-ring"
+                        >
+                            <Image src={`https://neupgroup.com${upload.filePath}`} alt={upload.fileName} layout="fill" objectFit="cover" className="hover:opacity-80 transition-opacity" />
+                            {selectedMediaUrls.includes(upload.filePath) && (
+                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                    <CheckCircle className="h-8 w-8 text-white" />
+                                </div>
+                            )}
+                        </button>
+                    ))
+                )}
+            </div>
+
             {uploadProgress !== null && (
               <div className="mt-4 space-y-2">
                 <Label>Uploading...</Label>

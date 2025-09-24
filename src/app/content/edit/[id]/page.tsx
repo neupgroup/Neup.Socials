@@ -7,16 +7,15 @@ import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { UploadCloud, ArrowLeft, Loader2, Image as ImageIcon } from 'lucide-react';
+import { UploadCloud, ArrowLeft, Loader2, Image as ImageIcon, Search, CheckCircle } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { doc, getDoc, updateDoc, collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { recordUpload, UploadRecord } from '@/actions/uploads/recordUpload';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
+import { Input } from '@/components/ui/input';
 
 const UPLOAD_ENDPOINT = 'https://neupgroup.com/usercontent/bridge/api/upload.php';
 
@@ -26,9 +25,7 @@ export default function EditPostPage() {
   const params = useParams();
   const id = params.id as string;
   const [content, setContent] = React.useState('');
-  const [mediaFile, setMediaFile] = React.useState<File | null>(null);
-  const [currentMediaUrl, setCurrentMediaUrl] = React.useState('');
-  const [selectedMediaUrl, setSelectedMediaUrl] = React.useState<string | null>(null);
+  const [selectedMediaUrls, setSelectedMediaUrls] = React.useState<string[]>([]);
   
   const [isLoading, setIsLoading] = React.useState(true);
   const [isSaving, setIsSaving] = React.useState(false);
@@ -36,9 +33,11 @@ export default function EditPostPage() {
 
   const [uploads, setUploads] = React.useState<Upload[]>([]);
   const [loadingUploads, setLoadingUploads] = React.useState(true);
+  const [searchTerm, setSearchTerm] = React.useState('');
   
   const router = useRouter();
   const { toast } = useToast();
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   const userId = 'neupkishor'; // This should be replaced with actual logged-in user
 
   React.useEffect(() => {
@@ -52,8 +51,7 @@ export default function EditPostPage() {
       if (docSnap.exists()) {
         const data = docSnap.data();
         setContent(data.content);
-        setCurrentMediaUrl(data.mediaUrl);
-        setSelectedMediaUrl(data.mediaUrl);
+        setSelectedMediaUrls(data.mediaUrls || (data.mediaUrl ? [data.mediaUrl] : []));
       } else {
         toast({ title: 'Post not found', variant: 'destructive' });
         router.push('/content');
@@ -112,6 +110,9 @@ export default function EditPostPage() {
                   platform: 'teamsocial-content',
                   contentId: contentId,
               });
+              if (selectedMediaUrls.length < 8) {
+                setSelectedMediaUrls(prev => [...prev, result.url]);
+              }
               resolve(result.url);
             } else {
               reject(new Error(result.message || 'File upload failed.'));
@@ -136,16 +137,9 @@ export default function EditPostPage() {
   const handleNext = async () => {
     setIsSaving(true);
     try {
-      let finalMediaUrl = selectedMediaUrl;
-      
-      if (mediaFile) {
-        toast({ title: 'Uploading new media...', description: 'Please wait.' });
-        finalMediaUrl = await uploadFile(mediaFile, id);
-      }
-
       await updateDoc(doc(db, 'content', id), {
         content,
-        mediaUrl: finalMediaUrl || '',
+        mediaUrls: selectedMediaUrls,
       });
 
       router.push(`/content/edit/${id}/platforms`);
@@ -157,29 +151,46 @@ export default function EditPostPage() {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileTrigger = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setMediaFile(e.target.files[0]);
-      setSelectedMediaUrl(URL.createObjectURL(e.target.files[0])); // for preview
+      const file = e.target.files[0];
+      setIsSaving(true);
+      try {
+        await uploadFile(file, id);
+      } catch (error: any) {
+         toast({ title: 'Upload Failed', description: error.message, variant: 'destructive'});
+      } finally {
+        setIsSaving(false);
+        if(fileInputRef.current) fileInputRef.current.value = "";
+      }
     }
   };
 
-  const handleSelectFromLibrary = (upload: Upload) => {
-    setSelectedMediaUrl(upload.filePath);
-    setMediaFile(null); // Clear file selection
-  }
+  const handleMediaToggle = (url: string) => {
+    setSelectedMediaUrls((prev) => {
+      if (prev.includes(url)) {
+        return prev.filter((u) => u !== url);
+      } else {
+        if(prev.length >= 8) {
+          toast({ title: 'You can select up to 8 media items.', variant: 'destructive'});
+          return prev;
+        }
+        return [...prev, url];
+      }
+    });
+  };
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
-  const previewUrl = mediaFile 
-    ? URL.createObjectURL(mediaFile) 
-    : (selectedMediaUrl && !selectedMediaUrl.startsWith('blob:')) 
-    ? `https://neupgroup.com${selectedMediaUrl}`
-    : selectedMediaUrl;
-
-  const previewName = mediaFile ? mediaFile.name : selectedMediaUrl ? selectedMediaUrl.split('/').pop() : 'No media selected';
+  const filteredUploads = uploads.filter(upload => 
+    upload.fileName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -196,57 +207,49 @@ export default function EditPostPage() {
         <CardContent className="space-y-4">
           <div className="space-y-2"><Label htmlFor="post-text">Text</Label><Textarea id="post-text" value={content} onChange={e => setContent(e.target.value)} rows={6} disabled={isSaving} /></div>
           <div className="space-y-2">
-            <Label>Media (Image/Video)</Label>
-            <Tabs defaultValue="library">
-                <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="upload">Upload New</TabsTrigger>
-                    <TabsTrigger value="library">Select from Library</TabsTrigger>
-                </TabsList>
-                <TabsContent value="upload">
-                     <div className="flex items-center justify-center w-full mt-2">
-                        <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-muted hover:bg-muted/50">
-                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                <UploadCloud className="w-8 h-8 mb-3 text-muted-foreground" />
-                                <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Click to upload</span> to replace current media</p>
-                            </div>
-                            <input id="dropzone-file" type="file" className="hidden" onChange={handleFileChange} disabled={isSaving} />
-                        </label>
-                    </div>
-                </TabsContent>
-                <TabsContent value="library">
-                    <ScrollArea className="h-48 w-full rounded-md border p-2 mt-2">
-                        {loadingUploads ? (
-                             <div className="flex justify-center items-center h-full"><Loader2 className="h-6 w-6 animate-spin text-primary"/></div>
-                        ) : uploads.length === 0 ? (
-                            <div className="flex justify-center items-center h-full text-muted-foreground">No uploads found.</div>
-                        ) : (
-                            <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
-                                {uploads.map(upload => (
-                                    <button 
-                                        key={upload.id} 
-                                        onClick={() => handleSelectFromLibrary(upload)}
-                                        className={`relative aspect-square w-full rounded-md overflow-hidden border-2 ${selectedMediaUrl === upload.filePath ? 'border-primary' : 'border-transparent'}`}
-                                    >
-                                        <Image src={`https://neupgroup.com${upload.filePath}`} alt={upload.fileName} layout="fill" objectFit="cover" />
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </ScrollArea>
-                </TabsContent>
-            </Tabs>
+            <Label>Media (Image/Video) - Select up to 8</Label>
+            <div className="relative mb-4">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input 
+                    placeholder="Search media library..." 
+                    className="pl-10"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
             
-            {previewUrl && (
-                <div className="mt-4 p-4 border rounded-lg flex items-center gap-4 bg-muted/50">
-                     <div className="w-16 h-16 relative rounded-md overflow-hidden border"><Image src={previewUrl} alt="Preview" layout="fill" objectFit="cover" /></div>
-                     <div className="flex-1">
-                        <p className="text-sm font-semibold">Selected Media:</p>
-                        <p className="text-xs text-muted-foreground truncate">{previewName}</p>
-                    </div>
-                    <Button variant="ghost" size="sm" onClick={() => { setMediaFile(null); setSelectedMediaUrl(null); }}>Clear</Button>
-                </div>
-            )}
-             {uploadProgress !== null && (
+            <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
+                <button
+                    onClick={handleFileTrigger}
+                    disabled={isSaving}
+                    className="relative aspect-square w-full rounded-md border-2 border-dashed bg-muted hover:bg-muted/80 flex flex-col items-center justify-center text-muted-foreground"
+                >
+                    {isSaving && !uploadProgress ? <Loader2 className="h-6 w-6 animate-spin"/> : <UploadCloud className="h-8 w-8"/>}
+                    <span className="text-xs mt-1">Upload</span>
+                </button>
+                <input id="dropzone-file" type="file" className="hidden" onChange={handleFileChange} ref={fileInputRef} disabled={isSaving} />
+
+                {loadingUploads ? (
+                    Array.from({length: 7}).map((_, i) => <div key={i} className="aspect-square w-full rounded-md bg-muted animate-pulse" />)
+                ) : (
+                    filteredUploads.slice(0, 7).map(upload => (
+                        <button 
+                            key={upload.id} 
+                            onClick={() => handleMediaToggle(upload.filePath)}
+                            className="relative aspect-square w-full rounded-md overflow-hidden border-2 border-transparent focus:outline-none focus:ring-2 focus:ring-ring"
+                        >
+                            <Image src={`https://neupgroup.com${upload.filePath}`} alt={upload.fileName} layout="fill" objectFit="cover" className="hover:opacity-80 transition-opacity" />
+                            {selectedMediaUrls.includes(upload.filePath) && (
+                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                    <CheckCircle className="h-8 w-8 text-white" />
+                                </div>
+                            )}
+                        </button>
+                    ))
+                )}
+            </div>
+
+            {uploadProgress !== null && (
               <div className="mt-4 space-y-2">
                 <Label>Uploading...</Label>
                 <Progress value={uploadProgress} />

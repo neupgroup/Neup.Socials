@@ -135,16 +135,19 @@ export async function validateToken(pageToken: string): Promise<DebugTokenRespon
  * @param pageId The ID of the Facebook Page.
  * @param pageToken The Page Access Token.
  * @param content The text content of the post.
- * @param mediaUrl Optional URL of an image or video to attach.
+ * @param mediaUrls Optional array of URLs of images or videos to attach.
  * @returns The response from the Facebook API, typically containing the post ID.
  */
 export async function publishToPage(
   pageId: string,
   pageToken: string,
   content: string,
-  mediaUrl?: string
+  mediaUrls?: string[]
 ): Promise<PublishPostResponse> {
   
+  // TODO: Handle multiple media URLs. For now, we'll just use the first one.
+  const mediaUrl = mediaUrls && mediaUrls.length > 0 ? mediaUrls[0] : undefined;
+
   if (mediaUrl) {
     const fullMediaUrl = mediaUrl.startsWith('http') ? mediaUrl : `https://neupgroup.com${mediaUrl}`;
     const mimeType = mime.lookup(fullMediaUrl);
