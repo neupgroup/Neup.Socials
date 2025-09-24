@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -6,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, Twitter, Facebook, Linkedin, Instagram, MoreHorizontal, Loader2 } from 'lucide-react';
+import { PlusCircle, Twitter, Facebook, Linkedin, Instagram, MoreHorizontal, Loader2, Search } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,9 +15,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { format } from 'date-fns';
-import { collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, getDocs, onSnapshot, orderBy, limit, startAfter, DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
+import { Input } from '@/components/ui/input';
 
 type Account = {
   id: string;
@@ -39,57 +41,132 @@ const PlatformIcon = ({ platform }: { platform: string }) => {
     }
 }
 
+const PAGE_SIZE = 10;
+
 export default function AccountsPage() {
   const [accounts, setAccounts] = React.useState<Account[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [loadingMore, setLoadingMore] = React.useState(false);
+  const [lastVisible, setLastVisible] = React.useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [hasMore, setHasMore] = React.useState(true);
+  const [searchTerm, setSearchTerm] = React.useState('');
+  
   const { toast } = useToast();
   const owner = 'neupkishor'; // This should be dynamic in a real app
 
-  React.useEffect(() => {
-    setLoading(true);
+  const fetchAccounts = React.useCallback(async (loadMore = false, search = '') => {
+    if(!loadMore) setLoading(true);
+    else setLoadingMore(true);
+
     try {
-      const q = query(collection(db, 'connected_accounts'), where('owner', '==', owner));
+      let q = query(
+        collection(db, 'connected_accounts'),
+        where('owner', '==', owner),
+        orderBy('connectedOn', 'desc'),
+        limit(PAGE_SIZE)
+      );
+
+      if (search) {
+        q = query(
+          collection(db, 'connected_accounts'),
+          where('owner', '==', owner),
+          where('name', '>=', search),
+          where('name', '<=', search + '\uf8ff'),
+          orderBy('name'),
+          limit(PAGE_SIZE)
+        );
+      }
       
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const fetchedAccounts = querySnapshot.docs.map(doc => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            platform: data.platform,
-            username: data.username,
-            name: data.name,
-            connectedOn: format(data.connectedOn.toDate(), 'yyyy-MM-dd'),
-            status: data.status,
-            owner: data.owner,
-            icon: <PlatformIcon platform={data.platform} />,
-          }
-        });
-        setAccounts(fetchedAccounts);
-        setLoading(false);
+      if (loadMore && lastVisible) {
+        q = query(
+          collection(db, 'connected_accounts'),
+          where('owner', '==', owner),
+          orderBy('connectedOn', 'desc'),
+          startAfter(lastVisible),
+          limit(PAGE_SIZE)
+        );
+         if (search) {
+            q = query(
+              collection(db, 'connected_accounts'),
+              where('owner', '==', owner),
+              where('name', '>=', search),
+              where('name', '<=', search + '\uf8ff'),
+              orderBy('name'),
+              startAfter(lastVisible),
+              limit(PAGE_SIZE)
+            );
+        }
+      }
+
+      const documentSnapshots = await getDocs(q);
+      const newAccounts = documentSnapshots.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          platform: data.platform,
+          username: data.username,
+          name: data.name,
+          connectedOn: data.connectedOn ? format(data.connectedOn.toDate(), 'yyyy-MM-dd') : '-',
+          status: data.status,
+          owner: data.owner,
+          icon: <PlatformIcon platform={data.platform} />,
+        } as Account;
       });
 
-      return () => unsubscribe();
+      setLastVisible(documentSnapshots.docs[documentSnapshots.docs.length - 1]);
+      setHasMore(newAccounts.length === PAGE_SIZE);
+      setAccounts(prev => loadMore ? [...prev, ...newAccounts] : newAccounts);
 
     } catch (error) {
       console.error("Error fetching accounts: ", error);
       toast({ title: 'Error fetching accounts', variant: 'destructive' });
+    } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
-  }, [owner, toast]);
+  }, [owner, toast, lastVisible]);
+  
+  React.useEffect(() => {
+    const debouncedSearch = setTimeout(() => {
+      setLastVisible(null); // Reset pagination on new search
+      fetchAccounts(false, searchTerm);
+    }, 500);
+
+    return () => clearTimeout(debouncedSearch);
+  // We only want to run this when searchTerm changes, fetchAccounts is memoized
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm]);
+
+  const handleShowMore = () => {
+      if(hasMore) {
+          fetchAccounts(true, searchTerm);
+      }
+  }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">Connected Accounts</h1>
           <p className="text-muted-foreground">Manage your connected social media accounts.</p>
         </div>
-        <Button asChild>
-          <Link href="/accounts/add">
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Connect New Account
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+            <div className="relative">
+                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                 <Input 
+                    placeholder="Search by name..." 
+                    className="pl-10"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
+            <Button asChild>
+            <Link href="/accounts/add">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Connect New Account
+            </Link>
+            </Button>
+        </div>
       </div>
 
       <Card>
@@ -98,6 +175,7 @@ export default function AccountsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Platform</TableHead>
+                <TableHead>Name</TableHead>
                 <TableHead>Username</TableHead>
                 <TableHead>Connected On</TableHead>
                 <TableHead>Status</TableHead>
@@ -107,14 +185,14 @@ export default function AccountsPage() {
             <TableBody>
               {loading ? (
                  <TableRow>
-                  <TableCell colSpan={5} className="text-center">
+                  <TableCell colSpan={6} className="text-center h-24">
                     <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
                   </TableCell>
                 </TableRow>
               ) : accounts.length === 0 ? (
                  <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground">
-                    No accounts connected yet.
+                  <TableCell colSpan={6} className="text-center text-muted-foreground h-24">
+                    No accounts found.
                   </TableCell>
                 </TableRow>
               ) : (
@@ -126,6 +204,7 @@ export default function AccountsPage() {
                         <span className="font-medium">{account.platform}</span>
                       </div>
                     </TableCell>
+                    <TableCell>{account.name}</TableCell>
                     <TableCell>{account.username}</TableCell>
                     <TableCell>{account.connectedOn}</TableCell>
                     <TableCell>
@@ -152,6 +231,15 @@ export default function AccountsPage() {
           </Table>
         </CardContent>
       </Card>
+      
+      {hasMore && (
+        <div className="text-center">
+          <Button onClick={handleShowMore} disabled={loadingMore}>
+            {loadingMore ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            Show More
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

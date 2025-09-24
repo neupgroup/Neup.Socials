@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -6,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Send, Twitter, Facebook, Linkedin, Loader2 } from 'lucide-react';
-import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, getDocs, limit } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, getDocs, limit, startAfter, where, QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -46,6 +47,8 @@ const PlatformIcon = ({ platform }: { platform: string }) => {
   return null;
 };
 
+const PAGE_SIZE = 10;
+
 export default function InboxPage() {
   const [conversations, setConversations] = React.useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = React.useState<Conversation | null>(null);
@@ -53,24 +56,73 @@ export default function InboxPage() {
   const [reply, setReply] = React.useState('');
   const [loading, setLoading] = React.useState(true);
   const [sending, setSending] = React.useState(false);
+  const [loadingMore, setLoadingMore] = React.useState(false);
+  const [lastVisible, setLastVisible] = React.useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [hasMore, setHasMore] = React.useState(true);
+  const [searchTerm, setSearchTerm] = React.useState('');
+  
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
 
-  React.useEffect(() => {
-    setLoading(true);
-    const q = query(collection(db, 'conversations'), orderBy('lastMessageAt', 'desc'));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const convos: Conversation[] = [];
-      querySnapshot.forEach((doc) => {
-        convos.push({ id: doc.id, ...doc.data() } as Conversation);
-      });
-      setConversations(convos);
-      if(!selectedConversation && convos.length > 0){
-        setSelectedConversation(convos[0]);
+  const fetchConversations = React.useCallback(async (loadMore = false, search = '') => {
+    if(!loadMore) setLoading(true);
+    else setLoadingMore(true);
+
+    try {
+      let q = query(
+        collection(db, 'conversations'),
+        orderBy('lastMessageAt', 'desc'),
+        limit(PAGE_SIZE)
+      );
+
+      if (search) {
+        q = query(
+          collection(db, 'conversations'),
+          where('contactName', '>=', search),
+          where('contactName', '<=', search + '\uf8ff'),
+          orderBy('contactName'),
+          limit(PAGE_SIZE)
+        );
       }
+      
+      if (loadMore && lastVisible) {
+        const baseQuery = search 
+            ? query(collection(db, 'conversations'), where('contactName', '>=', search), where('contactName', '<=', search + '\uf8ff'), orderBy('contactName'))
+            : query(collection(db, 'conversations'), orderBy('lastMessageAt', 'desc'));
+
+        q = query(baseQuery, startAfter(lastVisible), limit(PAGE_SIZE));
+      }
+
+      const documentSnapshots = await getDocs(q);
+      const newConvos = documentSnapshots.docs.map(doc => ({ id: doc.id, ...doc.data() } as Conversation));
+
+      setLastVisible(documentSnapshots.docs[documentSnapshots.docs.length - 1]);
+      setHasMore(newConvos.length === PAGE_SIZE);
+      setConversations(prev => {
+        const updatedConvos = loadMore ? [...prev, ...newConvos] : newConvos;
+        if (!selectedConversation && updatedConvos.length > 0) {
+            setSelectedConversation(updatedConvos[0]);
+        }
+        return updatedConvos;
+      });
+
+    } catch (error) {
+      console.error("Error fetching conversations: ", error);
+    } finally {
       setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
+      setLoadingMore(false);
+    }
+  }, [lastVisible, selectedConversation]);
+
+  React.useEffect(() => {
+    const debouncedSearch = setTimeout(() => {
+      setLastVisible(null); // Reset pagination on new search
+      fetchConversations(false, searchTerm);
+    }, 500);
+
+    return () => clearTimeout(debouncedSearch);
+  // We only want to run this when searchTerm changes, fetchConversations is memoized
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm]);
 
   React.useEffect(() => {
     if (selectedConversation) {
@@ -103,6 +155,12 @@ export default function InboxPage() {
     setReply('');
     setSending(false);
   };
+  
+  const handleShowMore = () => {
+      if(hasMore) {
+          fetchConversations(true, searchTerm);
+      }
+  }
 
   return (
     <div className="h-[calc(100vh-theme(spacing.28))]">
@@ -113,14 +171,22 @@ export default function InboxPage() {
             <div className="p-4 border-b">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search messages..." className="pl-10" />
+                <Input 
+                    placeholder="Search by name..." 
+                    className="pl-10"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
               </div>
             </div>
             <div className="flex-1 overflow-y-auto">
               {loading ? (
                  <div className="flex justify-center items-center h-full"><Loader2 className="h-6 w-6 animate-spin text-primary"/></div>
+              ) : conversations.length === 0 ? (
+                <div className="text-center text-muted-foreground p-4">No conversations found.</div>
               ) : (
-                conversations.map((convo) => (
+                <>
+                {conversations.map((convo) => (
                   <div
                     key={convo.id}
                     className={`flex items-start gap-4 p-4 cursor-pointer hover:bg-accent ${selectedConversation?.id === convo.id ? 'bg-accent' : ''}`}
@@ -141,7 +207,16 @@ export default function InboxPage() {
                     </div>
                     {convo.unread && <div className="h-2.5 w-2.5 rounded-full bg-primary mt-1.5"></div>}
                   </div>
-                ))
+                ))}
+                 {hasMore && (
+                    <div className="p-4 text-center">
+                        <Button variant="outline" size="sm" onClick={handleShowMore} disabled={loadingMore}>
+                            {loadingMore ? <Loader2 className="mr-2 h-3 w-3 animate-spin"/> : null}
+                            Show More
+                        </Button>
+                    </div>
+                 )}
+                </>
               )}
             </div>
           </div>
@@ -172,7 +247,7 @@ export default function InboxPage() {
                       {msg.sender === 'agent' && (
                         <Avatar className="h-8 w-8">
                            <AvatarImage src="https://placehold.co/40x40" />
-                           <AvatarFallback>TS</AvatarFallback>
+                           <AvatarFallback>NS</AvatarFallback>
                         </Avatar>
                       )}
                     </div>
