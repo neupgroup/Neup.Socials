@@ -15,7 +15,7 @@ import { format } from 'date-fns';
 import { Input } from '@/components/ui/input';
 
 
-type Post = {
+type PostCollection = {
   id: string;
   content: string;
   status: 'Published' | 'Scheduled' | 'Draft';
@@ -26,7 +26,7 @@ type Post = {
 const PAGE_SIZE = 10;
 
 export default function ContentDashboardPage() {
-  const [posts, setPosts] = React.useState<Post[]>([]);
+  const [postCollections, setPostCollections] = React.useState<PostCollection[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [loadingMore, setLoadingMore] = React.useState(false);
   const [lastVisible, setLastVisible] = React.useState<QueryDocumentSnapshot<DocumentData> | null>(null);
@@ -35,20 +35,20 @@ export default function ContentDashboardPage() {
   
   const router = useRouter();
 
-  const fetchPosts = React.useCallback(async (loadMore = false, search = '') => {
+  const fetchPostCollections = React.useCallback(async (loadMore = false, search = '') => {
     if (!loadMore) setLoading(true);
     else setLoadingMore(true);
 
     try {
       let q = query(
-        collection(db, 'content'),
+        collection(db, 'postCollections'),
         orderBy('createdAt', 'desc'),
         limit(PAGE_SIZE)
       );
 
       if (search) {
         q = query(
-          collection(db, 'content'),
+          collection(db, 'postCollections'),
           where('content', '>=', search),
           where('content', '<=', search + '\uf8ff'),
           orderBy('content'),
@@ -58,14 +58,14 @@ export default function ContentDashboardPage() {
 
       if (loadMore && lastVisible) {
         const baseQuery = search 
-            ? query(collection(db, 'content'), where('content', '>=', search), where('content', '<=', search + '\uf8ff'), orderBy('content'))
-            : query(collection(db, 'content'), orderBy('createdAt', 'desc'));
+            ? query(collection(db, 'postCollections'), where('content', '>=', search), where('content', '<=', search + '\uf8ff'), orderBy('content'))
+            : query(collection(db, 'postCollections'), orderBy('createdAt', 'desc'));
 
         q = query(baseQuery, startAfter(lastVisible), limit(PAGE_SIZE));
       }
 
       const documentSnapshots = await getDocs(q);
-      const fetchedPosts = documentSnapshots.docs.map(doc => {
+      const fetchedData = documentSnapshots.docs.map(doc => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -73,14 +73,14 @@ export default function ContentDashboardPage() {
           status: data.status,
           platforms: data.platforms || [],
           scheduledAt: data.scheduledAt ? format(data.scheduledAt.toDate(), 'yyyy-MM-dd') : '-',
-        } as Post;
+        } as PostCollection;
       });
 
       setLastVisible(documentSnapshots.docs[documentSnapshots.docs.length - 1]);
-      setHasMore(fetchedPosts.length === PAGE_SIZE);
-      setPosts(prev => loadMore ? [...prev, ...fetchedPosts] : fetchedPosts);
+      setHasMore(fetchedData.length === PAGE_SIZE);
+      setPostCollections(prev => loadMore ? [...prev, ...fetchedData] : fetchedData);
     } catch (error) {
-      console.error("Error fetching posts: ", error);
+      console.error("Error fetching post collections: ", error);
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -90,22 +90,22 @@ export default function ContentDashboardPage() {
   React.useEffect(() => {
     const debouncedSearch = setTimeout(() => {
       setLastVisible(null);
-      fetchPosts(false, searchTerm);
+      fetchPostCollections(false, searchTerm);
     }, 500);
 
     return () => clearTimeout(debouncedSearch);
-  // We only want to run this when searchTerm changes, fetchPosts is memoized
+  // We only want to run this when searchTerm changes, fetchPostCollections is memoized
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm]);
 
 
-  const handleRowClick = (postId: string) => {
-    router.push(`/content/view/${postId}`);
+  const handleRowClick = (id: string) => {
+    router.push(`/content/view/${id}`);
   };
 
   const handleShowMore = () => {
       if(hasMore) {
-          fetchPosts(true, searchTerm);
+          fetchPostCollections(true, searchTerm);
       }
   }
 
@@ -114,7 +114,7 @@ export default function ContentDashboardPage() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">Content Dashboard</h1>
-          <p className="text-muted-foreground">Manage all your posts in one place.</p>
+          <p className="text-muted-foreground">Manage all your post collections in one place.</p>
         </div>
         <div className="flex items-center gap-2">
            <div className="relative">
@@ -153,27 +153,27 @@ export default function ContentDashboardPage() {
                     <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
                   </TableCell>
                 </TableRow>
-              ) : posts.length === 0 ? (
+              ) : postCollections.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center text-muted-foreground h-24">
-                    No posts found.
+                    No post collections found.
                   </TableCell>
                 </TableRow>
               ) : (
-                posts.map((post) => (
+                postCollections.map((pc) => (
                   <TableRow 
-                    key={post.id} 
-                    onClick={() => handleRowClick(post.id)}
+                    key={pc.id} 
+                    onClick={() => handleRowClick(pc.id)}
                     className="cursor-pointer"
                   >
-                    <TableCell className="font-medium max-w-sm truncate">{post.content}</TableCell>
-                    <TableCell>{post.platforms.join(', ')}</TableCell>
+                    <TableCell className="font-medium max-w-sm truncate">{pc.content}</TableCell>
+                    <TableCell>{pc.platforms.join(', ')}</TableCell>
                     <TableCell>
-                      <Badge variant={post.status === 'Published' ? 'default' : (post.status === 'Scheduled' ? 'secondary' : 'outline')}>
-                        {post.status}
+                      <Badge variant={pc.status === 'Published' ? 'default' : (pc.status === 'Scheduled' ? 'secondary' : 'outline')}>
+                        {pc.status}
                       </Badge>
                     </TableCell>
-                    <TableCell>{post.scheduledAt}</TableCell>
+                    <TableCell>{pc.scheduledAt}</TableCell>
                   </TableRow>
                 ))
               )}
@@ -193,3 +193,5 @@ export default function ContentDashboardPage() {
     </div>
   );
 }
+
+    

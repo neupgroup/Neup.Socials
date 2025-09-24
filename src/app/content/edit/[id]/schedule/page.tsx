@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -20,7 +21,7 @@ import { publishPostAction } from '@/actions/content/publish';
 
 export default function EditSchedulePage() {
   const params = useParams();
-  const id = params.id as string;
+  const id = params.id as string; // This is postCollectionId
   const [scheduleOption, setScheduleOption] = React.useState('now');
   const [postDate, setPostDate] = React.useState<Date | undefined>();
   const [postTime, setPostTime] = React.useState('10:00');
@@ -30,9 +31,9 @@ export default function EditSchedulePage() {
   const { toast } = useToast();
 
   React.useEffect(() => {
-    const fetchPost = async () => {
+    const fetchPostCollection = async () => {
       setIsLoading(true);
-      const docRef = doc(db, 'content', id);
+      const docRef = doc(db, 'postCollections', id);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         const data = docSnap.data();
@@ -43,12 +44,12 @@ export default function EditSchedulePage() {
           setPostTime(format(scheduledDate, 'HH:mm'));
         }
       } else {
-        toast({ title: 'Post not found', variant: 'destructive' });
+        toast({ title: 'Post Collection not found', variant: 'destructive' });
         router.push('/content');
       }
       setIsLoading(false);
     };
-    fetchPost();
+    fetchPostCollection();
   }, [id, router, toast]);
 
   const handleSchedule = async () => {
@@ -69,7 +70,7 @@ export default function EditSchedulePage() {
         const scheduledDateTime = new Date(postDate);
         scheduledDateTime.setHours(parseInt(hours, 10), parseInt(minutes, 10));
 
-        const docRef = doc(db, 'content', id);
+        const docRef = doc(db, 'postCollections', id);
         await updateDoc(docRef, {
           status: 'Scheduled',
           scheduledAt: Timestamp.fromDate(scheduledDateTime),
@@ -177,3 +178,5 @@ export default function EditSchedulePage() {
     </div>
   );
 }
+
+    

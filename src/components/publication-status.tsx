@@ -17,19 +17,22 @@ type ConnectedAccount = {
   username: string;
 };
 
-type PublicationDetail = {
-  accountId: string;
-  platform: string;
-  platformPostId: string;
-};
+type Post = {
+    id: string;
+    platformPostId: string;
+    accountId: string;
+    platform: string;
+    postLink: string;
+    createdOn: any;
+}
 
 type PublicationStatusProps = {
   accountIds: string[];
-  publicationDetails: PublicationDetail[];
+  posts: Post[];
   postStatus: 'Published' | 'Scheduled' | 'Draft';
   publishedAt: string;
   scheduledAt: string;
-  postId: string;
+  postCollectionId: string;
 };
 
 const PlatformIcon = ({ platform, className }: { platform: string, className?: string }) => {
@@ -42,7 +45,7 @@ const PlatformIcon = ({ platform, className }: { platform: string, className?: s
   return null;
 }
 
-export const PublicationStatus: React.FC<PublicationStatusProps> = ({ accountIds, publicationDetails = [], postStatus, publishedAt, scheduledAt, postId }) => {
+export const PublicationStatus: React.FC<PublicationStatusProps> = ({ accountIds, posts = [], postStatus, publishedAt, scheduledAt, postCollectionId }) => {
   const [accounts, setAccounts] = React.useState<ConnectedAccount[]>([]);
   const [loading, setLoading] = React.useState(true);
 
@@ -80,8 +83,8 @@ export const PublicationStatus: React.FC<PublicationStatusProps> = ({ accountIds
     <div className="space-y-4">
       {accounts.map(account => {
         const date = postStatus === 'Published' ? publishedAt : (postStatus === 'Scheduled' ? scheduledAt : 'Not yet scheduled');
-        const detail = publicationDetails.find(d => d.accountId === account.id);
-        const postUrl = detail?.platformPostId ? `https://www.facebook.com/share/p/${detail.platformPostId}/` : null;
+        const individualPost = posts.find(p => p.accountId === account.id);
+        const postUrl = individualPost?.postLink;
 
         return (
           <Card key={account.id} className="overflow-hidden">
@@ -96,7 +99,9 @@ export const PublicationStatus: React.FC<PublicationStatusProps> = ({ accountIds
               
               <div className="flex flex-col items-start sm:items-end flex-shrink-0 gap-2 w-full sm:w-auto">
                  <div className="flex items-center gap-2">
-                    <Badge variant={postStatus === 'Published' ? 'default' : 'secondary'}>{postStatus}</Badge>
+                    <Badge variant={postStatus === 'Published' ? (individualPost ? 'default' : 'destructive') : 'secondary'}>
+                        {postStatus === 'Published' ? (individualPost ? 'Published' : 'Failed') : postStatus}
+                    </Badge>
                     <span className="text-sm text-muted-foreground">{date}</span>
                  </div>
                  <div className="flex items-center gap-2">
@@ -112,7 +117,7 @@ export const PublicationStatus: React.FC<PublicationStatusProps> = ({ accountIds
                        )}
                     </Button>
                     <Button size="sm" variant="ghost" asChild>
-                        <Link href={`/content/edit/${postId}`}><Edit className="h-4 w-4"/></Link>
+                        <Link href={`/content/edit/${postCollectionId}`}><Edit className="h-4 w-4"/></Link>
                     </Button>
                     <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive">
                         <Trash2 className="h-4 w-4" />
@@ -126,3 +131,5 @@ export const PublicationStatus: React.FC<PublicationStatusProps> = ({ accountIds
     </div>
   );
 };
+
+    

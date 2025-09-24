@@ -24,10 +24,10 @@ type Upload = UploadRecord & { id: string, uploadedOn: any };
 
 export default function EditPostPage() {
   const params = useParams();
-  const id = params.id as string;
+  const id = params.id as string; // This is now postCollectionId
   const [content, setContent] = React.useState('');
   const [selectedMediaUrls, setSelectedMediaUrls] = React.useState<string[]>([]);
-  const [ctaType, setCtaType] = React.useState<string>('');
+  const [ctaType, setCtaType] = React.useState<string>('NONE');
   const [ctaLink, setCtaLink] = React.useState<string>('');
   
   const [isLoading, setIsLoading] = React.useState(true);
@@ -46,25 +46,25 @@ export default function EditPostPage() {
   React.useEffect(() => {
     if (!id) return;
 
-    const fetchPost = async () => {
+    const fetchPostCollection = async () => {
       setIsLoading(true);
-      const docRef = doc(db, 'content', id);
+      const docRef = doc(db, 'postCollections', id);
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
         const data = docSnap.data();
         setContent(data.content);
-        setSelectedMediaUrls(data.mediaUrls || (data.mediaUrl ? [data.mediaUrl] : []));
+        setSelectedMediaUrls(data.mediaUrls || []);
         setCtaType(data.ctaType || 'NONE');
         setCtaLink(data.ctaLink || '');
       } else {
-        toast({ title: 'Post not found', variant: 'destructive' });
+        toast({ title: 'Post Collection not found', variant: 'destructive' });
         router.push('/content');
       }
       setIsLoading(false);
     };
 
-    fetchPost();
+    fetchPostCollection();
 
     setLoadingUploads(true);
     const q = query(collection(db, 'uploads'), orderBy('uploadedOn', 'desc'));
@@ -81,13 +81,13 @@ export default function EditPostPage() {
     return () => unsubscribe();
   }, [id, router, toast]);
 
-  const uploadFile = (file: File, contentId: string): Promise<string> => {
+  const uploadFile = (file: File, postCollectionId: string): Promise<string> => {
     return new Promise((resolve, reject) => {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('platform', 'neupsocials-content');
       formData.append('userid', userId);
-      formData.append('contentid', contentId);
+      formData.append('contentid', postCollectionId);
       formData.append('name', file.name.split('.').slice(0, -1).join('.'));
       
       const xhr = new XMLHttpRequest();
@@ -113,7 +113,7 @@ export default function EditPostPage() {
                   uploadedBy: userId,
                   filePath: result.url,
                   platform: 'neupsocials-content',
-                  contentId: contentId,
+                  contentId: postCollectionId,
               });
               if (selectedMediaUrls.length < 8) {
                 setSelectedMediaUrls(prev => [...prev, result.url]);
@@ -142,7 +142,7 @@ export default function EditPostPage() {
   const handleNext = async () => {
     setIsSaving(true);
     try {
-      await updateDoc(doc(db, 'content', id), {
+      await updateDoc(doc(db, 'postCollections', id), {
         content,
         mediaUrls: selectedMediaUrls,
         ctaType: ctaType === 'NONE' ? null : ctaType,
@@ -151,8 +151,8 @@ export default function EditPostPage() {
 
       router.push(`/content/edit/${id}/platforms`);
     } catch (error: any) {
-      console.error("Error updating post: ", error);
-      toast({ title: 'Error', description: error.message || 'Failed to update post.', variant: 'destructive' });
+      console.error("Error updating post collection: ", error);
+      toast({ title: 'Error', description: error.message || 'Failed to update post collection.', variant: 'destructive' });
     } finally {
       setIsSaving(false);
     }
@@ -203,13 +203,13 @@ export default function EditPostPage() {
     <div className="max-w-3xl mx-auto space-y-6">
        <div className="flex items-center gap-4">
         <Button asChild variant="outline" size="icon"><Link href={`/content/view/${id}`}><ArrowLeft /></Link></Button>
-        <div><h1 className="text-3xl font-bold">Edit Post</h1><p className="text-muted-foreground">Step 1 of 3: Modify your content</p></div>
+        <div><h1 className="text-3xl font-bold">Edit Post Collection</h1><p className="text-muted-foreground">Step 1 of 3: Modify your base content</p></div>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>Post Content</CardTitle>
-          <CardDescription>Update your post and media.</CardDescription>
+          <CardDescription>Update your base post and media.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2"><Label htmlFor="post-text">Text</Label><Textarea id="post-text" value={content} onChange={e => setContent(e.target.value)} rows={6} disabled={isSaving} /></div>
@@ -313,3 +313,5 @@ export default function EditPostPage() {
     </div>
   );
 }
+
+    

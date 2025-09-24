@@ -29,7 +29,7 @@ export default function CreatePostPage() {
   const [uploads, setUploads] = React.useState<Upload[]>([]);
   const [loadingUploads, setLoadingUploads] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState('');
-  const [ctaType, setCtaType] = React.useState<string>('');
+  const [ctaType, setCtaType] = React.useState<string>('NONE');
   const [ctaLink, setCtaLink] = React.useState<string>('');
   
   const router = useRouter();
@@ -57,13 +57,13 @@ export default function CreatePostPage() {
     return () => unsubscribe();
   }, [toast]);
   
-  const uploadFile = (file: File, contentId: string): Promise<string> => {
+  const uploadFile = (file: File, postCollectionId: string): Promise<string> => {
     return new Promise((resolve, reject) => {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('platform', 'neupsocials-content');
       formData.append('userid', userId);
-      formData.append('contentid', contentId);
+      formData.append('contentid', postCollectionId);
       formData.append('name', file.name.split('.').slice(0, -1).join('.'));
       
       const xhr = new XMLHttpRequest();
@@ -89,7 +89,7 @@ export default function CreatePostPage() {
                   uploadedBy: userId,
                   filePath: result.url,
                   platform: 'neupsocials-content',
-                  contentId: contentId,
+                  contentId: postCollectionId,
               };
               await recordUpload(newUploadRecord);
               // Auto-select the newly uploaded file
@@ -130,23 +130,24 @@ export default function CreatePostPage() {
     setIsLoading(true);
 
     try {
-      const docRef = await addDoc(collection(db, "content"), {
+      const docRef = await addDoc(collection(db, "postCollections"), {
         content,
-        mediaUrls: selectedMediaUrls, // Save array of URLs
+        mediaUrls: selectedMediaUrls,
         status: 'Draft',
         author: userId,
         createdAt: serverTimestamp(),
-        platforms: [],
+        postsId: [],
         accountIds: [],
+        platforms: [],
         ctaType: ctaType === 'NONE' ? null : ctaType,
         ctaLink: ctaLink || null,
       });
       
-      toast({ title: 'Draft Saved!', description: 'Your post has been saved as a draft.' });
+      toast({ title: 'Draft Saved!', description: 'Your post collection has been saved as a draft.' });
       router.push(`/content/edit/${docRef.id}/platforms`);
 
     } catch (error: any) {
-      console.error("Error creating post draft: ", error);
+      console.error("Error creating post collection draft: ", error);
       toast({
         title: 'Error',
         description: error.message || 'Could not save your draft. Please try again.',
@@ -165,10 +166,10 @@ export default function CreatePostPage() {
       const file = e.target.files[0];
        // A temporary ID for uploads before post is created. 
        // In a real app, might want a more robust way to handle this.
-      const tempContentId = `temp-${Date.now()}`;
+      const tempId = `temp-${Date.now()}`;
       setIsLoading(true);
       try {
-        await uploadFile(file, tempContentId);
+        await uploadFile(file, tempId);
       } catch (error: any) {
          toast({ title: 'Upload Failed', description: error.message, variant: 'destructive'});
       } finally {
@@ -204,14 +205,14 @@ export default function CreatePostPage() {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
        <div>
-        <h1 className="text-3xl font-bold">Create a New Post</h1>
-        <p className="text-muted-foreground">Step 1 of 3: Compose your content</p>
+        <h1 className="text-3xl font-bold">Create a New Post Collection</h1>
+        <p className="text-muted-foreground">Step 1 of 3: Compose your base content</p>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>Post Content</CardTitle>
-          <CardDescription>Write your post and optionally add media. Your work is saved as a draft.</CardDescription>
+          <CardDescription>Write your post and optionally add media. This will serve as the base for all platforms.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -329,3 +330,5 @@ export default function CreatePostPage() {
     </div>
   );
 }
+
+    

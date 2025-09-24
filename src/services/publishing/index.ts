@@ -1,33 +1,42 @@
 
 'use server';
 
-import { doc, getDoc, updateDoc, serverTimestamp, collection, arrayUnion } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, serverTimestamp, collection, addDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { decrypt } from '@/lib/crypto';
 import { logError } from '../error-logging';
 import { publishToPage as publishToFacebookPage } from '@/core/facebook/api';
 
+type PublicationResult = {
+    accountId: string;
+    platform: string;
+    platformPostId: string;
+    postLink: string;
+    createdOn: any;
+    logs: any[];
+};
+
 /**
- * Publishes a post to all its selected social media accounts.
- * @param postId The ID of the post document in Firestore.
+ * Publishes a post collection to all its selected social media accounts.
+ * @param postCollectionId The ID of the postCollection document in Firestore.
  */
-export async function publishContent(postId: string) {
-  const postDocRef = doc(db, 'content', postId);
-  let post;
+export async function publishContent(postCollectionId: string) {
+  const pcDocRef = doc(db, 'postCollections', postCollectionId);
+  let postCollectionData;
 
   try {
-    const postSnap = await getDoc(postDocRef);
-    if (!postSnap.exists()) {
-      throw new Error(`Post with ID ${postId} not found.`);
+    const pcSnap = await getDoc(pcDocRef);
+    if (!pcSnap.exists()) {
+      throw new Error(`Post Collection with ID ${postCollectionId} not found.`);
     }
-    post = postSnap.data();
+    postCollectionData = pcSnap.data();
 
-    if (!post.accountIds || post.accountIds.length === 0) {
-      throw new Error(`Post ${postId} has no accounts selected for publishing.`);
+    if (!postCollectionData.accountIds || postCollectionData.accountIds.length === 0) {
+      throw new Error(`Post Collection ${postCollectionId} has no accounts selected for publishing.`);
     }
 
     const accountsCollection = collection(db, 'connected_accounts');
-    const publicationPromises = post.accountIds.map(async (accountId: string) => {
+    const publicationPromises = postCollectionData.accountIds.map(async (accountId: string) => {
       const accountDocRef = doc(accountsCollection, accountId);
       const accountSnap = await getDoc(accountDocRef);
 
@@ -38,62 +47,78 @@ export async function publishContent(postId: string) {
       const pageId = account.platformId;
       const encryptedToken = account.encryptedToken;
       
-      let publicationResult = null;
+      let individualPostRef = null;
 
       try {
         const token = await decrypt(encryptedToken);
         
-        // Currently, we only support Facebook
+        let response = null;
+        let postLink = '';
+
         if (account.platform === 'Facebook') {
-          const response = await publishToFacebookPage(pageId, token, post.content, post.mediaUrls, post.ctaType, post.ctaLink);
+          response = await publishToFacebookPage(pageId, token, postCollectionData.content, postCollectionData.mediaUrls, postCollectionData.ctaType, postCollectionData.ctaLink);
           const platformPostId = response.post_id || response.id;
+          postLink = `https://www.facebook.com/${platformPostId}`;
           console.log(`Successfully published to Facebook page: ${account.name} (${pageId}). Post ID: ${platformPostId}`);
-          publicationResult = {
-              accountId,
-              platform: 'Facebook',
-              platformPostId,
-              publishedAt: new Date().toISOString(),
-          };
         } else {
            console.warn(`Publishing for platform '${account.platform}' is not yet implemented.`);
+           return null; // Skip unsupported platforms
         }
-        return publicationResult;
+
+        // Create a new document in the 'posts' collection for this successful publication
+        const postData = {
+            postCollectionId: postCollectionId,
+            accountId: accountId,
+            platform: account.platform,
+            platformPostId: response.post_id || response.id,
+            message: postCollectionData.content,
+            postLink: postLink,
+            createdBy: postCollectionData.author,
+            createdOn: serverTimestamp(),
+            analytics: [],
+            logs: ['Published successfully'],
+        };
+        individualPostRef = await addDoc(collection(db, 'posts'), postData);
+        
+        // Return the ID of the new post document
+        return individualPostRef.id;
+
       } catch (error: any) {
-        // Log an error for the specific account that failed
         await logError({
           source: 'publishContent - Account Publishing',
           message: `Failed to publish to ${account.platform} account: ${account.name}`,
-          context: { postId, accountId, pageId, errorMessage: error.message },
+          context: { postCollectionId, accountId, pageId, errorMessage: error.message },
           userId: account.owner,
         });
-        // We throw here to make the Promise.all fail
+        // We throw here to make the Promise.allSettled report it as rejected
         throw new Error(`Failed to publish to ${account.name}: ${error.message}`);
       }
     });
 
-    // Wait for all publications to attempt
-    const results = await Promise.all(publicationPromises);
-    const successfulPublications = results.filter(r => r !== null);
+    const results = await Promise.allSettled(publicationPromises);
+    const successfulPostIds = results
+        .filter(r => r.status === 'fulfilled' && r.value)
+        .map(r => (r as PromiseFulfilledResult<string>).value);
 
-
-    // Update the post status and add publication details
-    await updateDoc(postDocRef, {
+    // Update the post collection status and link the new post documents
+    await updateDoc(pcDocRef, {
       status: 'Published',
       publishedAt: serverTimestamp(),
       scheduledAt: null,
-      publicationDetails: arrayUnion(...successfulPublications),
+      postsId: arrayUnion(...successfulPostIds),
     });
 
   } catch (error: any) {
-    // Log the overarching error
     await logError({
       source: 'publishContent - Main',
-      message: 'One or more publications failed.',
-      context: { postId, error: error.message },
-      userId: post?.author || 'unknown',
+      message: 'One or more publications failed during the process.',
+      context: { postCollectionId, error: error.message },
+      userId: postCollectionData?.author || 'unknown',
     });
 
     // We re-throw the error so the calling action can handle it
     throw error;
   }
 }
+
+    

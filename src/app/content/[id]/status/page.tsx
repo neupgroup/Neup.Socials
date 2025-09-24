@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -13,7 +14,7 @@ import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
-type Post = {
+type PostCollection = {
   id: string;
   status: 'Published' | 'Scheduled' | 'Draft';
   platforms: string[]; // Kept for display
@@ -31,21 +32,21 @@ type Post = {
 export default function PostStatusPage() {
   const params = useParams();
   const id = params.id as string;
-  const [post, setPost] = React.useState<Post | null>(null);
+  const [postCollection, setPostCollection] = React.useState<PostCollection | null>(null);
   const [loading, setLoading] = React.useState(true);
   const router = useRouter();
   const { toast } = useToast();
 
   React.useEffect(() => {
     if (!id) return;
-    const fetchPost = async () => {
+    const fetchPostCollection = async () => {
       setLoading(true);
-      const docRef = doc(db, 'content', id);
+      const docRef = doc(db, 'postCollections', id);
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
         const data = docSnap.data();
-        setPost({
+        setPostCollection({
           id: docSnap.id,
           status: data.status,
           platforms: data.platforms || [],
@@ -55,13 +56,13 @@ export default function PostStatusPage() {
           analytics: data.status === 'Published' ? { likes: 120, comments: 15, shares: 45, reach: 1500 } : undefined
         });
       } else {
-        toast({ title: 'Post not found', variant: 'destructive' });
+        toast({ title: 'Post Collection not found', variant: 'destructive' });
         router.push('/content');
       }
       setLoading(false);
     };
 
-    fetchPost();
+    fetchPostCollection();
   }, [id, router, toast]);
 
   if (loading) {
@@ -72,14 +73,14 @@ export default function PostStatusPage() {
     );
   }
 
-  if (!post) {
-    return <p className="text-center">Post not found.</p>;
+  if (!postCollection) {
+    return <p className="text-center">Post Collection not found.</p>;
   }
 
-  const isPublished = post.status === 'Published';
-  const isScheduled = post.status === 'Scheduled';
-  const progressValue = isPublished ? Math.floor(((post.analytics?.likes || 0) / 200) * 100) : 0;
-  const platformText = post.platforms.join(', ');
+  const isPublished = postCollection.status === 'Published';
+  const isScheduled = postCollection.status === 'Scheduled';
+  const progressValue = isPublished ? Math.floor(((postCollection.analytics?.likes || 0) / 200) * 100) : 0;
+  const platformText = postCollection.platforms.join(', ');
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -91,11 +92,11 @@ export default function PostStatusPage() {
         </Button>
         <div>
             <h1 className="text-3xl font-bold">Post Status</h1>
-            <p className="text-muted-foreground">Check the status of your post ID: {id}</p>
+            <p className="text-muted-foreground">Check the status of your post collection ID: {id}</p>
         </div>
       </div>
         
-        {isPublished && post.analytics ? (
+        {isPublished && postCollection.analytics ? (
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -103,26 +104,26 @@ export default function PostStatusPage() {
                         <span>Published Successfully</span>
                     </CardTitle>
                     <CardDescription>
-                        Your post went live on {platformText} at {post.publishedAt}.
+                        Your post went live on {platformText} at {postCollection.publishedAt}.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="flex items-center justify-between p-4 border rounded-lg">
                         <div className="space-y-1">
                             <p className="text-sm font-medium text-muted-foreground">Likes</p>
-                            <p className="text-2xl font-bold">{post.analytics.likes}</p>
+                            <p className="text-2xl font-bold">{postCollection.analytics.likes}</p>
                         </div>
                          <div className="space-y-1 text-right">
                             <p className="text-sm font-medium text-muted-foreground">Comments</p>
-                            <p className="text-2xl font-bold">{post.analytics.comments}</p>
+                            <p className="text-2xl font-bold">{postCollection.analytics.comments}</p>
                         </div>
                          <div className="space-y-1 text-right">
                             <p className="text-sm font-medium text-muted-foreground">Shares</p>
-                            <p className="text-2xl font-bold">{post.analytics.shares}</p>
+                            <p className="text-2xl font-bold">{postCollection.analytics.shares}</p>
                         </div>
                     </div>
                      <div className="space-y-2">
-                        <Label>Reach: {post.analytics.reach} users</Label>
+                        <Label>Reach: {postCollection.analytics.reach} users</Label>
                         <Progress value={progressValue} />
                     </div>
                     <Button asChild variant="secondary">
@@ -143,7 +144,7 @@ export default function PostStatusPage() {
                 </CardHeader>
                 <CardContent className="space-y-4 text-center py-10">
                     <p className="text-lg">Scheduled for:</p>
-                    <p className="text-4xl font-bold text-primary">{post.scheduledAt}</p>
+                    <p className="text-4xl font-bold text-primary">{postCollection.scheduledAt}</p>
                     <p className="text-muted-foreground">You can still edit or cancel this post before it goes live.</p>
                     <div className="flex justify-center gap-4 pt-4">
                         <Button asChild>
@@ -182,3 +183,5 @@ export default function PostStatusPage() {
     </div>
   );
 }
+
+    

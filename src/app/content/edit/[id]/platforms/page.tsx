@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -32,7 +33,7 @@ const PlatformIcon = ({ platform }: { platform: string }) => {
 
 export default function EditPlatformsPage() {
   const params = useParams();
-  const id = params.id as string;
+  const id = params.id as string; // This is postCollectionId
   const [connectedAccounts, setConnectedAccounts] = React.useState<ConnectedAccount[]>([]);
   const [selectedAccountIds, setSelectedAccountIds] = React.useState<string[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -54,27 +55,14 @@ export default function EditPlatformsPage() {
         } as ConnectedAccount));
         setConnectedAccounts(accounts);
 
-        // Fetch existing post selections
-        const postDocRef = doc(db, 'content', id);
-        const postDocSnap = await getDoc(postDocRef);
-        if (postDocSnap.exists()) {
-          // Use 'accountIds' if it exists, otherwise fallback to 'platforms' for migration
-          const data = postDocSnap.data();
-          if(data.accountIds) {
-            setSelectedAccountIds(data.accountIds || []);
-          } else if (data.platforms) {
-            // This is a fallback for older data model. It tries to match platform names to account IDs.
-            const platformToId = accounts.reduce((acc, account) => {
-              if(!acc[account.platform]) acc[account.platform] = [];
-              acc[account.platform].push(account.id);
-              return acc;
-            }, {} as Record<string, string[]>);
-            
-            const idsToSelect = (data.platforms as string[]).flatMap(platform => platformToId[platform] || []);
-            setSelectedAccountIds(idsToSelect);
-          }
+        // Fetch existing selections from the post collection
+        const pcDocRef = doc(db, 'postCollections', id);
+        const pcDocSnap = await getDoc(pcDocRef);
+        if (pcDocSnap.exists()) {
+          const data = pcDocSnap.data();
+          setSelectedAccountIds(data.accountIds || []);
         } else {
-          toast({ title: 'Post not found', variant: 'destructive' });
+          toast({ title: 'Post Collection not found', variant: 'destructive' });
           router.push('/content');
         }
       } catch (error) {
@@ -102,7 +90,7 @@ export default function EditPlatformsPage() {
     }
     setIsSaving(true);
     try {
-      const docRef = doc(db, 'content', id);
+      const docRef = doc(db, 'postCollections', id);
       const selectedPlatforms = connectedAccounts
         .filter(acc => selectedAccountIds.includes(acc.id))
         .map(acc => acc.platform);
@@ -187,3 +175,5 @@ export default function EditPlatformsPage() {
     </div>
   );
 }
+
+    
