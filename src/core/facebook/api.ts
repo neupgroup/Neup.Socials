@@ -5,7 +5,7 @@
 'use server';
 import * as mime from 'mime-types';
 
-const API_VERSION = 'v20.0';
+const API_VERSION = 'v23.0';
 const GRAPH_API_BASE_URL = `https://graph.facebook.com/${API_VERSION}`;
 
 type AccessTokenResponse = {
@@ -268,7 +268,7 @@ export async function getPosts(
     params.append('until', String(until));
   }
 
-  const res = await fetch(`${GRAPH_API_BASE_URL}/${pageId}/feed?${params.toString()}`);
+  const res = await fetch(`${GRAPH_API_BASE_URL}/${pageId}/published_posts?${params.toString()}`);
   return handleApiResponse<PageFeedResponse>(res);
 }
 

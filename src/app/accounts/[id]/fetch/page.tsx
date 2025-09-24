@@ -6,13 +6,14 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { collection, query, where, orderBy, onSnapshot, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { format } from 'date-fns';
+import { format, subDays } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { Loader2, ArrowLeft, History, CheckCircle, XCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { syncPostsAction } from '@/actions/facebook/sync-posts';
 
 type SyncLog = {
     id: string;
@@ -34,6 +35,7 @@ export default function FetchHistoryPage() {
 
     const [logs, setLogs] = React.useState<SyncLog[]>([]);
     const [loading, setLoading] = React.useState(true);
+    const [isSyncing, setIsSyncing] = React.useState<string | null>(null);
 
     React.useEffect(() => {
         if (!id) return;
@@ -61,11 +63,45 @@ export default function FetchHistoryPage() {
         return () => unsubscribe();
     }, [id, toast]);
     
-    const handleActionClick = (actionName: string) => {
-        toast({
-            title: 'Coming Soon!',
-            description: `'${actionName}' functionality is not yet implemented.`
-        });
+    const handleSync = async (type: 'older' | 'newer') => {
+        if (!id) return;
+        setIsSyncing(type);
+        
+        let options: { since?: number, until?: number } | undefined = undefined;
+
+        if (type === 'older' && logs.length > 0) {
+            // Find the earliest 'since' date from all logs
+            const oldestSinceDate = logs.reduce((oldest, log) => {
+                if (log.range?.since && log.range.since.toDate() < oldest) {
+                    return log.range.since.toDate();
+                }
+                return oldest;
+            }, new Date());
+            
+            const until = Math.floor(oldestSinceDate.getTime() / 1000);
+            const since = Math.floor(subDays(oldestSinceDate, 90).getTime() / 1000);
+            options = { since, until };
+        }
+
+        try {
+            const result = await syncPostsAction(id, options);
+            if (result.success) {
+                toast({
+                    title: 'Sync Complete',
+                    description: `${result.postsSynced} new posts were synced.`,
+                });
+            } else {
+                throw new Error(result.error || 'Unknown sync error');
+            }
+        } catch (error: any) {
+             toast({
+                title: 'Sync Failed',
+                description: error.message,
+                variant: 'destructive',
+            });
+        } finally {
+            setIsSyncing(null);
+        }
     }
 
     return (
@@ -83,8 +119,14 @@ export default function FetchHistoryPage() {
                     </div>
                 </div>
                  <div className="flex items-center gap-2">
-                    <Button variant="outline" onClick={() => handleActionClick('Sync Older Posts')}>Sync Older Posts</Button>
-                    <Button variant="outline" onClick={() => handleActionClick('Sync Newer Posts')}>Sync Newer Posts</Button>
+                    <Button variant="outline" onClick={() => handleSync('older')} disabled={!!isSyncing || logs.length === 0}>
+                        {isSyncing === 'older' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                        Sync Older Posts
+                    </Button>
+                    <Button variant="outline" onClick={() => handleSync('newer')} disabled={!!isSyncing}>
+                        {isSyncing === 'newer' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                        Sync Newer Posts
+                    </Button>
                 </div>
             </div>
 
@@ -117,7 +159,7 @@ export default function FetchHistoryPage() {
                             ) : logs.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={3} className="text-center text-muted-foreground h-24">
-                                        No sync history found.
+                                        No sync history found. Try syncing some posts.
                                     </TableCell>
                                 </TableRow>
                             ) : (
