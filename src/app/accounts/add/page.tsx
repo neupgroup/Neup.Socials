@@ -56,17 +56,27 @@ export default function AddAccountPage() {
 
   const selectedPlatform = watch('platform');
 
-  const handleFacebookConnect = () => {
+  const handleFacebookConnect = async () => {
     setIsSubmitting(true);
-    // This assumes the user ID is available. In a real app, you'd get this from your auth context.
-    const authUrl = getFacebookAuthUrl(userId);
-    // Redirect the user to Facebook's auth dialog
-    window.location.href = authUrl;
+    try {
+      // This assumes the user ID is available. In a real app, you'd get this from your auth context.
+      const authUrl = await getFacebookAuthUrl(userId);
+      // Redirect the user to Facebook's auth dialog
+      window.location.href = authUrl;
+    } catch (error) {
+        console.error("Error getting Facebook auth URL: ", error);
+        toast({
+            title: 'Could not connect to Facebook',
+            description: 'An unexpected error occurred. Please try again.',
+            variant: 'destructive',
+        });
+        setIsSubmitting(false);
+    }
   };
   
   const onSubmit = async (data: FormValues) => {
     if (data.platform === 'Facebook') {
-        handleFacebookConnect();
+        await handleFacebookConnect();
         return;
     }
 
