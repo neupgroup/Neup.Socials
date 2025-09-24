@@ -164,10 +164,10 @@ export default function ViewContentPage() {
         </Button>
         <div>
           <h1 className="text-3xl font-bold">View Post Details</h1>
-          <p className="text-muted-foreground flex items-center gap-2">
+          <div className="text-muted-foreground flex items-center gap-2">
             Status:
             <Badge variant={isPublished ? 'default' : (post.status === 'Scheduled' ? 'secondary' : 'outline')}>{post.status}</Badge>
-          </p>
+          </div>
         </div>
       </div>
       
