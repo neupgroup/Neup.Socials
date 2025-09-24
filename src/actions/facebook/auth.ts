@@ -16,7 +16,7 @@ const FB_OAUTH_BASE_URL = 'https://www.facebook.com/v20.0/dialog/oauth';
 export async function getFacebookAuthUrl(userId: string): Promise<string> {
   try {
     // The state parameter is used for security purposes to prevent CSRF attacks.
-    const state = generateRandomState(userId);
+    const state = await generateRandomState(userId);
 
     if (!process.env.FB_APP_ID || !process.env.FB_REDIRECT_URI) {
       throw new Error('Facebook environment variables are not set.');
