@@ -40,7 +40,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import './globals.css';
-import { Toaster } from "@/components/ui/toaster"
+import { Toaster } from "@/components/ui/toaster";
+import { ProgressBar } from '@/components/progress-bar';
 
 const navItems = [
   { href: '/analytics', icon: LayoutGrid, label: 'Analytics' },
@@ -68,6 +69,7 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
+        <ProgressBar />
         <SidebarProvider>
           <div className="flex min-h-screen w-full flex-col">
             
