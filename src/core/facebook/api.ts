@@ -1,3 +1,4 @@
+
 /**
  * @fileoverview Core functions for interacting with the Facebook Graph API.
  */
@@ -98,6 +99,22 @@ export type PageInsightsResponse = {
 
 export type PostInsightsResponse = {
     data: PostInsightMetric[];
+}
+
+type PagePost = {
+  id: string;
+  created_time: string;
+  message?: string;
+  story?: string;
+  permalink_url: string;
+}
+
+export type PageFeedResponse = {
+    data: PagePost[];
+    paging: {
+        previous: string;
+        next: string;
+    }
 }
 
 
@@ -221,6 +238,38 @@ export async function getPagePostInsights(
 
     const res = await fetch(`${GRAPH_API_BASE_URL}/${postId}/insights?${params.toString()}`);
     return handleApiResponse<PostInsightsResponse>(res);
+}
+
+
+/**
+ * Fetches a list of posts from a Facebook Page's feed.
+ * @param pageId The ID of the Facebook Page.
+ * @param pageToken The Page Access Token.
+ * @param since The start unix timestamp for the query.
+ * @param until The end unix timestamp for the query.
+ * @returns The response from the Facebook API containing the feed data.
+ */
+export async function getPosts(
+  pageId: string,
+  pageToken: string,
+  since?: number,
+  until?: number
+): Promise<PageFeedResponse> {
+  const params = new URLSearchParams({
+    access_token: pageToken,
+    fields: 'id,created_time,message,story,permalink_url',
+    limit: '100', // Fetch up to 100 posts per request
+  });
+
+  if (since) {
+    params.append('since', String(since));
+  }
+  if (until) {
+    params.append('until', String(until));
+  }
+
+  const res = await fetch(`${GRAPH_API_BASE_URL}/${pageId}/feed?${params.toString()}`);
+  return handleApiResponse<PageFeedResponse>(res);
 }
 
 

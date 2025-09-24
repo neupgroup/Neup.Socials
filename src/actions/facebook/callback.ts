@@ -1,3 +1,4 @@
+
 /**
  * @fileoverview Handles the OAuth callback from Facebook.
  */
@@ -67,13 +68,16 @@ export async function handleFacebookCallback(code: string, state: string) {
             category: page.category,
             status: 'Active',
             owner: userId,
-            connectedOn: serverTimestamp(),
             updatedAt: serverTimestamp(),
+            lastSyncedAt: null, // New field
         }
 
         if (existingDocs.empty) {
             // Add new document
-            await addDoc(accountsCollection, accountData);
+            await addDoc(accountsCollection, {
+                ...accountData,
+                connectedOn: serverTimestamp(),
+            });
         } else {
             // Update existing document
             const docRef = existingDocs.docs[0].ref;

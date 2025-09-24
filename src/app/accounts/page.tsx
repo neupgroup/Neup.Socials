@@ -7,18 +7,19 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, Twitter, Facebook, Linkedin, Instagram, MoreHorizontal, Loader2, Search } from 'lucide-react';
+import { PlusCircle, Twitter, Facebook, Linkedin, Instagram, MoreHorizontal, Loader2, Search, RefreshCw } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { format } from 'date-fns';
-import { collection, query, where, getDocs, onSnapshot, orderBy, limit, startAfter, DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
+import { format, formatDistanceToNow } from 'date-fns';
+import { collection, query, where, getDocs, onSnapshot, orderBy, limit, startAfter, DocumentData, QueryDocumentSnapshot, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
+import { syncPostsAction } from '@/actions/facebook/sync-posts';
 
 type Account = {
   id: string;
@@ -26,6 +27,7 @@ type Account = {
   username: string;
   name?: string;
   connectedOn: string;
+  lastSyncedAt?: Timestamp;
   status: string;
   icon: React.ReactNode;
   owner: string;
@@ -50,6 +52,7 @@ export default function AccountsPage() {
   const [lastVisible, setLastVisible] = React.useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [hasMore, setHasMore] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState('');
+  const [syncingAccountId, setSyncingAccountId] = React.useState<string | null>(null);
   
   const { toast } = useToast();
   const owner = 'neupkishor'; // This should be dynamic in a real app
@@ -98,29 +101,34 @@ export default function AccountsPage() {
         }
       }
 
-      const documentSnapshots = await getDocs(q);
-      const newAccounts = documentSnapshots.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          platform: data.platform,
-          username: data.username,
-          name: data.name,
-          connectedOn: data.connectedOn ? format(data.connectedOn.toDate(), 'yyyy-MM-dd') : '-',
-          status: data.status,
-          owner: data.owner,
-          icon: <PlatformIcon platform={data.platform} />,
-        } as Account;
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const newAccounts = snapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            platform: data.platform,
+            username: data.username,
+            name: data.name,
+            connectedOn: data.connectedOn ? format(data.connectedOn.toDate(), 'yyyy-MM-dd') : '-',
+            lastSyncedAt: data.lastSyncedAt,
+            status: data.status,
+            owner: data.owner,
+            icon: <PlatformIcon platform={data.platform} />,
+          } as Account;
+        });
+
+        setLastVisible(snapshot.docs[snapshot.docs.length - 1]);
+        setHasMore(newAccounts.length === PAGE_SIZE);
+        setAccounts(prev => loadMore ? [...prev, ...newAccounts] : newAccounts);
+        setLoading(false);
+        setLoadingMore(false);
       });
 
-      setLastVisible(documentSnapshots.docs[documentSnapshots.docs.length - 1]);
-      setHasMore(newAccounts.length === PAGE_SIZE);
-      setAccounts(prev => loadMore ? [...prev, ...newAccounts] : newAccounts);
+      return unsubscribe;
 
     } catch (error) {
       console.error("Error fetching accounts: ", error);
       toast({ title: 'Error fetching accounts', variant: 'destructive' });
-    } finally {
       setLoading(false);
       setLoadingMore(false);
     }
@@ -142,6 +150,29 @@ export default function AccountsPage() {
           fetchAccounts(true, searchTerm);
       }
   }
+
+  const handleSyncPosts = async (accountId: string) => {
+    setSyncingAccountId(accountId);
+    try {
+        const result = await syncPostsAction(accountId);
+        if (result.success) {
+            toast({
+                title: 'Sync Complete',
+                description: `${result.postsSynced} new posts were synced for this account.`,
+            });
+        } else {
+            throw new Error(result.error || 'Unknown error during sync.');
+        }
+    } catch(error: any) {
+        toast({
+            title: 'Sync Failed',
+            description: error.message,
+            variant: 'destructive',
+        });
+    } finally {
+        setSyncingAccountId(null);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -176,8 +207,8 @@ export default function AccountsPage() {
               <TableRow>
                 <TableHead>Platform</TableHead>
                 <TableHead>Name</TableHead>
-                <TableHead>Username</TableHead>
                 <TableHead>Connected On</TableHead>
+                <TableHead>Last Synced</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead><span className="sr-only">Actions</span></TableHead>
               </TableRow>
@@ -205,20 +236,26 @@ export default function AccountsPage() {
                       </div>
                     </TableCell>
                     <TableCell>{account.name}</TableCell>
-                    <TableCell>{account.username}</TableCell>
                     <TableCell>{account.connectedOn}</TableCell>
+                    <TableCell>
+                        {account.lastSyncedAt ? formatDistanceToNow(account.lastSyncedAt.toDate(), { addSuffix: true }) : 'Never'}
+                    </TableCell>
                     <TableCell>
                       <Badge variant={account.status === 'Active' ? 'default' : 'destructive'}>{account.status}</Badge>
                     </TableCell>
                     <TableCell>
-                      <DropdownMenu>
+                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
+                          <Button variant="ghost" className="h-8 w-8 p-0" disabled={syncingAccountId === account.id}>
                             <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
+                            {syncingAccountId === account.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <MoreHorizontal className="h-4 w-4" />}
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                           <DropdownMenuItem onClick={() => handleSyncPosts(account.id)} disabled={syncingAccountId === account.id}>
+                                <RefreshCw className="mr-2 h-4 w-4" />
+                                <span>Sync Posts</span>
+                           </DropdownMenuItem>
                           <DropdownMenuItem>Refresh Connection</DropdownMenuItem>
                           <DropdownMenuItem className="text-destructive hover:text-destructive-foreground">Disconnect</DropdownMenuItem>
                         </DropdownMenuContent>
@@ -232,7 +269,7 @@ export default function AccountsPage() {
         </CardContent>
       </Card>
       
-      {hasMore && (
+      {hasMore && !loading && (
         <div className="text-center">
           <Button onClick={handleShowMore} disabled={loadingMore}>
             {loadingMore ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
