@@ -7,7 +7,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { UploadCloud, ArrowLeft, Loader2, Image as ImageIcon, Search, CheckCircle } from 'lucide-react';
+import { UploadCloud, ArrowLeft, Loader2, Image as ImageIcon, Search, CheckCircle, Facebook } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { doc, getDoc, updateDoc, collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -16,6 +16,7 @@ import { recordUpload, UploadRecord } from '@/actions/uploads/recordUpload';
 import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const UPLOAD_ENDPOINT = 'https://neupgroup.com/usercontent/bridge/api/upload.php';
 
@@ -26,6 +27,8 @@ export default function EditPostPage() {
   const id = params.id as string;
   const [content, setContent] = React.useState('');
   const [selectedMediaUrls, setSelectedMediaUrls] = React.useState<string[]>([]);
+  const [ctaType, setCtaType] = React.useState<string>('');
+  const [ctaLink, setCtaLink] = React.useState<string>('');
   
   const [isLoading, setIsLoading] = React.useState(true);
   const [isSaving, setIsSaving] = React.useState(false);
@@ -52,6 +55,8 @@ export default function EditPostPage() {
         const data = docSnap.data();
         setContent(data.content);
         setSelectedMediaUrls(data.mediaUrls || (data.mediaUrl ? [data.mediaUrl] : []));
+        setCtaType(data.ctaType || '');
+        setCtaLink(data.ctaLink || '');
       } else {
         toast({ title: 'Post not found', variant: 'destructive' });
         router.push('/content');
@@ -140,6 +145,8 @@ export default function EditPostPage() {
       await updateDoc(doc(db, 'content', id), {
         content,
         mediaUrls: selectedMediaUrls,
+        ctaType: ctaType || null,
+        ctaLink: ctaLink || null,
       });
 
       router.push(`/content/edit/${id}/platforms`);
@@ -260,6 +267,42 @@ export default function EditPostPage() {
         </CardContent>
       </Card>
       
+      <Card>
+        <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Facebook className="h-5 w-5 text-blue-600" /> Facebook Options</CardTitle>
+            <CardDescription>Add a Call To Action button to your Facebook post (optional, may not appear on organic posts).</CardDescription>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+                <Label htmlFor="ctaType">CTA Button Type</Label>
+                <Select value={ctaType} onValueChange={setCtaType}>
+                    <SelectTrigger id="ctaType">
+                        <SelectValue placeholder="None" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="">None</SelectItem>
+                        <SelectItem value="SHOP_NOW">Shop Now</SelectItem>
+                        <SelectItem value="LEARN_MORE">Learn More</SelectItem>
+                        <SelectItem value="SIGN_UP">Sign Up</SelectItem>
+                        <SelectItem value="BOOK_NOW">Book Now</SelectItem>
+                        <SelectItem value="CONTACT_US">Contact Us</SelectItem>
+                        <SelectItem value="SEND_MESSAGE">Send Message</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+             <div className="space-y-2">
+                <Label htmlFor="ctaLink">CTA Link</Label>
+                <Input 
+                    id="ctaLink"
+                    placeholder="https://example.com/product"
+                    value={ctaLink}
+                    onChange={(e) => setCtaLink(e.target.value)}
+                    disabled={!ctaType}
+                />
+            </div>
+        </CardContent>
+      </Card>
+
       <div className="flex justify-between">
          <Button asChild variant="outline" disabled={isSaving}><Link href={`/content/view/${id}`}>Cancel</Link></Button>
         <Button onClick={handleNext} disabled={isSaving}>

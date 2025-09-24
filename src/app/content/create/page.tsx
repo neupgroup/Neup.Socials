@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { UploadCloud, Loader2, Image as ImageIcon, Search, CheckCircle } from 'lucide-react';
+import { UploadCloud, Loader2, Image as ImageIcon, Search, CheckCircle, Facebook } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { addDoc, collection, serverTimestamp, doc, updateDoc, query, orderBy, onSnapshot } from 'firebase/firestore';
@@ -15,6 +15,7 @@ import { recordUpload, UploadRecord } from '@/actions/uploads/recordUpload';
 import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const UPLOAD_ENDPOINT = 'https://neupgroup.com/usercontent/bridge/api/upload.php';
 
@@ -28,6 +29,8 @@ export default function CreatePostPage() {
   const [uploads, setUploads] = React.useState<Upload[]>([]);
   const [loadingUploads, setLoadingUploads] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState('');
+  const [ctaType, setCtaType] = React.useState<string>('');
+  const [ctaLink, setCtaLink] = React.useState<string>('');
   
   const router = useRouter();
   const { toast } = useToast();
@@ -135,6 +138,8 @@ export default function CreatePostPage() {
         createdAt: serverTimestamp(),
         platforms: [],
         accountIds: [],
+        ctaType: ctaType || null,
+        ctaLink: ctaLink || null,
       });
       
       toast({ title: 'Draft Saved!', description: 'Your post has been saved as a draft.' });
@@ -273,6 +278,42 @@ export default function CreatePostPage() {
               </div>
             )}
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Facebook className="h-5 w-5 text-blue-600" /> Facebook Options</CardTitle>
+            <CardDescription>Add a Call To Action button to your Facebook post (optional, may not appear on organic posts).</CardDescription>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+                <Label htmlFor="ctaType">CTA Button Type</Label>
+                <Select value={ctaType} onValueChange={setCtaType}>
+                    <SelectTrigger id="ctaType">
+                        <SelectValue placeholder="None" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="">None</SelectItem>
+                        <SelectItem value="SHOP_NOW">Shop Now</SelectItem>
+                        <SelectItem value="LEARN_MORE">Learn More</SelectItem>
+                        <SelectItem value="SIGN_UP">Sign Up</SelectItem>
+                        <SelectItem value="BOOK_NOW">Book Now</SelectItem>
+                        <SelectItem value="CONTACT_US">Contact Us</SelectItem>
+                        <SelectItem value="SEND_MESSAGE">Send Message</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+             <div className="space-y-2">
+                <Label htmlFor="ctaLink">CTA Link</Label>
+                <Input 
+                    id="ctaLink"
+                    placeholder="https://example.com/product"
+                    value={ctaLink}
+                    onChange={(e) => setCtaLink(e.target.value)}
+                    disabled={!ctaType}
+                />
+            </div>
         </CardContent>
       </Card>
       

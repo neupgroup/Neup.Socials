@@ -42,7 +42,7 @@ export async function publishContent(postId: string) {
         
         // Currently, we only support Facebook
         if (account.platform === 'Facebook') {
-          await publishToFacebookPage(pageId, token, post.content, post.mediaUrls);
+          await publishToFacebookPage(pageId, token, post.content, post.mediaUrls, post.ctaType, post.ctaLink);
           console.log(`Successfully published to Facebook page: ${account.name} (${pageId})`);
         } else {
            console.warn(`Publishing for platform '${account.platform}' is not yet implemented.`);

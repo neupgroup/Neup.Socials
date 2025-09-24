@@ -136,56 +136,58 @@ export async function validateToken(pageToken: string): Promise<DebugTokenRespon
  * @param pageToken The Page Access Token.
  * @param content The text content of the post.
  * @param mediaUrls Optional array of URLs of images or videos to attach.
+ * @param ctaType Optional CTA button type.
+ * @param ctaLink Optional link for the CTA button.
  * @returns The response from the Facebook API, typically containing the post ID.
  */
 export async function publishToPage(
   pageId: string,
   pageToken: string,
   content: string,
-  mediaUrls?: string[]
+  mediaUrls?: string[],
+  ctaType?: string,
+  ctaLink?: string,
 ): Promise<PublishPostResponse> {
   
   // TODO: Handle multiple media URLs. For now, we'll just use the first one.
   const mediaUrl = mediaUrls && mediaUrls.length > 0 ? mediaUrls[0] : undefined;
 
-  if (mediaUrl) {
-    const fullMediaUrl = mediaUrl.startsWith('http') ? mediaUrl : `https://neupgroup.com${mediaUrl}`;
-    const mimeType = mime.lookup(fullMediaUrl);
+  const fullMediaUrl = mediaUrl && !mediaUrl.startsWith('http') ? `https://neupgroup.com${mediaUrl}` : mediaUrl;
 
-    if (mimeType && mimeType.startsWith('image/')) {
-      // It's an image
-      const params = new URLSearchParams({
-        url: fullMediaUrl,
-        caption: content,
-        access_token: pageToken,
-      });
-      const res = await fetch(`${GRAPH_API_BASE_URL}/${pageId}/photos`, {
-        method: 'POST',
-        body: params,
-      });
-      return handleApiResponse<PublishPostResponse>(res);
-    } else if (mimeType && mimeType.startsWith('video/')) {
-      // It's a video
-      const params = new URLSearchParams({
-        file_url: fullMediaUrl,
-        description: content,
-        access_token: pageToken,
-      });
-      const res = await fetch(`${GRAPH_API_BASE_URL}/${pageId}/videos`, {
-        method: 'POST',
-        body: params,
-      });
-      return handleApiResponse<PublishPostResponse>(res);
-    }
-  }
+  const mimeType = fullMediaUrl ? mime.lookup(fullMediaUrl) : false;
 
-  // Default to text-only post
+  let endpoint = `${GRAPH_API_BASE_URL}/${pageId}/feed`;
   const params = new URLSearchParams({
-    message: content,
     access_token: pageToken,
   });
 
-  const res = await fetch(`${GRAPH_API_BASE_URL}/${pageId}/feed`, {
+  if (ctaType && ctaLink) {
+    if (ctaType === 'SEND_MESSAGE') {
+        params.append('call_to_action', JSON.stringify({
+            type: 'MESSAGE',
+            value: { link: ctaLink }
+        }));
+    } else {
+        params.append('call_to_action', JSON.stringify({
+            type: ctaType,
+            value: { link: ctaLink }
+        }));
+    }
+  }
+
+  if (mimeType && mimeType.startsWith('image/')) {
+    endpoint = `${GRAPH_API_BASE_URL}/${pageId}/photos`;
+    params.append('url', fullMediaUrl!);
+    params.append('caption', content);
+  } else if (mimeType && mimeType.startsWith('video/')) {
+    endpoint = `${GRAPH_API_BASE_URL}/${pageId}/videos`;
+    params.append('file_url', fullMediaUrl!);
+    params.append('description', content);
+  } else {
+    params.append('message', content);
+  }
+
+  const res = await fetch(endpoint, {
     method: 'POST',
     body: params,
   });
