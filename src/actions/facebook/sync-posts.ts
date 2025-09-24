@@ -64,14 +64,24 @@ export async function syncPostsAction(accountId: string): Promise<SyncResult> {
     const postsCollectionRef = collection(db, 'posts');
     const platformPostIds = fetchedPosts.map(p => p.id);
 
-    // Find which posts already exist in our database for this account
-    const existingPostsQuery = query(
-        postsCollectionRef,
-        where('accountId', '==', accountId),
-        where('platformPostId', 'in', platformPostIds)
-    );
-    const existingPostsSnap = await getDocs(existingPostsQuery);
-    const existingPostIds = new Set(existingPostsSnap.docs.map(doc => doc.data().platformPostId));
+    // Chunk the platformPostIds array to respect Firestore's 30-item limit for 'in' queries
+    const chunks = [];
+    for (let i = 0; i < platformPostIds.length; i += 30) {
+        chunks.push(platformPostIds.slice(i, i + 30));
+    }
+    
+    const existingPostIds = new Set<string>();
+
+    for (const chunk of chunks) {
+        if (chunk.length === 0) continue;
+        const existingPostsQuery = query(
+            postsCollectionRef,
+            where('accountId', '==', accountId),
+            where('platformPostId', 'in', chunk)
+        );
+        const existingPostsSnap = await getDocs(existingPostsQuery);
+        existingPostsSnap.docs.forEach(doc => existingPostIds.add(doc.data().platformPostId));
+    }
 
     const newPosts = fetchedPosts.filter(p => !existingPostIds.has(p.id));
 
