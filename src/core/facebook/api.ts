@@ -191,7 +191,7 @@ export async function publishToPage(
     
     photoIds.forEach(id => feedParams.append('attached_media[]', `{"media_fbid":"${id}"}`));
 
-    if (ctaType && ctaLink) {
+    if (ctaType && ctaType !== 'NONE' && ctaLink) {
         feedParams.append('call_to_action', JSON.stringify({ type: ctaType, value: { link: ctaLink } }));
     }
 
@@ -203,26 +203,32 @@ export async function publishToPage(
   }
 
   // Handle single media post or text-only post
-  const mediaUrl = hasMedia ? mediaUrls[0] : undefined;
-  const fullMediaUrl = mediaUrl ? getFullMediaUrl(mediaUrl) : undefined;
-  const mimeType = fullMediaUrl ? mime.lookup(fullMediaUrl) : false;
-
-  let endpoint = `${GRAPH_API_BASE_URL}/${pageId}/feed`;
   const params = new URLSearchParams({ access_token: pageToken });
+  let endpoint = `${GRAPH_API_BASE_URL}/${pageId}/feed`;
 
-  if (ctaType && ctaLink) {
+  if (ctaType && ctaType !== 'NONE' && ctaLink) {
       params.append('call_to_action', JSON.stringify({ type: ctaType, value: { link: ctaLink } }));
   }
 
-  if (mimeType && mimeType.startsWith('image/')) {
-    endpoint = `${GRAPH_API_BASE_URL}/${pageId}/photos`;
-    params.append('url', fullMediaUrl!);
-    params.append('caption', content);
-  } else if (mimeType && mimeType.startsWith('video/')) {
-    endpoint = `${GRAPH_API_BASE_URL}/${pageId}/videos`;
-    params.append('file_url', fullMediaUrl!);
-    params.append('description', content);
+  if (hasMedia && mediaUrls.length === 1) {
+    const mediaUrl = mediaUrls[0];
+    const fullMediaUrl = getFullMediaUrl(mediaUrl);
+    const mimeType = mime.lookup(fullMediaUrl) || '';
+
+    if (mimeType.startsWith('image/')) {
+      endpoint = `${GRAPH_API_BASE_URL}/${pageId}/photos`;
+      params.append('url', fullMediaUrl);
+      params.append('caption', content);
+    } else if (mimeType.startsWith('video/')) {
+      endpoint = `${GRAPH_API_BASE_URL}/${pageId}/videos`;
+      params.append('file_url', fullMediaUrl);
+      params.append('description', content);
+    } else {
+        // Fallback for unknown media types: post as a link in the message
+        params.append('message', `${content}\n\n${fullMediaUrl}`);
+    }
   } else {
+    // Text-only post
     params.append('message', content);
   }
 
