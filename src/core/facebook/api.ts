@@ -75,6 +75,19 @@ export type InsightMetric = {
   id: string;
 };
 
+export type PostInsightValue = {
+    value: number | { [key: string]: number };
+}
+
+export type PostInsightMetric = {
+    name: string;
+    period: string;
+    values: PostInsightValue[];
+    title: string;
+    description: string;
+    id: string;
+}
+
 export type PageInsightsResponse = {
   data: InsightMetric[];
   paging: {
@@ -82,6 +95,10 @@ export type PageInsightsResponse = {
     next: string;
   };
 };
+
+export type PostInsightsResponse = {
+    data: PostInsightMetric[];
+}
 
 
 async function handleApiResponse<T>(res: Response): Promise<T> {
@@ -185,6 +202,27 @@ export async function getPageInsights(
   return handleApiResponse<PageInsightsResponse>(res);
 }
 
+/**
+ * Fetches insights for a specific Facebook Page Post.
+ * @param postId The ID of the Facebook Page Post.
+ * @param pageToken The Page Access Token.
+ * @param metrics An array of metric names to fetch.
+ * @returns The response from the Facebook API containing the post insights data.
+ */
+export async function getPagePostInsights(
+    postId: string,
+    pageToken: string,
+    metrics: string[]
+): Promise<PostInsightsResponse> {
+    const params = new URLSearchParams({
+        access_token: pageToken,
+        metric: metrics.join(','),
+    });
+
+    const res = await fetch(`${GRAPH_API_BASE_URL}/${postId}/insights?${params.toString()}`);
+    return handleApiResponse<PostInsightsResponse>(res);
+}
+
 
 const getFullMediaUrl = (url: string) => {
     return url && !url.startsWith('http') ? `https://neupgroup.com${url}` : url;
@@ -231,7 +269,7 @@ export async function publishToPage(
   ctaLink?: string,
 ): Promise<PublishPostResponse> {
   
-  const hasMedia = mediaUrls && mediaUrls.length > 0;
+  const hasMedia = Array.isArray(mediaUrls) && mediaUrls.length > 0;
 
   // Handle multi-photo posts
   if (hasMedia && mediaUrls.length > 1) {

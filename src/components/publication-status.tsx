@@ -3,12 +3,14 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import useSWR from 'swr';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Twitter, Linkedin, Facebook, Instagram, Youtube, Loader2, ExternalLink, Edit, Trash2 } from 'lucide-react';
+import { Twitter, Linkedin, Facebook, Instagram, Youtube, Loader2, ExternalLink, Edit, Trash2, ThumbsUp, MessageSquare, Share2 } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Badge } from './ui/badge';
+import { getPostAnalyticsAction } from '@/actions/facebook/post-insights';
 
 type ConnectedAccount = {
   id: string;
@@ -44,6 +46,42 @@ const PlatformIcon = ({ platform, className }: { platform: string, className?: s
   if (platform === 'YouTube') return <Youtube {...props} className="text-red-600" />;
   return null;
 }
+
+const fetcher = (postId: string) => getPostAnalyticsAction(postId);
+
+const PostAnalytics = ({ postId }: { postId: string }) => {
+    const { data, error, isLoading } = useSWR(postId, fetcher, {
+        revalidateOnFocus: false, // Don't refetch on window focus
+    });
+
+    if (isLoading) {
+        return <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />;
+    }
+
+    if (error || !data?.success || !data.analytics) {
+        return <span className="text-xs text-destructive">Analytics unavailable</span>;
+    }
+
+    const { likes, comments, shares } = data.analytics;
+
+    return (
+        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1">
+                <ThumbsUp className="h-3 w-3" />
+                <span>{likes}</span>
+            </div>
+            <div className="flex items-center gap-1">
+                <MessageSquare className="h-3 w-3" />
+                <span>{comments}</span>
+            </div>
+            <div className="flex items-center gap-1">
+                <Share2 className="h-3 w-3" />
+                <span>{shares}</span>
+            </div>
+        </div>
+    );
+};
+
 
 export const PublicationStatus: React.FC<PublicationStatusProps> = ({ accountIds, posts = [], postStatus, publishedAt, scheduledAt, postCollectionId }) => {
   const [accounts, setAccounts] = React.useState<ConnectedAccount[]>([]);
@@ -82,9 +120,10 @@ export const PublicationStatus: React.FC<PublicationStatusProps> = ({ accountIds
   return (
     <div className="space-y-4">
       {accounts.map(account => {
-        const date = postStatus === 'Published' ? publishedAt : (postStatus === 'Scheduled' ? scheduledAt : 'Not yet scheduled');
         const individualPost = posts.find(p => p.accountId === account.id);
+        const date = postStatus === 'Published' ? publishedAt : (postStatus === 'Scheduled' ? scheduledAt : 'Not yet scheduled');
         const postUrl = individualPost?.postLink;
+        const status = postStatus === 'Published' ? (individualPost ? 'Published' : 'Failed') : postStatus;
 
         return (
           <Card key={account.id} className="overflow-hidden">
@@ -99,11 +138,16 @@ export const PublicationStatus: React.FC<PublicationStatusProps> = ({ accountIds
               
               <div className="flex flex-col items-start sm:items-end flex-shrink-0 gap-2 w-full sm:w-auto">
                  <div className="flex items-center gap-2">
-                    <Badge variant={postStatus === 'Published' ? (individualPost ? 'default' : 'destructive') : 'secondary'}>
-                        {postStatus === 'Published' ? (individualPost ? 'Published' : 'Failed') : postStatus}
+                    <Badge variant={status === 'Published' ? 'default' : (status === 'Failed' ? 'destructive' : 'secondary')}>
+                        {status}
                     </Badge>
                     <span className="text-sm text-muted-foreground">{date}</span>
                  </div>
+
+                 {individualPost && individualPost.id && postStatus === 'Published' && (
+                    <PostAnalytics postId={individualPost.id} />
+                 )}
+
                  <div className="flex items-center gap-2">
                     <Button size="sm" variant="ghost" disabled={!postUrl} asChild>
                        {postUrl ? (
@@ -131,5 +175,3 @@ export const PublicationStatus: React.FC<PublicationStatusProps> = ({ accountIds
     </div>
   );
 };
-
-    
