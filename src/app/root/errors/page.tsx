@@ -42,7 +42,8 @@ export default function ErrorLogsPage() {
     return () => unsubscribe();
   }, []);
 
-  const getBadgeVariant = (source: string) => {
+  const getBadgeVariant = (source?: string) => {
+    if (!source) return 'outline';
     if (source.toLowerCase().includes('facebook')) return 'destructive';
     if (source.toLowerCase().includes('ai')) return 'secondary';
     return 'outline';
@@ -97,7 +98,7 @@ export default function ErrorLogsPage() {
                     </TableCell>
                     <TableCell className="font-medium max-w-sm truncate">{error.message}</TableCell>
                     <TableCell>
-                      <Badge variant={getBadgeVariant(error.source)}>{error.source}</Badge>
+                      <Badge variant={getBadgeVariant(error.source)}>{error.source || 'Unknown'}</Badge>
                     </TableCell>
                     <TableCell className="font-mono text-xs">{error.userId || 'N/A'}</TableCell>
                     <TableCell className="text-right">
