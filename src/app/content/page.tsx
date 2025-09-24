@@ -8,25 +8,35 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, Loader2, Search } from 'lucide-react';
+import { PlusCircle, Loader2, Search, Twitter, Facebook, Linkedin, Instagram } from 'lucide-react';
 import { collection, getDocs, orderBy, query, limit, startAfter, where, QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { format } from 'date-fns';
 import { Input } from '@/components/ui/input';
 
-
-type PostCollection = {
+type Post = {
   id: string;
-  content: string;
-  status: 'Published' | 'Scheduled' | 'Draft';
-  platforms: string[];
-  scheduledAt: string;
+  message: string;
+  platform: string;
+  createdOn: any; // Firestore Timestamp
+  postLink: string;
 };
 
-const PAGE_SIZE = 10;
+const PlatformIcon = ({ platform }: { platform: string }) => {
+    switch(platform) {
+        case 'Twitter': return <Twitter className="h-5 w-5 text-blue-400" />;
+        case 'LinkedIn': return <Linkedin className="h-5 w-5 text-blue-700" />;
+        case 'Facebook': return <Facebook className="h-5 w-5 text-blue-600" />;
+        case 'Instagram': return <Instagram className="h-5 w-5 text-pink-500" />;
+        default: return null;
+    }
+}
+
+
+const PAGE_SIZE = 15;
 
 export default function ContentDashboardPage() {
-  const [postCollections, setPostCollections] = React.useState<PostCollection[]>([]);
+  const [posts, setPosts] = React.useState<Post[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [loadingMore, setLoadingMore] = React.useState(false);
   const [lastVisible, setLastVisible] = React.useState<QueryDocumentSnapshot<DocumentData> | null>(null);
@@ -35,31 +45,31 @@ export default function ContentDashboardPage() {
   
   const router = useRouter();
 
-  const fetchPostCollections = React.useCallback(async (loadMore = false, search = '') => {
+  const fetchPosts = React.useCallback(async (loadMore = false, search = '') => {
     if (!loadMore) setLoading(true);
     else setLoadingMore(true);
 
     try {
       let q = query(
-        collection(db, 'postCollections'),
-        orderBy('createdAt', 'desc'),
+        collection(db, 'posts'),
+        orderBy('createdOn', 'desc'),
         limit(PAGE_SIZE)
       );
 
       if (search) {
         q = query(
-          collection(db, 'postCollections'),
-          where('content', '>=', search),
-          where('content', '<=', search + '\uf8ff'),
-          orderBy('content'),
+          collection(db, 'posts'),
+          where('message', '>=', search),
+          where('message', '<=', search + '\uf8ff'),
+          orderBy('message'),
           limit(PAGE_SIZE)
         );
       }
 
       if (loadMore && lastVisible) {
         const baseQuery = search 
-            ? query(collection(db, 'postCollections'), where('content', '>=', search), where('content', '<=', search + '\uf8ff'), orderBy('content'))
-            : query(collection(db, 'postCollections'), orderBy('createdAt', 'desc'));
+            ? query(collection(db, 'posts'), where('message', '>=', search), where('message', '<=', search + '\uf8ff'), orderBy('message'))
+            : query(collection(db, 'posts'), orderBy('createdOn', 'desc'));
 
         q = query(baseQuery, startAfter(lastVisible), limit(PAGE_SIZE));
       }
@@ -69,18 +79,18 @@ export default function ContentDashboardPage() {
         const data = doc.data();
         return {
           id: doc.id,
-          content: data.content,
-          status: data.status,
-          platforms: data.platforms || [],
-          scheduledAt: data.scheduledAt ? format(data.scheduledAt.toDate(), 'yyyy-MM-dd') : '-',
-        } as PostCollection;
+          message: data.message,
+          platform: data.platform,
+          createdOn: data.createdOn,
+          postLink: data.postLink,
+        } as Post;
       });
 
       setLastVisible(documentSnapshots.docs[documentSnapshots.docs.length - 1]);
       setHasMore(fetchedData.length === PAGE_SIZE);
-      setPostCollections(prev => loadMore ? [...prev, ...fetchedData] : fetchedData);
+      setPosts(prev => loadMore ? [...prev, ...fetchedData] : fetchedData);
     } catch (error) {
-      console.error("Error fetching post collections: ", error);
+      console.error("Error fetching posts: ", error);
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -90,22 +100,21 @@ export default function ContentDashboardPage() {
   React.useEffect(() => {
     const debouncedSearch = setTimeout(() => {
       setLastVisible(null);
-      fetchPostCollections(false, searchTerm);
+      fetchPosts(false, searchTerm);
     }, 500);
 
     return () => clearTimeout(debouncedSearch);
-  // We only want to run this when searchTerm changes, fetchPostCollections is memoized
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm]);
 
 
   const handleRowClick = (id: string) => {
-    router.push(`/content/collection/${id}`);
+    router.push(`/content/${id}`);
   };
 
   const handleShowMore = () => {
       if(hasMore) {
-          fetchPostCollections(true, searchTerm);
+          fetchPosts(true, searchTerm);
       }
   }
 
@@ -113,8 +122,8 @@ export default function ContentDashboardPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Content Dashboard</h1>
-          <p className="text-muted-foreground">Manage all your post collections in one place.</p>
+          <h1 className="text-3xl font-bold">Content Feed</h1>
+          <p className="text-muted-foreground">A unified feed of all your published posts.</p>
         </div>
         <div className="flex items-center gap-2">
            <div className="relative">
@@ -140,40 +149,36 @@ export default function ContentDashboardPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Platform</TableHead>
                 <TableHead>Content</TableHead>
-                <TableHead>Platforms</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Date</TableHead>
+                <TableHead>Date Published</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center h-24">
+                  <TableCell colSpan={3} className="text-center h-24">
                     <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
                   </TableCell>
                 </TableRow>
-              ) : postCollections.length === 0 ? (
+              ) : posts.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-muted-foreground h-24">
-                    No post collections found.
+                  <TableCell colSpan={3} className="text-center text-muted-foreground h-24">
+                    No posts found.
                   </TableCell>
                 </TableRow>
               ) : (
-                postCollections.map((pc) => (
+                posts.map((post) => (
                   <TableRow 
-                    key={pc.id} 
-                    onClick={() => handleRowClick(pc.id)}
+                    key={post.id} 
+                    onClick={() => handleRowClick(post.id)}
                     className="cursor-pointer"
                   >
-                    <TableCell className="font-medium max-w-sm truncate">{pc.content}</TableCell>
-                    <TableCell>{pc.platforms.join(', ')}</TableCell>
                     <TableCell>
-                      <Badge variant={pc.status === 'Published' ? 'default' : (pc.status === 'Scheduled' ? 'secondary' : 'outline')}>
-                        {pc.status}
-                      </Badge>
+                      <PlatformIcon platform={post.platform} />
                     </TableCell>
-                    <TableCell>{pc.scheduledAt}</TableCell>
+                    <TableCell className="font-medium max-w-sm truncate">{post.message}</TableCell>
+                    <TableCell>{post.createdOn ? format(post.createdOn.toDate(), 'PP p') : '-'}</TableCell>
                   </TableRow>
                 ))
               )}
@@ -182,7 +187,7 @@ export default function ContentDashboardPage() {
         </CardContent>
       </Card>
       
-       {hasMore && (
+       {hasMore && !loadingMore && hasMore && (
         <div className="text-center">
           <Button onClick={handleShowMore} disabled={loadingMore}>
             {loadingMore ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
@@ -193,5 +198,3 @@ export default function ContentDashboardPage() {
     </div>
   );
 }
-
-    
