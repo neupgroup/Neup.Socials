@@ -68,7 +68,7 @@ export default function AccountDetailPage() {
   const [hasMore, setHasMore] = React.useState(true);
 
   const fetchPosts = React.useCallback(async (loadMore = false) => {
-    if (!id) return;
+    if (!id) return { success: false };
     
     if (loadMore) {
         setLoadingMorePosts(true);
@@ -92,6 +92,7 @@ export default function AccountDetailPage() {
       setLastVisible(documentSnapshots.docs[documentSnapshots.docs.length - 1]);
       setHasMore(newPosts.length === PAGE_SIZE);
       setPosts(prev => loadMore ? [...prev, ...newPosts] : newPosts);
+      return { success: true };
 
     } catch (error: any) {
         await logError({
@@ -101,6 +102,7 @@ export default function AccountDetailPage() {
             context: { accountId: id, trace: error.stack },
         });
         toast({ title: 'Failed to fetch posts', variant: 'destructive' });
+        return { success: false };
     } finally {
       if (loadMore) {
         setLoadingMorePosts(false);
@@ -109,7 +111,10 @@ export default function AccountDetailPage() {
   }, [id, toast, lastVisible]);
   
   React.useEffect(() => {
-    if (!id) return;
+    if (!id) {
+        setLoading(false);
+        return;
+    };
 
     const fetchAccountDetails = async () => {
       setLoading(true);
@@ -141,7 +146,7 @@ export default function AccountDetailPage() {
     };
 
     fetchAccountDetails();
-  }, [id, router, toast, fetchPosts]);
+  }, [id, router, toast]);
 
   const handleSyncPosts = async () => {
     if (!id) return;
@@ -293,3 +298,5 @@ export default function AccountDetailPage() {
   );
 }
       
+
+    
