@@ -6,11 +6,12 @@ import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Twitter, Linkedin, Edit, Trash, ArrowLeft, Loader2, Facebook, Instagram, Youtube } from 'lucide-react';
-import { doc, getDoc, deleteDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { Twitter, Linkedin, Edit, Trash, ArrowLeft, Loader2, Facebook, Instagram, Youtube, Repeat } from 'lucide-react';
+import { doc, getDoc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { repostAction } from '@/actions/content/repost';
 
 type Post = {
   id: string;
@@ -39,6 +40,7 @@ export default function ViewContentPage() {
   const id = params.id as string;
   const [post, setPost] = React.useState<Post | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [isProcessing, setIsProcessing] = React.useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -75,12 +77,14 @@ export default function ViewContentPage() {
   const handleDelete = async () => {
     if (!post) return;
     if (window.confirm('Are you sure you want to delete this post?')) {
+      setIsProcessing(true);
       try {
         await deleteDoc(doc(db, 'content', post.id));
         toast({ title: 'Post deleted successfully' });
         router.push('/content');
       } catch (error) {
         toast({ title: 'Failed to delete post', variant: 'destructive' });
+        setIsProcessing(false);
       }
     }
   };
@@ -88,6 +92,7 @@ export default function ViewContentPage() {
   const handleCancelSchedule = async () => {
       if (!post || post.status !== 'Scheduled') return;
        if (window.confirm('Are you sure you want to cancel the schedule and move this post to drafts?')) {
+           setIsProcessing(true);
            try {
                 const docRef = doc(db, 'content', id);
                 await updateDoc(docRef, {
@@ -95,8 +100,8 @@ export default function ViewContentPage() {
                     scheduledAt: null,
                 });
                 toast({ title: 'Schedule cancelled' });
-                // Re-fetch post data
-                 const docSnap = await getDoc(docRef);
+                // Re-fetch post data to update UI
+                const docSnap = await getDoc(docRef);
                  const data = docSnap.data();
                  if(data) {
                     setPost({
@@ -113,8 +118,31 @@ export default function ViewContentPage() {
                  }
            } catch (error) {
                toast({ title: 'Failed to cancel schedule', variant: 'destructive' });
+           } finally {
+               setIsProcessing(false);
            }
        }
+  };
+
+  const handleRepost = async () => {
+    if (!post) return;
+    setIsProcessing(true);
+    try {
+        const result = await repostAction(post.id);
+        if (result.success && result.newPostId) {
+            toast({ title: 'Post duplicated!', description: 'Redirecting to schedule the new post...' });
+            router.push(`/content/edit/${result.newPostId}/platforms`);
+        } else {
+            throw new Error(result.error || 'Failed to create a repost.');
+        }
+    } catch (error: any) {
+        toast({
+            title: 'Could not create repost',
+            description: error.message,
+            variant: 'destructive',
+        });
+        setIsProcessing(false);
+    }
   };
 
 
@@ -146,7 +174,7 @@ export default function ViewContentPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Button asChild variant="outline" size="icon">
+        <Button asChild variant="outline" size="icon" disabled={isProcessing}>
           <Link href="/content">
             <ArrowLeft />
           </Link>
@@ -211,25 +239,29 @@ export default function ViewContentPage() {
                 <CardContent className="flex flex-col gap-2">
                    {!isPublished && (
                      <>
-                        <Button asChild>
+                        <Button asChild disabled={isProcessing}>
                             <Link href={`/content/edit/${id}`}><Edit className="mr-2 h-4 w-4"/> Edit Post</Link>
                         </Button>
                         {post.status === 'Scheduled' && (
-                            <Button variant="outline" onClick={handleCancelSchedule}>
+                            <Button variant="outline" onClick={handleCancelSchedule} disabled={isProcessing}>
+                                {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
                                 Cancel Schedule
                             </Button>
                         )}
                      </>
                    )}
-                    <Button variant="destructive" onClick={handleDelete}>
-                        <Trash className="mr-2 h-4 w-4"/> Delete Post
+                   <Button variant="secondary" onClick={handleRepost} disabled={isProcessing}>
+                        {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Repeat className="mr-2 h-4 w-4"/>}
+                        Repost
+                    </Button>
+                    <Button variant="destructive" onClick={handleDelete} disabled={isProcessing}>
+                        {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash className="mr-2 h-4 w-4"/>}
+                         Delete Post
                     </Button>
                 </CardContent>
             </Card>
         </div>
       </div>
-
-
     </div>
   );
 }
