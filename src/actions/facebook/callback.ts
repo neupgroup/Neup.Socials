@@ -11,6 +11,7 @@ import {
 import { validateState, encrypt } from '@/lib/crypto';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, query, where, getDocs, updateDoc } from 'firebase/firestore';
+import { logError } from '@/services/error-logging';
 
 /**
  * Handles the OAuth callback from Facebook. It exchanges the authorization code
@@ -22,9 +23,11 @@ import { collection, addDoc, serverTimestamp, query, where, getDocs, updateDoc }
  * @returns An object indicating success or failure.
  */
 export async function handleFacebookCallback(code: string, state: string) {
+  let userId = 'anonymous';
   try {
     // 1. Validate the state parameter to prevent CSRF attacks.
-    const { userId } = validateState(state);
+    const validationResult = await validateState(state);
+    userId = validationResult.userId;
     if (!userId) {
       throw new Error('State validation failed: No user ID present.');
     }
@@ -49,7 +52,7 @@ export async function handleFacebookCallback(code: string, state: string) {
     const accountsCollection = collection(db, 'connected_accounts');
     for (const page of pagesResponse.data) {
         // Encrypt the long-lived page access token before storing.
-        const encryptedToken = encrypt(page.access_token);
+        const encryptedToken = await encrypt(page.access_token);
 
         // Check if this page is already connected for this user
         const q = query(accountsCollection, where('platformId', '==', page.id), where('owner', '==', userId));
@@ -84,6 +87,23 @@ export async function handleFacebookCallback(code: string, state: string) {
     return { success: true, message: `${pagesResponse.data.length} Facebook page(s) connected successfully.` };
   } catch (error: any) {
     console.error('Error in Facebook callback handler:', error);
+    
+    // Log the error using the new service
+    await logError({
+        source: 'handleFacebookCallback',
+        message: error.message,
+        stack: error.stack,
+        userId: userId,
+        request: {
+            url: '/api/auth/callback/facebook',
+            method: 'GET',
+        },
+        context: {
+            step: 'Facebook OAuth Callback Processing',
+            state,
+        },
+    });
+    
     return { success: false, error: error.message || 'An unknown error occurred during the Facebook callback.' };
   }
 }
