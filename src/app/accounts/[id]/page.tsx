@@ -14,6 +14,7 @@ import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { getPageInsightsAction } from '@/actions/facebook/insights';
 import { format } from 'date-fns';
+import { logError } from '@/lib/error-logging';
 
 type Account = {
   id: string;
@@ -123,8 +124,14 @@ export default function AccountDetailPage() {
       setHasMore(newPosts.length === PAGE_SIZE);
       setPosts(prev => loadMore ? [...prev, ...newPosts] : newPosts);
 
-    } catch (error) {
-      toast({ title: 'Failed to fetch posts', variant: 'destructive' });
+    } catch (error: any) {
+        await logError({
+            process: 'fetchPosts',
+            location: 'AccountDetailPage',
+            errorMessage: error.message,
+            context: { accountId: id, trace: error.stack },
+        });
+        toast({ title: 'Failed to fetch posts', variant: 'destructive' });
     } finally {
       setLoadingPosts(false);
       setLoadingMorePosts(false);
