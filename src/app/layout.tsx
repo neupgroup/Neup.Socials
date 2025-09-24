@@ -48,7 +48,6 @@ const navItems = [
   { href: '/settings', icon: Settings, label: 'Settings' },
 ];
 
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -57,8 +56,8 @@ export default function RootLayout({
   const pathname = usePathname();
 
   return (
-     <html lang="en" suppressHydrationWarning>
-       <head>
+    <html lang="en" suppressHydrationWarning>
+      <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -66,42 +65,46 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <SidebarProvider>
           <div className="flex min-h-screen w-full flex-col">
-            <header className="sticky top-0 z-10 flex h-14 items-center border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
-                <div className="container flex items-center justify-between p-0">
-                    <SidebarTrigger className="md:hidden" />
-                    <div className="flex items-center gap-4 ml-auto">
-                        <Button variant="outline">Feedback</Button>
-                        <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                            <Avatar className="h-8 w-8">
-                                <AvatarImage src="https://placehold.co/40x40" alt="User Avatar" />
-                                <AvatarFallback>TS</AvatarFallback>
-                            </Avatar>
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-56" align="end" forceMount>
-                            <DropdownMenuLabel className="font-normal">
-                            <div className="flex flex-col space-y-1">
-                                <p className="text-sm font-medium leading-none">Team Admin</p>
-                                <p className="text-xs leading-none text-muted-foreground">
-                                admin@teamsocial.com
-                                </p>
-                            </div>
-                            </DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem>Profile</DropdownMenuItem>
-                            <DropdownMenuItem>Billing</DropdownMenuItem>
-                            <DropdownMenuItem>Settings</DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem>Log out</DropdownMenuItem>
-                        </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
+            
+            {/* HEADER - full width background + container */}
+            <header className="sticky top-0 z-10 border-b bg-background/80 backdrop-blur-sm shadow-sm">
+              <div className="container flex h-14 items-center justify-between px-4 sm:px-6">
+                <SidebarTrigger className="md:hidden" />
+                <div className="flex items-center gap-4 ml-auto">
+                  <Button variant="outline">Feedback</Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src="https://placehold.co/40x40" alt="User Avatar" />
+                          <AvatarFallback>TS</AvatarFallback>
+                        </Avatar>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-56" align="end" forceMount>
+                      <DropdownMenuLabel className="font-normal">
+                        <div className="flex flex-col space-y-1">
+                          <p className="text-sm font-medium leading-none">Team Admin</p>
+                          <p className="text-xs leading-none text-muted-foreground">
+                            admin@teamsocial.com
+                          </p>
+                        </div>
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem>Profile</DropdownMenuItem>
+                      <DropdownMenuItem>Billing</DropdownMenuItem>
+                      <DropdownMenuItem>Settings</DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem>Log out</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
+              </div>
             </header>
-            <div className="container flex-1 p-0">
-              <div className="flex">
+
+            {/* MAIN - full width background + container */}
+            <main className="flex-1 bg-background">
+              <div className="container flex p-0">
                 <Sidebar>
                   <SidebarHeader>
                     <div className="flex items-center gap-2 p-2 pr-0">
@@ -141,11 +144,13 @@ export default function RootLayout({
                     </div>
                   </SidebarFooter>
                 </Sidebar>
+
+                {/* CONTENT */}
                 <SidebarInset>
-                  <main className="flex-1 p-6">{children}</main>
+                  <div className="flex-1 p-6">{children}</div>
                 </SidebarInset>
               </div>
-            </div>
+            </main>
           </div>
         </SidebarProvider>
         <Toaster />
