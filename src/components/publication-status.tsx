@@ -6,9 +6,8 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Twitter, Linkedin, Facebook, Instagram, Youtube, Loader2, ExternalLink, Edit, Trash2 } from 'lucide-react';
-import { doc, getDoc, collection, DocumentData } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from './ui/badge';
 
 type ConnectedAccount = {
@@ -18,8 +17,15 @@ type ConnectedAccount = {
   username: string;
 };
 
+type PublicationDetail = {
+  accountId: string;
+  platform: string;
+  platformPostId: string;
+};
+
 type PublicationStatusProps = {
   accountIds: string[];
+  publicationDetails: PublicationDetail[];
   postStatus: 'Published' | 'Scheduled' | 'Draft';
   publishedAt: string;
   scheduledAt: string;
@@ -36,7 +42,7 @@ const PlatformIcon = ({ platform, className }: { platform: string, className?: s
   return null;
 }
 
-export const PublicationStatus: React.FC<PublicationStatusProps> = ({ accountIds, postStatus, publishedAt, scheduledAt, postId }) => {
+export const PublicationStatus: React.FC<PublicationStatusProps> = ({ accountIds, publicationDetails = [], postStatus, publishedAt, scheduledAt, postId }) => {
   const [accounts, setAccounts] = React.useState<ConnectedAccount[]>([]);
   const [loading, setLoading] = React.useState(true);
 
@@ -74,6 +80,8 @@ export const PublicationStatus: React.FC<PublicationStatusProps> = ({ accountIds
     <div className="space-y-4">
       {accounts.map(account => {
         const date = postStatus === 'Published' ? publishedAt : (postStatus === 'Scheduled' ? scheduledAt : 'Not yet scheduled');
+        const detail = publicationDetails.find(d => d.accountId === account.id);
+        const postUrl = detail?.platformPostId ? `https://www.facebook.com/share/p/${detail.platformPostId}/` : null;
 
         return (
           <Card key={account.id} className="overflow-hidden">
@@ -92,8 +100,16 @@ export const PublicationStatus: React.FC<PublicationStatusProps> = ({ accountIds
                     <span className="text-sm text-muted-foreground">{date}</span>
                  </div>
                  <div className="flex items-center gap-2">
-                    <Button size="sm" variant="ghost" disabled={postStatus !== 'Published'}>
-                        <ExternalLink className="mr-2 h-4 w-4" /> View Post
+                    <Button size="sm" variant="ghost" disabled={!postUrl} asChild>
+                       {postUrl ? (
+                         <a href={postUrl} target="_blank" rel="noopener noreferrer">
+                           <ExternalLink className="mr-2 h-4 w-4" /> View Post
+                         </a>
+                       ) : (
+                         <span>
+                           <ExternalLink className="mr-2 h-4 w-4" /> View Post
+                         </span>
+                       )}
                     </Button>
                     <Button size="sm" variant="ghost" asChild>
                         <Link href={`/content/edit/${postId}`}><Edit className="h-4 w-4"/></Link>

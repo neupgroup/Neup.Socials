@@ -16,6 +16,12 @@ import { format } from 'date-fns';
 import { repostAction } from '@/actions/content/repost';
 import { PublicationStatus } from '@/components/publication-status';
 
+type PublicationDetail = {
+  accountId: string;
+  platform: string;
+  platformPostId: string;
+};
+
 type Post = {
   id: string;
   content: string;
@@ -26,6 +32,7 @@ type Post = {
   publishedAt: string;
   author: string;
   mediaUrls: string[];
+  publicationDetails?: PublicationDetail[];
 };
 
 export default function ViewContentPage() {
@@ -56,6 +63,7 @@ export default function ViewContentPage() {
           mediaUrls: data.mediaUrls || (data.mediaUrl ? [data.mediaUrl] : []),
           scheduledAt: data.scheduledAt ? format(data.scheduledAt.toDate(), 'PPpp') : '-',
           publishedAt: data.publishedAt ? format(data.publishedAt.toDate(), 'PPpp') : '-',
+          publicationDetails: data.publicationDetails || [],
         });
       } else {
         toast({ title: 'Post not found', variant: 'destructive' });
@@ -198,7 +206,8 @@ export default function ViewContentPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <PublicationStatus 
-                        accountIds={post.accountIds} 
+                        accountIds={post.accountIds}
+                        publicationDetails={post.publicationDetails || []}
                         postStatus={post.status} 
                         publishedAt={post.publishedAt}
                         scheduledAt={post.scheduledAt}
