@@ -11,7 +11,7 @@ import {
 import { validateState, encrypt } from '@/lib/crypto';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, query, where, getDocs, updateDoc } from 'firebase/firestore';
-import { logError } from '@/services/error-logging';
+import { logError } from '@/lib/error-logging';
 
 /**
  * Handles the OAuth callback from Facebook. It exchanges the authorization code
@@ -90,14 +90,10 @@ export async function handleFacebookCallback(code: string, state: string) {
     
     // Log the error using the new service
     await logError({
-        source: 'handleFacebookCallback',
-        message: error.message,
-        stack: error.stack,
-        userId: userId,
-        request: {
-            url: '/api/auth/callback/facebook',
-            method: 'GET',
-        },
+        process: 'handleFacebookCallback',
+        location: 'Facebook Callback Handler',
+        errorMessage: error.message,
+        user: userId,
         context: {
             step: 'Facebook OAuth Callback Processing',
             state,
