@@ -213,22 +213,19 @@ export default function AccountsPage() {
               <TableRow>
                 <TableHead>Platform</TableHead>
                 <TableHead>Name</TableHead>
-                <TableHead>Connected On</TableHead>
-                <TableHead>Last Synced</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead><span className="sr-only">Actions</span></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                  <TableRow>
-                  <TableCell colSpan={6} className="text-center h-24">
+                  <TableCell colSpan={3} className="text-center h-24">
                     <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
                   </TableCell>
                 </TableRow>
               ) : accounts.length === 0 ? (
                  <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground h-24">
+                  <TableCell colSpan={3} className="text-center text-muted-foreground h-24">
                     No accounts found.
                   </TableCell>
                 </TableRow>
@@ -242,30 +239,8 @@ export default function AccountsPage() {
                       </div>
                     </TableCell>
                     <TableCell>{account.name}</TableCell>
-                    <TableCell>{account.connectedOn}</TableCell>
-                    <TableCell>
-                        {account.lastSyncedAt ? formatDistanceToNow(account.lastSyncedAt.toDate(), { addSuffix: true }) : 'Never'}
-                    </TableCell>
                     <TableCell>
                       <Badge variant={account.status === 'Active' ? 'default' : 'destructive'}>{account.status}</Badge>
-                    </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                       <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0" disabled={syncingAccountId === account.id}>
-                            <span className="sr-only">Open menu</span>
-                            {syncingAccountId === account.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <MoreHorizontal className="h-4 w-4" />}
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                           <DropdownMenuItem onClick={() => handleSyncPosts(account.id)} disabled={syncingAccountId === account.id}>
-                                <RefreshCw className="mr-2 h-4 w-4" />
-                                <span>Sync Posts</span>
-                           </DropdownMenuItem>
-                          <DropdownMenuItem>Refresh Connection</DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive hover:text-destructive-foreground">Disconnect</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))
