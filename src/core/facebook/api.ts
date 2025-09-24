@@ -2,6 +2,7 @@
  * @fileoverview Core functions for interacting with the Facebook Graph API.
  */
 'use server';
+import * as mime from 'mime-types';
 
 const API_VERSION = 'v20.0';
 const GRAPH_API_BASE_URL = `https://graph.facebook.com/${API_VERSION}`;
@@ -57,6 +58,7 @@ type DebugTokenResponse = {
 
 type PublishPostResponse = {
     id: string;
+    post_id?: string; // for photos
 }
 
 async function handleApiResponse<T>(res: Response): Promise<T> {
@@ -133,18 +135,55 @@ export async function validateToken(pageToken: string): Promise<DebugTokenRespon
  * @param pageId The ID of the Facebook Page.
  * @param pageToken The Page Access Token.
  * @param content The text content of the post.
+ * @param mediaUrl Optional URL of an image or video to attach.
  * @returns The response from the Facebook API, typically containing the post ID.
  */
-export async function publishToPage(pageId: string, pageToken: string, content: string): Promise<PublishPostResponse> {
-    const params = new URLSearchParams({ 
-        message: content, 
-        access_token: pageToken 
-    });
-    
-    const res = await fetch(`${GRAPH_API_BASE_URL}/${pageId}/feed`, { 
-        method: 'POST', 
-        body: params 
-    });
-    
-    return handleApiResponse<PublishPostResponse>(res);
+export async function publishToPage(
+  pageId: string,
+  pageToken: string,
+  content: string,
+  mediaUrl?: string
+): Promise<PublishPostResponse> {
+  
+  if (mediaUrl) {
+    const mimeType = mime.lookup(mediaUrl);
+    if (mimeType && mimeType.startsWith('image/')) {
+      // It's an image
+      const params = new URLSearchParams({
+        url: mediaUrl,
+        caption: content,
+        access_token: pageToken,
+      });
+      const res = await fetch(`${GRAPH_API_BASE_URL}/${pageId}/photos`, {
+        method: 'POST',
+        body: params,
+      });
+      return handleApiResponse<PublishPostResponse>(res);
+    } else if (mimeType && mimeType.startsWith('video/')) {
+      // It's a video
+      const params = new URLSearchParams({
+        file_url: mediaUrl,
+        description: content,
+        access_token: pageToken,
+      });
+      const res = await fetch(`${GRAPH_API_BASE_URL}/${pageId}/videos`, {
+        method: 'POST',
+        body: params,
+      });
+      return handleApiResponse<PublishPostResponse>(res);
+    }
+  }
+
+  // Default to text-only post
+  const params = new URLSearchParams({
+    message: content,
+    access_token: pageToken,
+  });
+
+  const res = await fetch(`${GRAPH_API_BASE_URL}/${pageId}/feed`, {
+    method: 'POST',
+    body: params,
+  });
+
+  return handleApiResponse<PublishPostResponse>(res);
 }
