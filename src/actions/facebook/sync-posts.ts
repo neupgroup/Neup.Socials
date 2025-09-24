@@ -1,7 +1,7 @@
 
 'use server';
 
-import { doc, getDoc, updateDoc, collection, query, where, getDocs, writeBatch, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, query, where, getDocs, writeBatch, serverTimestamp, Timestamp, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { decrypt } from '@/lib/crypto';
 import { getPosts } from '@/core/facebook/api';
@@ -13,6 +13,33 @@ type SyncResult = {
   postsSynced: number;
   error?: string;
 };
+
+/**
+ * Creates a log entry for a sync operation.
+ * @param accountId The ID of the account being synced.
+ * @param status The status of the sync ('Success', 'Failed').
+ * @param details An object with details like postsSynced or errorMessage.
+ */
+async function createSyncLog(accountId: string, status: 'Success' | 'Failed', details: object) {
+    try {
+        await addDoc(collection(db, 'sync_logs'), {
+            accountId,
+            status,
+            syncedAt: serverTimestamp(),
+            ...details,
+        });
+    } catch(error: any) {
+        // If logging fails, log the logging error itself to the main error log
+        console.error("Failed to create sync log:", error);
+        await logError({
+            process: 'createSyncLog',
+            location: 'Sync Posts Action',
+            errorMessage: 'Could not write to sync_logs collection.',
+            context: { originalDetails: details, loggingError: error.message }
+        });
+    }
+}
+
 
 /**
  * Fetches posts from a Facebook Page and stores them in Firestore.
@@ -44,8 +71,7 @@ export async function syncPostsAction(accountId: string): Promise<SyncResult> {
 
     if (lastSynced) {
       // Subsequent sync: fetch from a few days before the last sync to catch any missed posts.
-      const daysDiff = differenceInDays(now, lastSynced);
-      since = Math.floor(addDays(lastSynced, -(daysDiff + 5)).getTime() / 1000);
+      since = Math.floor(subDays(lastSynced, 5).getTime() / 1000);
     } else {
       // First sync: fetch posts from the last 90 days.
       since = Math.floor(subDays(now, 90).getTime() / 1000);
@@ -58,6 +84,7 @@ export async function syncPostsAction(accountId: string): Promise<SyncResult> {
 
     if (!fetchedPosts || fetchedPosts.length === 0) {
       await updateDoc(accountDocRef, { lastSyncedAt: serverTimestamp() });
+      await createSyncLog(accountId, 'Success', { postsSynced: 0, range: { since: new Date(since * 1000), until: new Date(until * 1000) } });
       return { success: true, postsSynced: 0 };
     }
 
@@ -107,6 +134,8 @@ export async function syncPostsAction(accountId: string): Promise<SyncResult> {
     await updateDoc(accountDocRef, {
       lastSyncedAt: serverTimestamp(),
     });
+    
+    await createSyncLog(accountId, 'Success', { postsSynced: newPosts.length, range: { since: new Date(since * 1000), until: new Date(until * 1000) } });
 
     return { success: true, postsSynced: newPosts.length };
   } catch (error: any) {
@@ -116,6 +145,7 @@ export async function syncPostsAction(accountId: string): Promise<SyncResult> {
       errorMessage: error.message,
       context: { accountId },
     });
+    await createSyncLog(accountId, 'Failed', { errorMessage: error.message });
     return { success: false, postsSynced: 0, error: error.message };
   }
 }

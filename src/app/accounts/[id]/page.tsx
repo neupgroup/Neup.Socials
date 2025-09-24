@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, ArrowLeft, Users, ThumbsUp, Share2, ExternalLink, Twitter, Facebook, Linkedin, Instagram, RefreshCw, Heart, Laugh, Angry, Droplet, Annoyed } from 'lucide-react';
+import { Loader2, ArrowLeft, Users, ThumbsUp, Share2, ExternalLink, Twitter, Facebook, Linkedin, Instagram, RefreshCw, Heart, Laugh, Angry, Droplet, Annoyed, History } from 'lucide-react';
 import { doc, getDoc, collection, query, where, orderBy, limit, startAfter, getDocs, DocumentData, QueryDocumentSnapshot, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
@@ -124,6 +124,7 @@ export default function AccountDetailPage() {
   
   React.useEffect(() => {
     if (!id) {
+        setLoading(false);
         return;
     };
 
@@ -173,7 +174,21 @@ export default function AccountDetailPage() {
             });
             // Reset pagination and fetch posts from the start
             setLastVisible(null);
-            await fetchPosts(false);
+            // We need to call fetchPosts directly without the memoized version to get the latest data.
+            const fetchAgain = async () => {
+                let q = query(
+                    collection(db, 'posts'),
+                    where('accountId', '==', id),
+                    orderBy('createdOn', 'desc'),
+                    limit(PAGE_SIZE)
+                );
+                const documentSnapshots = await getDocs(q);
+                const newPosts = documentSnapshots.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+                setLastVisible(documentSnapshots.docs[documentSnapshots.docs.length - 1]);
+                setHasMore(newPosts.length === PAGE_SIZE);
+                setPosts(newPosts);
+            };
+            await fetchAgain();
         } else {
             throw new Error(result.error || 'Unknown error during sync.');
         }
@@ -227,6 +242,12 @@ export default function AccountDetailPage() {
             </div>
         </div>
         <div className="flex items-center gap-2">
+            <Button asChild variant="secondary">
+                <Link href={`/accounts/${id}/fetch`}>
+                    <History className="mr-2 h-4 w-4" />
+                    View Sync History
+                </Link>
+            </Button>
             <Button variant="outline" onClick={handleSyncPosts} disabled={isSyncing}>
                 {isSyncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <RefreshCw className="mr-2 h-4 w-4"/>}
                 Sync Posts
@@ -331,5 +352,3 @@ export default function AccountDetailPage() {
     </div>
   );
 }
-
-    
