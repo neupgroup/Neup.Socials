@@ -16,7 +16,7 @@ import { format } from 'date-fns';
 type Post = {
   id: string;
   status: 'Published' | 'Scheduled' | 'Draft';
-  platform: string;
+  platforms: string[]; // Kept for display
   publishedAt?: string;
   scheduledAt?: string;
   analytics?: {
@@ -48,7 +48,7 @@ export default function PostStatusPage() {
         setPost({
           id: docSnap.id,
           status: data.status,
-          platform: (data.platforms || []).join(', '),
+          platforms: data.platforms || [],
           publishedAt: data.publishedAt ? format(data.publishedAt.toDate(), 'PPpp') : undefined,
           scheduledAt: data.scheduledAt ? format(data.scheduledAt.toDate(), 'PPpp') : undefined,
           // Mock analytics for now
@@ -79,6 +79,7 @@ export default function PostStatusPage() {
   const isPublished = post.status === 'Published';
   const isScheduled = post.status === 'Scheduled';
   const progressValue = isPublished ? Math.floor(((post.analytics?.likes || 0) / 200) * 100) : 0;
+  const platformText = post.platforms.join(', ');
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -102,7 +103,7 @@ export default function PostStatusPage() {
                         <span>Published Successfully</span>
                     </CardTitle>
                     <CardDescription>
-                        Your post went live on {post.platform} at {post.publishedAt}.
+                        Your post went live on {platformText} at {post.publishedAt}.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -137,7 +138,7 @@ export default function PostStatusPage() {
                         <span>Post is Scheduled</span>
                     </CardTitle>
                     <CardDescription>
-                        This post is scheduled to be published on {post.platform}.
+                        This post is scheduled to be published on {platformText}.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4 text-center py-10">

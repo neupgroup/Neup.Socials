@@ -16,7 +16,8 @@ type Post = {
   id: string;
   content: string;
   status: 'Published' | 'Scheduled' | 'Draft';
-  platforms: string[];
+  platforms: string[]; // Keep for display
+  accountIds: string[];
   scheduledAt: string;
   publishedAt: string;
   author: string;
@@ -55,6 +56,7 @@ export default function ViewContentPage() {
           content: data.content,
           status: data.status,
           platforms: data.platforms || [],
+          accountIds: data.accountIds || [],
           author: data.author,
           mediaUrl: data.mediaUrl,
           scheduledAt: data.scheduledAt ? format(data.scheduledAt.toDate(), 'PPpp') : '-',
@@ -102,6 +104,7 @@ export default function ViewContentPage() {
                         content: data.content,
                         status: data.status,
                         platforms: data.platforms || [],
+                        accountIds: data.accountIds || [],
                         author: data.author,
                         mediaUrl: data.mediaUrl,
                         scheduledAt: data.scheduledAt ? format(data.scheduledAt.toDate(), 'PPpp') : '-',
@@ -178,10 +181,10 @@ export default function ViewContentPage() {
                         <Badge variant={isPublished ? 'default' : (post.status === 'Scheduled' ? 'secondary' : 'outline')}>{post.status}</Badge>
                     </div>
                     <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Platform(s)</span>
+                        <span className="text-muted-foreground">Accounts</span>
                          <div className="flex items-center gap-2">
                            {post.platforms.map(p => <PlatformIcon key={p} platform={p} />)}
-                           <span>{post.platforms.join(', ')}</span>
+                           <span className="truncate">{post.platforms.join(', ') || 'None'}</span>
                          </div>
                     </div>
                      <div className="flex justify-between items-center">
