@@ -39,7 +39,7 @@ type Post = {
 }
 
 
-export default function ViewContentPage() {
+export default function ViewContentCollectionPage() {
   const params = useParams();
   const id = params.id as string; // This is postCollectionId
   const [postCollection, setPostCollection] = React.useState<PostCollection | null>(null);

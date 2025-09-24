@@ -100,7 +100,7 @@ export default function ContentDashboardPage() {
 
 
   const handleRowClick = (id: string) => {
-    router.push(`/content/view/${id}`);
+    router.push(`/content/collection/${id}`);
   };
 
   const handleShowMore = () => {

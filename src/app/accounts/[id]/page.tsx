@@ -68,7 +68,7 @@ export default function AccountDetailPage() {
   const [hasMore, setHasMore] = React.useState(true);
 
   const fetchPosts = React.useCallback(async (loadMore = false) => {
-    if (!id) return { success: false };
+    if (!id) return;
     
     if (loadMore) {
         setLoadingMorePosts(true);
@@ -92,7 +92,6 @@ export default function AccountDetailPage() {
       setLastVisible(documentSnapshots.docs[documentSnapshots.docs.length - 1]);
       setHasMore(newPosts.length === PAGE_SIZE);
       setPosts(prev => loadMore ? [...prev, ...newPosts] : newPosts);
-      return { success: true };
 
     } catch (error: any) {
         await logError({
@@ -102,7 +101,6 @@ export default function AccountDetailPage() {
             context: { accountId: id, trace: error.stack },
         });
         toast({ title: 'Failed to fetch posts', variant: 'destructive' });
-        return { success: false };
     } finally {
       if (loadMore) {
         setLoadingMorePosts(false);
@@ -127,13 +125,15 @@ export default function AccountDetailPage() {
           const acc = { id: docSnap.id, ...data } as Account;
           setAccount(acc);
 
+          // Fetch posts right after account details
+          await fetchPosts();
+
           if (acc.platform === 'Facebook') {
             const insightsResult = await getPageInsightsAction(id);
             if (insightsResult.success && insightsResult.data) {
               setInsights(insightsResult.data);
             }
           }
-          await fetchPosts(); // Initial post fetch
         } else {
           toast({ title: 'Account not found', variant: 'destructive' });
           router.push('/accounts');
@@ -146,7 +146,7 @@ export default function AccountDetailPage() {
     };
 
     fetchAccountDetails();
-  }, [id, router, toast]);
+  }, [id, router, toast, fetchPosts]);
 
   const handleSyncPosts = async () => {
     if (!id) return;
@@ -158,7 +158,8 @@ export default function AccountDetailPage() {
                 title: 'Sync Complete',
                 description: `${result.postsSynced} new posts were synced.`,
             });
-            // Refresh the posts list
+            // Reset pagination and fetch posts from the start
+            setLastVisible(null);
             await fetchPosts(false);
         } else {
             throw new Error(result.error || 'Unknown error during sync.');
@@ -271,12 +272,12 @@ export default function AccountDetailPage() {
                 <TableRow><TableCell colSpan={3} className="text-center h-24 text-muted-foreground">No posts found for this account.</TableCell></TableRow>
               ) : (
                 posts.map(post => (
-                  <TableRow key={post.id}>
+                  <TableRow key={post.id} className="cursor-pointer" onClick={() => router.push(`/content/${post.id}`)}>
                     <TableCell className="max-w-md truncate">{post.message}</TableCell>
                     <TableCell>{format(post.createdOn.toDate(), 'yyyy-MM-dd HH:mm')}</TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="sm" asChild>
-                        <a href={post.postLink} target="_blank" rel="noopener noreferrer"><ExternalLink className="mr-2 h-4 w-4" /> View</a>
+                        <a href={post.postLink} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}><ExternalLink className="mr-2 h-4 w-4" /> View</a>
                       </Button>
                     </TableCell>
                   </TableRow>

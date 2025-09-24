@@ -82,7 +82,7 @@ export default function EditSchedulePage() {
         title: `Post ${scheduleOption === 'now' ? 'Published' : 'Scheduled'}!`,
         description: `Your post has been successfully ${scheduleOption === 'now' ? 'sent for publishing' : 'scheduled'}.`,
       });
-      router.push(`/content/view/${id}`);
+      router.push(`/content/collection/${id}`);
 
     } catch (error: any) {
       console.error("Error scheduling/publishing post: ", error);

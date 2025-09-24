@@ -202,7 +202,7 @@ export default function EditPostPage() {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
        <div className="flex items-center gap-4">
-        <Button asChild variant="outline" size="icon"><Link href={`/content/view/${id}`}><ArrowLeft /></Link></Button>
+        <Button asChild variant="outline" size="icon"><Link href={`/content/collection/${id}`}><ArrowLeft /></Link></Button>
         <div><h1 className="text-3xl font-bold">Edit Post Collection</h1><p className="text-muted-foreground">Step 1 of 3: Modify your base content</p></div>
       </div>
 
@@ -304,7 +304,7 @@ export default function EditPostPage() {
       </Card>
 
       <div className="flex justify-between">
-         <Button asChild variant="outline" disabled={isSaving}><Link href={`/content/view/${id}`}>Cancel</Link></Button>
+         <Button asChild variant="outline" disabled={isSaving}><Link href={`/content/collection/${id}`}>Cancel</Link></Button>
         <Button onClick={handleNext} disabled={isSaving}>
           {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
           Next: Select Platforms
