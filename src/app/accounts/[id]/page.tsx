@@ -61,7 +61,6 @@ export default function AccountDetailPage() {
   const [posts, setPosts] = React.useState<Post[]>([]);
   
   const [loading, setLoading] = React.useState(true);
-  const [loadingPosts, setLoadingPosts] = React.useState(true);
   const [loadingMorePosts, setLoadingMorePosts] = React.useState(false);
   const [isSyncing, setIsSyncing] = React.useState(false);
 
@@ -70,12 +69,10 @@ export default function AccountDetailPage() {
 
   const fetchPosts = React.useCallback(async (loadMore = false) => {
     if (!id) return;
-    if (!loadMore) {
-        setLoadingPosts(true);
-        setLastVisible(null); // Reset for a fresh fetch
-        setPosts([]);
+    
+    if (loadMore) {
+        setLoadingMorePosts(true);
     }
-    else setLoadingMorePosts(true);
 
     try {
       let q = query(
@@ -105,8 +102,9 @@ export default function AccountDetailPage() {
         });
         toast({ title: 'Failed to fetch posts', variant: 'destructive' });
     } finally {
-      setLoadingPosts(false);
-      setLoadingMorePosts(false);
+      if (loadMore) {
+        setLoadingMorePosts(false);
+      }
     }
   }, [id, toast, lastVisible]);
   
@@ -130,7 +128,7 @@ export default function AccountDetailPage() {
               setInsights(insightsResult.data);
             }
           }
-          fetchPosts(); // Initial post fetch
+          await fetchPosts(); // Initial post fetch
         } else {
           toast({ title: 'Account not found', variant: 'destructive' });
           router.push('/accounts');
@@ -156,7 +154,7 @@ export default function AccountDetailPage() {
                 description: `${result.postsSynced} new posts were synced.`,
             });
             // Refresh the posts list
-            fetchPosts(false);
+            await fetchPosts(false);
         } else {
             throw new Error(result.error || 'Unknown error during sync.');
         }
@@ -264,9 +262,7 @@ export default function AccountDetailPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loadingPosts ? (
-                <TableRow><TableCell colSpan={3} className="text-center h-24"><Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" /></TableCell></TableRow>
-              ) : posts.length === 0 ? (
+              {posts.length === 0 ? (
                 <TableRow><TableCell colSpan={3} className="text-center h-24 text-muted-foreground">No posts found for this account.</TableCell></TableRow>
               ) : (
                 posts.map(post => (
@@ -283,7 +279,7 @@ export default function AccountDetailPage() {
               )}
             </TableBody>
           </Table>
-          {hasMore && !loadingPosts && (
+          {hasMore && (
             <div className="text-center mt-4">
               <Button onClick={() => fetchPosts(true)} disabled={loadingMorePosts}>
                 {loadingMorePosts && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -296,5 +292,4 @@ export default function AccountDetailPage() {
     </div>
   );
 }
-
       
