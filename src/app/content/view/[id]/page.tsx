@@ -138,6 +138,7 @@ export default function ViewContentPage() {
   }
   
   const isPublished = post.status === 'Published';
+  const fullMediaUrl = post.mediaUrl ? `https://neupgroup.com${post.mediaUrl}` : '';
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -161,9 +162,9 @@ export default function ViewContentPage() {
                 </CardHeader>
                 <CardContent>
                     <p className="text-muted-foreground whitespace-pre-wrap">{post.content}</p>
-                    {post.mediaUrl && (
+                    {fullMediaUrl && (
                         <div className="mt-4">
-                            <img src={post.mediaUrl} alt="Post media" className="rounded-lg w-full h-auto max-h-[400px] object-contain" />
+                            <img src={fullMediaUrl} alt="Post media" className="rounded-lg w-full h-auto max-h-[400px] object-contain" />
                         </div>
                     )}
                 </CardContent>

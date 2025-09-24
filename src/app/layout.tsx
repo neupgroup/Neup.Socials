@@ -11,6 +11,7 @@ import {
   MessageSquareText,
   PlusSquare,
   AlertTriangle,
+  Upload,
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
@@ -45,6 +46,7 @@ const navItems = [
   { href: '/schedule', icon: Calendar, label: 'Schedule' },
   { href: '/content', icon: PlusSquare, label: 'Content' },
   { href: '/inbox', icon: Inbox, label: 'Inbox' },
+  { href: '/uploads', icon: Upload, label: 'Uploads' },
   { href: '/accounts', icon: Users, label: 'Accounts' },
   { href: '/settings', icon: Settings, label: 'Settings' },
   { href: '/root/errors', icon: AlertTriangle, label: 'Errors'},

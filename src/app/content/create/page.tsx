@@ -9,9 +9,11 @@ import { UploadCloud } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { db, storage } from '@/lib/firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
+import { recordUpload } from '@/actions/uploads/recordUpload';
+
+const UPLOAD_ENDPOINT = 'https://neupgroup.com/usercontent/bridge/api/upload.php';
 
 export default function CreatePostPage() {
   const [content, setContent] = React.useState('');
@@ -20,6 +22,7 @@ export default function CreatePostPage() {
   const router = useRouter();
   const { toast } = useToast();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const userId = 'neupkishor'; // This should be replaced with actual logged-in user
 
   const handleNext = async () => {
     if (!content.trim()) {
@@ -34,21 +37,55 @@ export default function CreatePostPage() {
     setIsLoading(true);
 
     try {
-      let mediaUrl = '';
-      if (mediaFile) {
-        const storageRef = ref(storage, `content/${Date.now()}_${mediaFile.name}`);
-        const snapshot = await uploadBytes(storageRef, mediaFile);
-        mediaUrl = await getDownloadURL(snapshot.ref);
-      }
-
+      // First, create the draft post to get an ID
       const docRef = await addDoc(collection(db, "content"), {
         content,
-        mediaUrl,
+        mediaUrl: '', // Will be updated after upload
         status: 'Draft',
-        author: 'Team Admin', // Replace with actual user later
+        author: userId,
         createdAt: serverTimestamp(),
         platforms: [],
+        accountIds: [],
       });
+      const contentId = docRef.id;
+
+      let mediaUrl = '';
+      if (mediaFile) {
+        toast({ title: 'Uploading media...', description: 'Please wait while your file is being uploaded.' });
+
+        const formData = new FormData();
+        formData.append('file', mediaFile);
+        formData.append('platform', 'teamsocial-content');
+        formData.append('userid', userId);
+        formData.append('contentid', contentId);
+        formData.append('name', mediaFile.name.split('.').slice(0, -1).join('.'));
+
+        const response = await fetch(UPLOAD_ENDPOINT, {
+            method: 'POST',
+            body: formData,
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            mediaUrl = result.url;
+            // Now record the upload in our database
+            await recordUpload({
+                fileName: mediaFile.name,
+                fileSize: mediaFile.size,
+                fileType: mediaFile.type,
+                uploadedBy: userId,
+                filePath: mediaUrl,
+                platform: 'teamsocial-content',
+                contentId: contentId,
+            });
+        } else {
+            throw new Error(result.message || 'File upload failed.');
+        }
+      }
+
+      // Update the post with the media URL
+      await db.collection('content').doc(contentId).update({ mediaUrl });
       
       toast({
         title: 'Draft Saved!',
@@ -57,11 +94,11 @@ export default function CreatePostPage() {
 
       router.push(`/content/edit/${docRef.id}/platforms`);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating post draft: ", error);
       toast({
         title: 'Error',
-        description: 'Could not save your draft. Please try again.',
+        description: error.message || 'Could not save your draft. Please try again.',
         variant: 'destructive',
       });
       setIsLoading(false);

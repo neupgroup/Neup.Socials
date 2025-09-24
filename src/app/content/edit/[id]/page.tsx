@@ -9,9 +9,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { UploadCloud, ArrowLeft, Loader2, Image } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { db, storage } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
+import { recordUpload } from '@/actions/uploads/recordUpload';
+
+const UPLOAD_ENDPOINT = 'https://neupgroup.com/usercontent/bridge/api/upload.php';
 
 export default function EditPostPage() {
   const params = useParams();
@@ -23,6 +25,7 @@ export default function EditPostPage() {
   const [isSaving, setIsSaving] = React.useState(false);
   const router = useRouter();
   const { toast } = useToast();
+  const userId = 'neupkishor'; // This should be replaced with actual logged-in user
 
   React.useEffect(() => {
     if (!id) return;
@@ -53,9 +56,35 @@ export default function EditPostPage() {
     try {
       let newMediaUrl = mediaUrl;
       if (mediaFile) {
-        const storageRef = ref(storage, `content/${Date.now()}_${mediaFile.name}`);
-        const snapshot = await uploadBytes(storageRef, mediaFile);
-        newMediaUrl = await getDownloadURL(snapshot.ref);
+        toast({ title: 'Uploading media...', description: 'Please wait while your file is being uploaded.' });
+        
+        const formData = new FormData();
+        formData.append('file', mediaFile);
+        formData.append('platform', 'teamsocial-content');
+        formData.append('userid', userId);
+        formData.append('contentid', id);
+        formData.append('name', mediaFile.name.split('.').slice(0, -1).join('.'));
+        
+        const response = await fetch(UPLOAD_ENDPOINT, {
+            method: 'POST',
+            body: formData,
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            newMediaUrl = result.url;
+            await recordUpload({
+                fileName: mediaFile.name,
+                fileSize: mediaFile.size,
+                fileType: mediaFile.type,
+                uploadedBy: userId,
+                filePath: newMediaUrl,
+                platform: 'teamsocial-content',
+                contentId: id,
+            });
+        } else {
+             throw new Error(result.message || 'File upload failed.');
+        }
       }
 
       const docRef = doc(db, 'content', id);
@@ -65,11 +94,11 @@ export default function EditPostPage() {
       });
 
       router.push(`/content/edit/${id}/platforms`);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating post: ", error);
       toast({
         title: 'Error',
-        description: 'Failed to update post. Please try again.',
+        description: error.message || 'Failed to update post. Please try again.',
         variant: 'destructive',
       });
     } finally {
@@ -118,9 +147,10 @@ export default function EditPostPage() {
           </div>
           <div className="space-y-2">
             <Label>Media (Image/Video)</Label>
-            {mediaUrl && !mediaFile && (
+            {mediaUrl && (
               <div className="mb-4">
-                <img src={mediaUrl} alt="Current media" className="rounded-lg max-h-64 w-auto" />
+                 {/* The 'neupgroup.com' host needs to be added to next.config.js image remote patterns */}
+                <img src={mediaUrl.startsWith('blob:') ? mediaUrl : `https://neupgroup.com${mediaUrl}`} alt="Current media" className="rounded-lg max-h-64 w-auto" />
               </div>
             )}
             <div className="flex items-center justify-center w-full">
