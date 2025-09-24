@@ -9,10 +9,22 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Loader2, AlertTriangle, Eye } from 'lucide-react';
+import { Loader2, AlertTriangle, Trash2 } from 'lucide-react';
 import { ErrorLog } from '@/services/error-logging';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { useRouter } from 'next/navigation';
+import { clearAllErrorsAction } from '@/actions/error-log-actions';
+import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 type FetchedErrorLog = Omit<ErrorLog, 'timestamp'> & {
   id: string;
@@ -22,6 +34,10 @@ type FetchedErrorLog = Omit<ErrorLog, 'timestamp'> & {
 export default function ErrorLogsPage() {
   const [errors, setErrors] = React.useState<FetchedErrorLog[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [isClearing, setIsClearing] = React.useState(false);
+
+  const router = useRouter();
+  const { toast } = useToast();
 
   React.useEffect(() => {
     setLoading(true);
@@ -42,6 +58,21 @@ export default function ErrorLogsPage() {
     return () => unsubscribe();
   }, []);
 
+  const handleRowClick = (id: string) => {
+    router.push(`/root/errors/${id}`);
+  };
+
+  const handleClearAll = async () => {
+    setIsClearing(true);
+    const result = await clearAllErrorsAction();
+    if (result.success) {
+      toast({ title: 'Success', description: 'All error logs have been cleared.' });
+    } else {
+      toast({ title: 'Error', description: result.error, variant: 'destructive' });
+    }
+    setIsClearing(false);
+  }
+
   const getBadgeVariant = (source?: string) => {
     if (!source) return 'outline';
     if (source.toLowerCase().includes('facebook')) return 'destructive';
@@ -59,12 +90,33 @@ export default function ErrorLogsPage() {
           </h1>
           <p className="text-muted-foreground">A real-time log of all recorded errors in the system.</p>
         </div>
+         <AlertDialog>
+          <AlertDialogTrigger asChild>
+             <Button variant="destructive" disabled={isClearing || errors.length === 0}>
+              {isClearing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+              Clear All Errors
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete all
+                error logs from the database.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleClearAll}>Continue</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>Error Stream</CardTitle>
-          <CardDescription>Latest errors are shown at the top.</CardDescription>
+          <CardDescription>Latest errors are shown at the top. Click a message to see details.</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
@@ -74,59 +126,36 @@ export default function ErrorLogsPage() {
                 <TableHead>Message</TableHead>
                 <TableHead>Source</TableHead>
                 <TableHead>User ID</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center h-24">
+                  <TableCell colSpan={4} className="text-center h-24">
                     <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
                   </TableCell>
                 </TableRow>
               ) : errors.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground h-24">
+                  <TableCell colSpan={4} className="text-center text-muted-foreground h-24">
                     No errors recorded. The system is healthy.
                   </TableCell>
                 </TableRow>
               ) : (
                 errors.map((error) => (
-                  <TableRow key={error.id}>
+                  <TableRow 
+                    key={error.id} 
+                    onClick={() => handleRowClick(error.id)}
+                    className="cursor-pointer"
+                  >
                     <TableCell className="font-mono text-xs">
                       {error.timestamp ? format(error.timestamp.toDate(), 'yyyy-MM-dd HH:mm:ss') : 'N/A'}
                     </TableCell>
-                    <TableCell className="font-medium max-w-sm truncate">{error.message}</TableCell>
+                    <TableCell className="font-medium max-w-sm truncate">{error.errorMessage}</TableCell>
                     <TableCell>
                       <Badge variant={getBadgeVariant(error.source)}>{error.source || 'Unknown'}</Badge>
                     </TableCell>
                     <TableCell className="font-mono text-xs">{error.userId || 'N/A'}</TableCell>
-                    <TableCell className="text-right">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-4xl">
-                          <DialogHeader>
-                            <DialogTitle>Error Details: {error.id}</DialogTitle>
-                          </DialogHeader>
-                          <ScrollArea className="max-h-[70vh] p-4 border rounded-lg bg-muted/50">
-                            <pre className="text-xs whitespace-pre-wrap break-all">
-                              {JSON.stringify(
-                                {
-                                  ...error,
-                                  // Convert timestamp to a readable string for JSON view
-                                  timestamp: error.timestamp ? error.timestamp.toDate().toISOString() : 'N/A',
-                                },
-                                null, 2
-                              )}
-                            </pre>
-                          </ScrollArea>
-                        </DialogContent>
-                      </Dialog>
-                    </TableCell>
                   </TableRow>
                 ))
               )}
