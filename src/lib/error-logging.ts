@@ -1,48 +1,38 @@
 
-import { collection, addDoc, serverTimestamp, query, where, getDocs, updateDoc, increment } from 'firebase/firestore';
+'use server';
+
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from './firebase';
 
-interface ErrorDetails {
+export interface ErrorLog {
   process: string;
   location: string;
-  userId?: string;
+  errorMessage: string;
+  user?: string;
   context?: any;
-  message: string;
 }
 
-export async function logError(details: ErrorDetails) {
+/**
+ * Logs an error to the 'errors' collection in Firestore.
+ * This is a simplified and more robust version that always creates a new error document.
+ * @param details - An object containing the details of the error.
+ */
+export async function logError(details: ErrorLog) {
   try {
     const errorsCollection = collection(db, 'errors');
+    
+    // Directly add the new error document without checking for duplicates.
+    // This is more resilient and ensures all error occurrences are captured.
+    await addDoc(errorsCollection, {
+      ...details,
+      timestamp: serverTimestamp(),
+      count: 1, // Each log is now a unique occurrence.
+    });
 
-    // Check if an identical error has already been logged
-    const q = query(
-      errorsCollection,
-      where('message', '==', details.message),
-      where('location', '==', details.location),
-      where('process', '==', details.process)
-    );
-
-    const querySnapshot = await getDocs(q);
-
-    if (!querySnapshot.empty) {
-      // If the same error exists, increment its count
-      const errorDoc = querySnapshot.docs[0];
-      await updateDoc(errorDoc.ref, {
-        count: increment(1),
-        // Update the timestamp to reflect the latest occurrence
-        timestamp: serverTimestamp(),
-      });
-    } else {
-      // If it's a new error, create a new document
-      await addDoc(errorsCollection, {
-        ...details,
-        count: 1,
-        timestamp: serverTimestamp(),
-      });
-    }
   } catch (error) {
-    console.error("Failed to log error to Firestore:", error);
-    // Fallback to console.error if Firestore logging fails
+    // If logging to Firestore fails, log to console as a fallback.
+    // This is the last line of defense for error reporting.
+    console.error("FATAL: Failed to log error to Firestore:", error);
     console.error("Original error details:", details);
   }
 }
