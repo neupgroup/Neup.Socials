@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { recordUpload, UploadRecord } from '@/actions/uploads/recordUpload';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
 
 const UPLOAD_ENDPOINT = 'https://neupgroup.com/usercontent/bridge/api/upload.php';
@@ -31,6 +32,7 @@ export default function EditPostPage() {
   
   const [isLoading, setIsLoading] = React.useState(true);
   const [isSaving, setIsSaving] = React.useState(false);
+  const [uploadProgress, setUploadProgress] = React.useState<number | null>(null);
 
   const [uploads, setUploads] = React.useState<Upload[]>([]);
   const [loadingUploads, setLoadingUploads] = React.useState(true);
@@ -76,6 +78,61 @@ export default function EditPostPage() {
     return () => unsubscribe();
   }, [id, router, toast]);
 
+  const uploadFile = (file: File, contentId: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('platform', 'teamsocial-content');
+      formData.append('userid', userId);
+      formData.append('contentid', contentId);
+      formData.append('name', file.name.split('.').slice(0, -1).join('.'));
+      
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', UPLOAD_ENDPOINT, true);
+      
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const percentComplete = Math.round((event.loaded / event.total) * 100);
+          setUploadProgress(percentComplete);
+        }
+      };
+      
+      xhr.onload = async () => {
+        setUploadProgress(null);
+        if (xhr.status === 200) {
+          try {
+            const result = JSON.parse(xhr.responseText);
+            if (result.success) {
+              await recordUpload({
+                  fileName: file.name,
+                  fileSize: file.size,
+                  fileType: file.type,
+                  uploadedBy: userId,
+                  filePath: result.url,
+                  platform: 'teamsocial-content',
+                  contentId: contentId,
+              });
+              resolve(result.url);
+            } else {
+              reject(new Error(result.message || 'File upload failed.'));
+            }
+          } catch(e: any) {
+              reject(new Error('Failed to parse upload response.'));
+          }
+        } else {
+          reject(new Error(`Upload failed with status: ${xhr.status}`));
+        }
+      };
+      
+      xhr.onerror = () => {
+        setUploadProgress(null);
+        reject(new Error('Network error during upload.'));
+      };
+      
+      xhr.send(formData);
+    });
+  };
+
   const handleNext = async () => {
     setIsSaving(true);
     try {
@@ -83,31 +140,7 @@ export default function EditPostPage() {
       
       if (mediaFile) {
         toast({ title: 'Uploading new media...', description: 'Please wait.' });
-        
-        const formData = new FormData();
-        formData.append('file', mediaFile);
-        formData.append('platform', 'teamsocial-content');
-        formData.append('userid', userId);
-        formData.append('contentid', id);
-        formData.append('name', mediaFile.name.split('.').slice(0, -1).join('.'));
-        
-        const response = await fetch(UPLOAD_ENDPOINT, { method: 'POST', body: formData });
-        const result = await response.json();
-
-        if (result.success) {
-            finalMediaUrl = result.url;
-            await recordUpload({
-                fileName: mediaFile.name,
-                fileSize: mediaFile.size,
-                fileType: mediaFile.type,
-                uploadedBy: userId,
-                filePath: finalMediaUrl,
-                platform: 'teamsocial-content',
-                contentId: id,
-            });
-        } else {
-             throw new Error(result.message || 'File upload failed.');
-        }
+        finalMediaUrl = await uploadFile(mediaFile, id);
       }
 
       await updateDoc(doc(db, 'content', id), {
@@ -212,6 +245,13 @@ export default function EditPostPage() {
                     </div>
                     <Button variant="ghost" size="sm" onClick={() => { setMediaFile(null); setSelectedMediaUrl(null); }}>Clear</Button>
                 </div>
+            )}
+             {uploadProgress !== null && (
+              <div className="mt-4 space-y-2">
+                <Label>Uploading...</Label>
+                <Progress value={uploadProgress} />
+                <p className="text-sm text-muted-foreground text-center">{uploadProgress}%</p>
+              </div>
             )}
           </div>
         </CardContent>
