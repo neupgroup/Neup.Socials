@@ -300,7 +300,7 @@ export default function CreatePostPage() {
                         <SelectItem value="SIGN_UP">Sign Up</SelectItem>
                         <SelectItem value="BOOK_NOW">Book Now</SelectItem>
                         <SelectItem value="CONTACT_US">Contact Us</SelectItem>
-                        <SelectItem value="SEND_MESSAGE">Send Message</SelectItem>
+                        <SelectItem value="MESSAGE_PAGE">Send Message</SelectItem>
                     </SelectContent>
                 </Select>
             </div>
