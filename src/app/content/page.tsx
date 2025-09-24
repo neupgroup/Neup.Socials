@@ -1,18 +1,14 @@
+
 'use client';
 
 import * as React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, MoreHorizontal, Edit, Trash, Eye, Activity, Loader2 } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { PlusCircle, Loader2 } from 'lucide-react';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { format } from 'date-fns';
@@ -28,6 +24,7 @@ type Post = {
 export default function ContentDashboardPage() {
   const [posts, setPosts] = React.useState<Post[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const router = useRouter();
 
   React.useEffect(() => {
     const fetchPosts = async () => {
@@ -57,6 +54,10 @@ export default function ContentDashboardPage() {
     fetchPosts();
   }, []);
 
+  const handleRowClick = (postId: string) => {
+    router.push(`/content/view/${postId}`);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -81,25 +82,28 @@ export default function ContentDashboardPage() {
                 <TableHead>Platform</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Date</TableHead>
-                <TableHead><span className="sr-only">Actions</span></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center">
+                  <TableCell colSpan={4} className="text-center">
                     <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
                   </TableCell>
                 </TableRow>
               ) : posts.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground">
+                  <TableCell colSpan={4} className="text-center text-muted-foreground">
                     No posts found. Start by creating a new one!
                   </TableCell>
                 </TableRow>
               ) : (
                 posts.map((post) => (
-                  <TableRow key={post.id}>
+                  <TableRow 
+                    key={post.id} 
+                    onClick={() => handleRowClick(post.id)}
+                    className="cursor-pointer"
+                  >
                     <TableCell className="font-medium max-w-sm truncate">{post.content}</TableCell>
                     <TableCell>{post.platform}</TableCell>
                     <TableCell>
@@ -108,38 +112,6 @@ export default function ContentDashboardPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>{post.scheduledAt}</TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem asChild>
-                             <Link href={`/content/view/${post.id}`} className="flex items-center">
-                              <Eye className="mr-2 h-4 w-4" /> View
-                            </Link>
-                          </DropdownMenuItem>
-                           <DropdownMenuItem asChild>
-                             <Link href={`/content/${post.id}/status`} className="flex items-center">
-                              <Activity className="mr-2 h-4 w-4" /> Status
-                            </Link>
-                          </DropdownMenuItem>
-                          {post.status !== 'Published' && (
-                             <DropdownMenuItem asChild>
-                              <Link href={`/content/edit/${post.id}`} className="flex items-center">
-                                <Edit className="mr-2 h-4 w-4" /> Edit
-                              </Link>
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem className="text-destructive hover:text-destructive-foreground flex items-center">
-                            <Trash className="mr-2 h-4 w-4" /> Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
                   </TableRow>
                 ))
               )}
