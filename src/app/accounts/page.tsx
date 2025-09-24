@@ -3,6 +3,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -56,6 +57,7 @@ export default function AccountsPage() {
   
   const { toast } = useToast();
   const owner = 'neupkishor'; // This should be dynamic in a real app
+  const router = useRouter();
 
   const fetchAccounts = React.useCallback(async (loadMore = false, search = '') => {
     if(!loadMore) setLoading(true);
@@ -150,6 +152,10 @@ export default function AccountsPage() {
           fetchAccounts(true, searchTerm);
       }
   }
+  
+  const handleRowClick = (id: string) => {
+    router.push(`/accounts/${id}`);
+  };
 
   const handleSyncPosts = async (accountId: string) => {
     setSyncingAccountId(accountId);
@@ -228,7 +234,7 @@ export default function AccountsPage() {
                 </TableRow>
               ) : (
                 accounts.map((account) => (
-                  <TableRow key={account.id}>
+                  <TableRow key={account.id} onClick={() => handleRowClick(account.id)} className="cursor-pointer">
                     <TableCell>
                       <div className="flex items-center gap-3">
                         {account.icon}
@@ -243,7 +249,7 @@ export default function AccountsPage() {
                     <TableCell>
                       <Badge variant={account.status === 'Active' ? 'default' : 'destructive'}>{account.status}</Badge>
                     </TableCell>
-                    <TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                        <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" className="h-8 w-8 p-0" disabled={syncingAccountId === account.id}>
