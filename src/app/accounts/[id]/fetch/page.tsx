@@ -106,7 +106,7 @@ export default function FetchHistoryPage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                     <Button asChild variant="outline" size="icon">
                         <Link href={`/accounts/${id}`}>
@@ -118,7 +118,7 @@ export default function FetchHistoryPage() {
                         <p className="text-muted-foreground">History of post fetching operations for this account.</p>
                     </div>
                 </div>
-                 <div className="flex items-center gap-2">
+                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
                     <Button variant="outline" onClick={() => handleSync('older')} disabled={!!isSyncing || logs.length === 0}>
                         {isSyncing === 'older' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                         Sync Older Posts
@@ -141,59 +141,61 @@ export default function FetchHistoryPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Date</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Details</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {loading ? (
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
                                 <TableRow>
-                                    <TableCell colSpan={3} className="text-center h-24">
-                                        <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
-                                    </TableCell>
+                                    <TableHead>Date</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead>Details</TableHead>
                                 </TableRow>
-                            ) : logs.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={3} className="text-center text-muted-foreground h-24">
-                                        No sync history found. Try syncing some posts.
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                logs.map((log) => (
-                                    <TableRow key={log.id}>
-                                        <TableCell className="font-mono text-xs">
-                                            {format(log.syncedAt.toDate(), 'PPpp')}
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge variant={log.status === 'Success' ? 'default' : 'destructive'}>
-                                                {log.status === 'Success' ? 
-                                                    <CheckCircle className="mr-1 h-3 w-3" /> : 
-                                                    <XCircle className="mr-1 h-3 w-3" />
-                                                }
-                                                {log.status}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell>
-                                            {log.status === 'Success' ?
-                                                `Synced ${log.postsSynced} new post(s).`
-                                                :
-                                                <span className="text-destructive text-sm">{log.errorMessage}</span>
-                                            }
-                                            {log.range && (
-                                                <p className="text-xs text-muted-foreground font-mono">
-                                                    Range: {format(log.range.since.toDate(), 'P')} - {format(log.range.until.toDate(), 'P')}
-                                                </p>
-                                            )}
+                            </TableHeader>
+                            <TableBody>
+                                {loading ? (
+                                    <TableRow>
+                                        <TableCell colSpan={3} className="text-center h-24">
+                                            <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
                                         </TableCell>
                                     </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
+                                ) : logs.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={3} className="text-center text-muted-foreground h-24">
+                                            No sync history found. Try syncing some posts.
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    logs.map((log) => (
+                                        <TableRow key={log.id}>
+                                            <TableCell className="font-mono text-xs whitespace-nowrap">
+                                                {format(log.syncedAt.toDate(), 'PPpp')}
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge variant={log.status === 'Success' ? 'default' : 'destructive'}>
+                                                    {log.status === 'Success' ? 
+                                                        <CheckCircle className="mr-1 h-3 w-3" /> : 
+                                                        <XCircle className="mr-1 h-3 w-3" />
+                                                    }
+                                                    {log.status}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell>
+                                                {log.status === 'Success' ?
+                                                    `Synced ${log.postsSynced} new post(s).`
+                                                    :
+                                                    <span className="text-destructive text-sm">{log.errorMessage}</span>
+                                                }
+                                                {log.range && (
+                                                    <p className="text-xs text-muted-foreground font-mono whitespace-nowrap">
+                                                        Range: {format(log.range.since.toDate(), 'P')} - {format(log.range.until.toDate(), 'P')}
+                                                    </p>
+                                                )}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
                 </CardContent>
             </Card>
         </div>

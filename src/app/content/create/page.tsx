@@ -192,7 +192,7 @@ export default function CreatePostPage() {
         return [...prev, url];
       }
     });
-  }
+  };
 
   const handleCancel = () => {
     router.push('/content');
@@ -238,7 +238,7 @@ export default function CreatePostPage() {
                 />
             </div>
             
-            <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
+            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
                 {/* Upload Button */}
                 <button
                     onClick={handleFileTrigger}
@@ -330,5 +330,3 @@ export default function CreatePostPage() {
     </div>
   );
 }
-
-    

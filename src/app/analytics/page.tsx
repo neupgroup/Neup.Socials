@@ -1,3 +1,4 @@
+
 'use client';
 import * as React from 'react';
 import { BarChart, LineChart } from 'recharts';
@@ -105,7 +106,7 @@ export default function AnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
         <div>
             {loadingAccounts ? <Loader2 className="h-5 w-5 animate-spin" /> : (
@@ -114,7 +115,7 @@ export default function AnalyticsPage() {
                     value={selectedAccountId || ''}
                     disabled={accounts.length === 0}
                 >
-                    <SelectTrigger className="w-[280px]">
+                    <SelectTrigger className="w-full md:w-[280px]">
                         <SelectValue placeholder="Select a Facebook Page..." />
                     </SelectTrigger>
                     <SelectContent>

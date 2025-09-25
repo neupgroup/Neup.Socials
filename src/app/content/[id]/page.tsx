@@ -39,7 +39,7 @@ const PostAnalytics = ({ postId }: { postId: string }) => {
     const { likes, comments, shares } = data.analytics;
 
     return (
-        <div className="flex justify-around p-4 border rounded-lg bg-muted/50">
+        <div className="flex flex-wrap justify-around p-4 border rounded-lg bg-muted/50 gap-4">
             <div className="text-center">
                 <p className="text-sm text-muted-foreground">Likes</p>
                 <p className="text-2xl font-bold flex items-center justify-center gap-2"><ThumbsUp className="h-5 w-5 text-blue-500" /> {likes}</p>
@@ -123,7 +123,7 @@ export default function ViewPostPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
             <Button asChild variant="outline" size="icon" disabled={isProcessing}>
                 <Link href={post.postCollectionId ? `/content/collection/${post.postCollectionId}` : '/content'}>

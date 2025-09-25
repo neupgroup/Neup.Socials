@@ -182,12 +182,12 @@ export default function AccountsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">Connected Accounts</h1>
           <p className="text-muted-foreground">Manage your connected social media accounts.</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
             <div className="relative">
                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                  <Input 
@@ -208,45 +208,47 @@ export default function AccountsPage() {
 
       <Card>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Platform</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                 <TableRow>
-                  <TableCell colSpan={3} className="text-center h-24">
-                    <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+                <TableHeader>
+                <TableRow>
+                    <TableHead>Platform</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Status</TableHead>
                 </TableRow>
-              ) : accounts.length === 0 ? (
-                 <TableRow>
-                  <TableCell colSpan={3} className="text-center text-muted-foreground h-24">
-                    No accounts found.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                accounts.map((account) => (
-                  <TableRow key={account.id} onClick={() => handleRowClick(account.id)} className="cursor-pointer">
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        {account.icon}
-                        <span className="font-medium">{account.platform}</span>
-                      </div>
+                </TableHeader>
+                <TableBody>
+                {loading ? (
+                    <TableRow>
+                    <TableCell colSpan={3} className="text-center h-24">
+                        <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
                     </TableCell>
-                    <TableCell>{account.name}</TableCell>
-                    <TableCell>
-                      <Badge variant={account.status === 'Active' ? 'default' : 'destructive'}>{account.status}</Badge>
+                    </TableRow>
+                ) : accounts.length === 0 ? (
+                    <TableRow>
+                    <TableCell colSpan={3} className="text-center text-muted-foreground h-24">
+                        No accounts found.
                     </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                    </TableRow>
+                ) : (
+                    accounts.map((account) => (
+                    <TableRow key={account.id} onClick={() => handleRowClick(account.id)} className="cursor-pointer">
+                        <TableCell>
+                        <div className="flex items-center gap-3">
+                            {account.icon}
+                            <span className="font-medium">{account.platform}</span>
+                        </div>
+                        </TableCell>
+                        <TableCell>{account.name}</TableCell>
+                        <TableCell>
+                        <Badge variant={account.status === 'Active' ? 'default' : 'destructive'}>{account.status}</Badge>
+                        </TableCell>
+                    </TableRow>
+                    ))
+                )}
+                </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
       

@@ -225,7 +225,7 @@ export default function EditPostPage() {
                 />
             </div>
             
-            <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
+            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
                 <button
                     onClick={handleFileTrigger}
                     disabled={isSaving}
@@ -313,5 +313,3 @@ export default function EditPostPage() {
     </div>
   );
 }
-
-    

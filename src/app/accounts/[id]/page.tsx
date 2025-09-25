@@ -145,7 +145,7 @@ export default function AccountDetailPage() {
               setInsights(insightsResult.data);
             }
           }
-          // Fetch posts right after account details
+          
           await fetchPosts();
 
         } else {
@@ -160,7 +160,9 @@ export default function AccountDetailPage() {
     };
 
     fetchAccountDetails();
-  }, [id, router, toast, fetchPosts]);
+  // The dependency array is intentionally kept simple to run once on mount.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, router, toast]);
 
   const handleSyncPosts = async () => {
     if (!id) return;
@@ -174,21 +176,7 @@ export default function AccountDetailPage() {
             });
             // Reset pagination and fetch posts from the start
             setLastVisible(null);
-            // We need to call fetchPosts directly without the memoized version to get the latest data.
-            const fetchAgain = async () => {
-                let q = query(
-                    collection(db, 'posts'),
-                    where('accountId', '==', id),
-                    orderBy('createdOn', 'desc'),
-                    limit(PAGE_SIZE)
-                );
-                const documentSnapshots = await getDocs(q);
-                const newPosts = documentSnapshots.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
-                setLastVisible(documentSnapshots.docs[documentSnapshots.docs.length - 1]);
-                setHasMore(newPosts.length === PAGE_SIZE);
-                setPosts(newPosts);
-            };
-            await fetchAgain();
+            await fetchPosts();
         } else {
             throw new Error(result.error || 'Unknown error during sync.');
         }
@@ -223,7 +211,7 @@ export default function AccountDetailPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
             <Button asChild variant="outline" size="icon">
             <Link href="/accounts">
@@ -234,14 +222,14 @@ export default function AccountDetailPage() {
                 <PlatformIcon platform={account.platform} />
                 <div>
                     <h1 className="text-3xl font-bold">{account.name}</h1>
-                    <div className="text-muted-foreground flex items-center gap-2">
+                    <div className="text-muted-foreground flex items-center gap-2 flex-wrap">
                         <span>@{account.username}</span>
                         <Badge variant="outline" className="font-mono">{account.platformId}</Badge>
                     </div>
                 </div>
             </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
             <Button asChild variant="secondary">
                 <Link href={`/accounts/${id}/fetch`}>
                     <History className="mr-2 h-4 w-4" />
@@ -293,7 +281,7 @@ export default function AccountDetailPage() {
                     <CardTitle className="text-sm font-medium">Reactions (30 days)</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="grid grid-cols-3 gap-2 text-center">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-center">
                         {Object.entries(insights.reactions).map(([type, count]) => (
                             <div key={type} className="flex flex-col items-center">
                                 <ReactionIcon reaction={type} />
@@ -313,32 +301,34 @@ export default function AccountDetailPage() {
           <CardDescription>Posts published to this account.</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Content</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {posts.length === 0 ? (
-                <TableRow><TableCell colSpan={3} className="text-center h-24 text-muted-foreground">No posts found for this account.</TableCell></TableRow>
-              ) : (
-                posts.map(post => (
-                  <TableRow key={post.id} className="cursor-pointer" onClick={() => router.push(`/content/${post.id}`)}>
-                    <TableCell className="max-w-md truncate">{post.message}</TableCell>
-                    <TableCell>{format(post.createdOn.toDate(), 'yyyy-MM-dd HH:mm')}</TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" asChild>
-                        <a href={post.postLink} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}><ExternalLink className="mr-2 h-4 w-4" /> View</a>
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+          <div className="overflow-x-auto">
+            <Table>
+                <TableHeader>
+                <TableRow>
+                    <TableHead>Content</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+                </TableHeader>
+                <TableBody>
+                {posts.length === 0 ? (
+                    <TableRow><TableCell colSpan={3} className="text-center h-24 text-muted-foreground">No posts found for this account.</TableCell></TableRow>
+                ) : (
+                    posts.map(post => (
+                    <TableRow key={post.id} className="cursor-pointer" onClick={() => router.push(`/content/${post.id}`)}>
+                        <TableCell className="max-w-md truncate">{post.message}</TableCell>
+                        <TableCell className="whitespace-nowrap">{format(post.createdOn.toDate(), 'yyyy-MM-dd HH:mm')}</TableCell>
+                        <TableCell className="text-right">
+                        <Button variant="ghost" size="sm" asChild>
+                            <a href={post.postLink} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}><ExternalLink className="mr-2 h-4 w-4" /> View</a>
+                        </Button>
+                        </TableCell>
+                    </TableRow>
+                    ))
+                )}
+                </TableBody>
+            </Table>
+          </div>
           {hasMore && (
             <div className="text-center mt-4">
               <Button onClick={() => fetchPosts(true)} disabled={loadingMorePosts}>

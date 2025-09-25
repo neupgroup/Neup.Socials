@@ -163,10 +163,10 @@ export default function InboxPage() {
   }
 
   return (
-    <div className="h-[calc(100vh-theme(spacing.28))]">
+    <div className="h-[calc(100vh-theme(spacing.28))] flex flex-col">
       <h1 className="text-3xl font-bold mb-6">Unified Inbox</h1>
-      <Card className="h-full">
-        <div className="grid md:grid-cols-[350px_1fr] h-full">
+      <Card className="flex-1">
+        <div className="grid md:grid-cols-[300px_1fr] lg:grid-cols-[350px_1fr] h-full">
           <div className="border-r flex flex-col">
             <div className="p-4 border-b">
               <div className="relative">
@@ -199,7 +199,7 @@ export default function InboxPage() {
                     <div className="flex-1 overflow-hidden">
                       <div className="flex justify-between items-center">
                         <span className="font-semibold truncate">{convo.contactName}</span>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
                           {convo.lastMessageAt ? formatDistanceToNow(convo.lastMessageAt.toDate(), { addSuffix: true }) : ''}
                         </span>
                       </div>

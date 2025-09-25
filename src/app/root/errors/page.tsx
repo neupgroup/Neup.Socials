@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Loader2, AlertTriangle, Trash2 } from 'lucide-react';
-import { ErrorLog } from '@/services/error-logging';
+import { logError } from '@/services/error-logging';
 import { useRouter } from 'next/navigation';
 import { clearAllErrorsAction } from '@/actions/error-log-actions';
 import { useToast } from '@/hooks/use-toast';
@@ -82,7 +82,7 @@ export default function ErrorLogsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <AlertTriangle className="h-8 w-8 text-destructive" />
@@ -119,48 +119,50 @@ export default function ErrorLogsPage() {
           <CardDescription>Latest errors are shown at the top. Click a message to see details.</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[180px]">Timestamp</TableHead>
-                <TableHead>Message</TableHead>
-                <TableHead>Source</TableHead>
-                <TableHead>User ID</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center h-24">
-                    <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
-                  </TableCell>
-                </TableRow>
-              ) : errors.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center text-muted-foreground h-24">
-                    No errors recorded. The system is healthy.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                errors.map((error) => (
-                  <TableRow 
-                    key={error.id} 
-                    onClick={() => handleRowClick(error.id)}
-                    className="cursor-pointer"
-                  >
-                    <TableCell className="font-mono text-xs">
-                      {error.timestamp ? format(error.timestamp.toDate(), 'yyyy-MM-dd HH:mm:ss') : 'N/A'}
-                    </TableCell>
-                    <TableCell className="font-medium max-w-sm truncate">{error.errorMessage}</TableCell>
-                    <TableCell>
-                      <Badge variant={getBadgeVariant(error.source)}>{error.source || 'Unknown'}</Badge>
-                    </TableCell>
-                    <TableCell className="font-mono text-xs">{error.userId || 'N/A'}</TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+            <div className="overflow-x-auto">
+                <Table>
+                    <TableHeader>
+                    <TableRow>
+                        <TableHead className="w-[180px]">Timestamp</TableHead>
+                        <TableHead>Message</TableHead>
+                        <TableHead>Source</TableHead>
+                        <TableHead>User ID</TableHead>
+                    </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                    {loading ? (
+                        <TableRow>
+                        <TableCell colSpan={4} className="text-center h-24">
+                            <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
+                        </TableCell>
+                        </TableRow>
+                    ) : errors.length === 0 ? (
+                        <TableRow>
+                        <TableCell colSpan={4} className="text-center text-muted-foreground h-24">
+                            No errors recorded. The system is healthy.
+                        </TableCell>
+                        </TableRow>
+                    ) : (
+                        errors.map((error) => (
+                        <TableRow 
+                            key={error.id} 
+                            onClick={() => handleRowClick(error.id)}
+                            className="cursor-pointer"
+                        >
+                            <TableCell className="font-mono text-xs whitespace-nowrap">
+                            {error.timestamp ? format(error.timestamp.toDate(), 'yyyy-MM-dd HH:mm:ss') : 'N/A'}
+                            </TableCell>
+                            <TableCell className="font-medium max-w-sm truncate">{error.errorMessage}</TableCell>
+                            <TableCell>
+                            <Badge variant={getBadgeVariant(error.source)}>{error.source || 'Unknown'}</Badge>
+                            </TableCell>
+                            <TableCell className="font-mono text-xs">{error.userId || 'N/A'}</TableCell>
+                        </TableRow>
+                        ))
+                    )}
+                    </TableBody>
+                </Table>
+            </div>
         </CardContent>
       </Card>
     </div>

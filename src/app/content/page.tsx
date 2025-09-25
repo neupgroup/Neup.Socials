@@ -120,12 +120,12 @@ export default function ContentDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">Content Feed</h1>
           <p className="text-muted-foreground">A unified feed of all your published posts.</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
            <div className="relative">
                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                  <Input 
@@ -146,44 +146,46 @@ export default function ContentDashboardPage() {
 
       <Card>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Platform</TableHead>
-                <TableHead>Content</TableHead>
-                <TableHead>Date Published</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
+          <div className="overflow-x-auto">
+            <Table>
+                <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center h-24">
-                    <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
-                  </TableCell>
+                    <TableHead>Platform</TableHead>
+                    <TableHead>Content</TableHead>
+                    <TableHead>Date Published</TableHead>
                 </TableRow>
-              ) : posts.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={3} className="text-center text-muted-foreground h-24">
-                    No posts found.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                posts.map((post) => (
-                  <TableRow 
-                    key={post.id} 
-                    onClick={() => handleRowClick(post.id)}
-                    className="cursor-pointer"
-                  >
-                    <TableCell>
-                      <PlatformIcon platform={post.platform} />
+                </TableHeader>
+                <TableBody>
+                {loading ? (
+                    <TableRow>
+                    <TableCell colSpan={3} className="text-center h-24">
+                        <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
                     </TableCell>
-                    <TableCell className="font-medium max-w-sm truncate">{post.message}</TableCell>
-                    <TableCell>{post.createdOn ? format(post.createdOn.toDate(), 'PP p') : '-'}</TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                    </TableRow>
+                ) : posts.length === 0 ? (
+                    <TableRow>
+                    <TableCell colSpan={3} className="text-center text-muted-foreground h-24">
+                        No posts found.
+                    </TableCell>
+                    </TableRow>
+                ) : (
+                    posts.map((post) => (
+                    <TableRow 
+                        key={post.id} 
+                        onClick={() => handleRowClick(post.id)}
+                        className="cursor-pointer"
+                    >
+                        <TableCell>
+                        <PlatformIcon platform={post.platform} />
+                        </TableCell>
+                        <TableCell className="font-medium max-w-sm truncate">{post.message}</TableCell>
+                        <TableCell className="whitespace-nowrap">{post.createdOn ? format(post.createdOn.toDate(), 'PP p') : '-'}</TableCell>
+                    </TableRow>
+                    ))
+                )}
+                </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
       

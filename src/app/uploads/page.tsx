@@ -112,7 +112,7 @@ export default function UploadsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <Upload className="h-8 w-8 text-primary" />
@@ -120,7 +120,7 @@ export default function UploadsPage() {
           </h1>
           <p className="text-muted-foreground">A log of all user-uploaded media files.</p>
         </div>
-         <div className="relative">
+         <div className="relative w-full md:w-auto">
              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
              <Input 
                 placeholder="Search by filename..." 
@@ -137,48 +137,50 @@ export default function UploadsPage() {
           <CardDescription>Latest uploads are shown at the top. Click a row to see details.</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>File Name</TableHead>
-                <TableHead>Size</TableHead>
-                <TableHead>Uploaded By</TableHead>
-                <TableHead>Date</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
+          <div className="overflow-x-auto">
+            <Table>
+                <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center h-24">
-                    <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
-                  </TableCell>
+                    <TableHead>File Name</TableHead>
+                    <TableHead>Size</TableHead>
+                    <TableHead>Uploaded By</TableHead>
+                    <TableHead>Date</TableHead>
                 </TableRow>
-              ) : uploads.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center text-muted-foreground h-24">
-                    No files have been uploaded yet.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                uploads.map((upload) => (
-                  <TableRow 
-                    key={upload.id} 
-                    onClick={() => handleRowClick(upload.id)}
-                    className="cursor-pointer"
-                  >
-                    <TableCell className="font-medium max-w-sm truncate">
-                        {upload.fileName}
+                </TableHeader>
+                <TableBody>
+                {loading ? (
+                    <TableRow>
+                    <TableCell colSpan={4} className="text-center h-24">
+                        <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
                     </TableCell>
-                    <TableCell>{formatBytes(upload.fileSize)}</TableCell>
-                    <TableCell>{upload.uploadedBy}</TableCell>
-                    <TableCell>
-                      {upload.uploadedOn ? format(upload.uploadedOn.toDate(), 'yyyy-MM-dd HH:mm') : 'N/A'}
+                    </TableRow>
+                ) : uploads.length === 0 ? (
+                    <TableRow>
+                    <TableCell colSpan={4} className="text-center text-muted-foreground h-24">
+                        No files have been uploaded yet.
                     </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                    </TableRow>
+                ) : (
+                    uploads.map((upload) => (
+                    <TableRow 
+                        key={upload.id} 
+                        onClick={() => handleRowClick(upload.id)}
+                        className="cursor-pointer"
+                    >
+                        <TableCell className="font-medium max-w-sm truncate">
+                            {upload.fileName}
+                        </TableCell>
+                        <TableCell>{formatBytes(upload.fileSize)}</TableCell>
+                        <TableCell>{upload.uploadedBy}</TableCell>
+                        <TableCell className="whitespace-nowrap">
+                        {upload.uploadedOn ? format(upload.uploadedOn.toDate(), 'yyyy-MM-dd HH:mm') : 'N/A'}
+                        </TableCell>
+                    </TableRow>
+                    ))
+                )}
+                </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
       
