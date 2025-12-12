@@ -17,6 +17,8 @@ import { useToast } from '@/hooks/use-toast';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { getFacebookAuthUrl } from '@/actions/facebook/auth';
+import { getInstagramAuthUrl } from '@/actions/instagram/auth';
+
 
 const formSchema = z.object({
   platform: z.enum(['Facebook', 'Instagram', 'Twitter', 'LinkedIn'], {required_error: "Please select a platform."}),
@@ -27,8 +29,8 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const platformDetails = {
-    Facebook: { icon: <Facebook className="h-5 w-5 text-blue-600" />, isOauth: true },
-    Instagram: { icon: <Instagram className="h-5 w-5 text-pink-500" />, isOauth: false },
+    Facebook: { icon: <Facebook className="h-5 w-5 text-blue-600" />, isOauth: true, handler: getFacebookAuthUrl },
+    Instagram: { icon: <Instagram className="h-5 w-5 text-pink-500" />, isOauth: true, handler: getInstagramAuthUrl },
     Twitter: { icon: <Twitter className="h-5 w-5 text-blue-400" />, isOauth: false },
     LinkedIn: { icon: <Linkedin className="h-5 w-5 text-blue-700" />, isOauth: false },
 }
@@ -57,17 +59,19 @@ export default function AddAccountPage() {
 
   const selectedPlatform = watch('platform');
 
-  const handleFacebookConnect = async () => {
+  const handleOAuthConnect = async () => {
+    if (!selectedPlatform) return;
+    const platform = platformDetails[selectedPlatform];
+    if (!platform || !platform.isOauth || !platform.handler) return;
+
     setIsSubmitting(true);
     try {
-      // This assumes the user ID is available. In a real app, you'd get this from your auth context.
-      const authUrl = await getFacebookAuthUrl(userId);
-      // Redirect the user to Facebook's auth dialog
+      const authUrl = await platform.handler(userId);
       window.location.href = authUrl;
     } catch (error) {
-        console.error("Error getting Facebook auth URL: ", error);
+        console.error(`Error getting ${selectedPlatform} auth URL: `, error);
         toast({
-            title: 'Could not connect to Facebook',
+            title: `Could not connect to ${selectedPlatform}`,
             description: 'An unexpected error occurred. Please try again.',
             variant: 'destructive',
         });
@@ -160,7 +164,7 @@ export default function AddAccountPage() {
                   <p className="text-muted-foreground mb-4">
                     You will be redirected to {selectedPlatform} to authorize the connection.
                   </p>
-                   <Button onClick={handleFacebookConnect} disabled={isSubmitting}>
+                   <Button onClick={handleOAuthConnect} disabled={isSubmitting}>
                       {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                       Continue to {selectedPlatform}
                   </Button>

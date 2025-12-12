@@ -1,0 +1,99 @@
+
+/**
+ * @fileoverview Handles the OAuth callback from Instagram.
+ */
+'use server';
+
+import {
+  exchangeCodeForToken,
+  exchangeForLongLivedToken,
+  getUserProfile,
+} from '@/core/instagram/api';
+import { validateState, encrypt } from '@/lib/crypto';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, serverTimestamp, query, where, getDocs, updateDoc } from 'firebase/firestore';
+import { logError } from '@/lib/error-logging';
+
+/**
+ * Handles the OAuth callback from Instagram. It exchanges the authorization code
+ * for a long-lived access token, fetches the user's profile, and stores the
+ * information securely in Firestore.
+ *
+ * @param code - The authorization code provided by Instagram.
+ * @param state - The state parameter for CSRF validation.
+ * @returns An object indicating success or failure.
+ */
+export async function handleInstagramCallback(code: string, state: string) {
+  let userId = 'anonymous';
+  try {
+    // 1. Validate the state parameter to prevent CSRF attacks.
+    const validationResult = await validateState(state);
+    userId = validationResult.userId;
+    if (!userId) {
+      throw new Error('State validation failed: No user ID present.');
+    }
+
+    // 2. Exchange the code for a short-lived user access token.
+    const shortLivedTokenResponse = await exchangeCodeForToken(code);
+    
+    // 3. Exchange the short-lived token for a long-lived one.
+    const longLivedTokenResponse = await exchangeForLongLivedToken(
+      shortLivedTokenResponse.access_token
+    );
+    const longLivedToken = longLivedTokenResponse.access_token;
+    
+    // 4. Fetch the user's profile using the long-lived token.
+    const userProfile = await getUserProfile(longLivedToken);
+
+    // 5. Encrypt the token and store account details in Firestore.
+    const encryptedToken = await encrypt(longLivedToken);
+    
+    const accountsCollection = collection(db, 'connected_accounts');
+    const q = query(accountsCollection, where('platformId', '==', userProfile.id), where('owner', '==', userId));
+    const existingDocs = await getDocs(q);
+
+    const accountData = {
+        platform: 'Instagram',
+        platformId: userProfile.id,
+        name: userProfile.username,
+        username: userProfile.username,
+        encryptedToken: encryptedToken,
+        status: 'Active',
+        owner: userId,
+        updatedAt: serverTimestamp(),
+        lastSyncedAt: null,
+    };
+    
+    if (existingDocs.empty) {
+        // Add new document
+        await addDoc(accountsCollection, {
+            ...accountData,
+            connectedOn: serverTimestamp(),
+        });
+    } else {
+        // Update existing document
+        const docRef = existingDocs.docs[0].ref;
+        await updateDoc(docRef, {
+            ...accountData,
+            connectedOn: existingDocs.docs[0].data().connectedOn,
+        });
+    }
+
+    return { success: true, message: `Instagram account @${userProfile.username} connected successfully.` };
+  } catch (error: any) {
+    console.error('Error in Instagram callback handler:', error);
+    
+    await logError({
+        process: 'handleInstagramCallback',
+        location: 'Instagram Callback Handler',
+        errorMessage: error.message,
+        user: userId,
+        context: {
+            step: 'Instagram OAuth Callback Processing',
+            state,
+        },
+    });
+    
+    return { success: false, error: error.message || 'An unknown error occurred during the Instagram callback.' };
+  }
+}
