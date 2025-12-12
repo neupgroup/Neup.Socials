@@ -23,7 +23,7 @@ export async function getLinkedInAuthUrl(userId: string): Promise<string> {
     }
     
     // Scopes for reading basic profile, email, and posting on behalf of the user.
-    const scope = 'r_profile_basicinfo w_member_social';
+    const scope = 'r_liteprofile w_member_social';
 
     const params = new URLSearchParams({
       response_type: 'code',
