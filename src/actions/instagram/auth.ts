@@ -27,7 +27,7 @@ export async function getInstagramAuthUrl(userId: string): Promise<string> {
       redirect_uri: process.env.INSTAGRAM_REDIRECT_URI!,
       scope: 'user_profile,user_media',
       response_type: 'code',
-      state,
+      state: encodeURIComponent(state),
     });
 
     return `${INSTAGRAM_OAUTH_BASE_URL}?${params.toString()}`;

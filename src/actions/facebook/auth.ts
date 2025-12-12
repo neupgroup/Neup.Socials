@@ -25,7 +25,7 @@ export async function getFacebookAuthUrl(userId: string): Promise<string> {
     const params = new URLSearchParams({
       client_id: process.env.FB_APP_ID!,
       redirect_uri: process.env.FB_REDIRECT_URI!,
-      state,
+      state: encodeURIComponent(state),
       // These scopes request permissions to manage pages and read engagement.
       scope: 'pages_manage_posts,pages_read_engagement,pages_show_list,business_management,read_insights',
       response_type: 'code',

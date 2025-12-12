@@ -29,7 +29,7 @@ export async function getLinkedInAuthUrl(userId: string): Promise<string> {
       response_type: 'code',
       client_id: process.env.LINKEDIN_CLIENT_ID!,
       redirect_uri: process.env.LINKEDIN_REDIRECT_URI!,
-      state,
+      state: encodeURIComponent(state),
       scope,
     });
 
