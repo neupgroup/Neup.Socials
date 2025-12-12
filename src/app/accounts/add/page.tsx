@@ -18,6 +18,7 @@ import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { getFacebookAuthUrl } from '@/actions/facebook/auth';
 import { getInstagramAuthUrl } from '@/actions/instagram/auth';
+import { getLinkedInAuthUrl } from '@/actions/linkedin/auth';
 
 
 const formSchema = z.object({
@@ -31,8 +32,8 @@ type FormValues = z.infer<typeof formSchema>;
 const platformDetails = {
     Facebook: { icon: <Facebook className="h-5 w-5 text-blue-600" />, isOauth: true, handler: getFacebookAuthUrl },
     Instagram: { icon: <Instagram className="h-5 w-5 text-pink-500" />, isOauth: true, handler: getInstagramAuthUrl },
+    LinkedIn: { icon: <Linkedin className="h-5 w-5 text-blue-700" />, isOauth: true, handler: getLinkedInAuthUrl },
     Twitter: { icon: <Twitter className="h-5 w-5 text-blue-400" />, isOauth: false },
-    LinkedIn: { icon: <Linkedin className="h-5 w-5 text-blue-700" />, isOauth: false },
 }
 
 export default function AddAccountPage() {
