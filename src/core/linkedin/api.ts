@@ -18,6 +18,7 @@ type AccessTokenResponse = {
 type ErrorResponse = {
   error: string;
   error_description: string;
+  message?: string; // Adding this to catch more error details
 };
 
 type LinkedInProfile = {
@@ -40,7 +41,8 @@ async function handleApiResponse<T>(res: Response): Promise<T> {
     if (!res.ok) {
         const error = json as ErrorResponse;
         console.error('LinkedIn API Error:', error);
-        throw new Error(error.error_description || 'An unknown LinkedIn API error occurred.');
+        // Use the more specific 'message' field if available
+        throw new Error(error.message || error.error_description || 'An unknown LinkedIn API error occurred.');
     }
     return json as T;
 }
@@ -72,7 +74,10 @@ export async function exchangeCodeForToken(code: string): Promise<AccessTokenRes
  * Fetches the user's basic profile information.
  */
 export async function getUserProfile(accessToken: string): Promise<LinkedInProfile> {
-    const res = await fetch(`${API_BASE_URL}/me`, {
+    // The projection specifies which fields we want to retrieve for the user's profile.
+    const projection = 'projection=(id,localizedFirstName,localizedLastName,profilePicture(displayImage~:playableStreams))';
+    
+    const res = await fetch(`${API_BASE_URL}/me?${projection}`, {
         headers: {
             'Authorization': `Bearer ${accessToken}`,
             'X-Restli-Protocol-Version': '2.0.0', // Required by LinkedIn API
