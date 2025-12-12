@@ -74,10 +74,10 @@ export async function exchangeCodeForToken(code: string): Promise<AccessTokenRes
  * Fetches the user's basic profile information.
  */
 export async function getUserProfile(accessToken: string): Promise<LinkedInProfile> {
-    // The projection specifies which fields we want to retrieve for the user's profile.
-    const projection = 'projection=(id,localizedFirstName,localizedLastName,profilePicture(displayImage~:playableStreams))';
+    // The fields parameter specifies which fields we want to retrieve for the user's profile.
+    const fields = 'fields=id,localizedFirstName,localizedLastName';
     
-    const res = await fetch(`${API_BASE_URL}/me?${projection}`, {
+    const res = await fetch(`${API_BASE_URL}/me?${fields}`, {
         headers: {
             'Authorization': `Bearer ${accessToken}`,
             'X-Restli-Protocol-Version': '2.0.0', // Required by LinkedIn API
