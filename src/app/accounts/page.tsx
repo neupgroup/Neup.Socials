@@ -209,14 +209,24 @@ export default function AccountsPage() {
                 </Card>
             ))}
         </div>
-      ) : accounts.length === 0 ? (
-        <Card>
-            <CardContent className="p-12 text-center text-muted-foreground">
-                No accounts found. Connect one to get started.
-            </CardContent>
-        </Card>
       ) : (
         <div className="grid grid-cols-1 gap-4">
+            <Card
+                key="add-new-account"
+                className="hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary"
+                onClick={() => router.push('/accounts/add')}
+            >
+                <CardContent className="p-4 flex items-center justify-center text-center h-full min-h-[110px]">
+                    <div className="flex items-center gap-4">
+                        <PlusCircle className="h-8 w-8 text-muted-foreground" />
+                        <div>
+                            <h3 className="font-bold text-lg">Connect New Account</h3>
+                            <p className="text-sm text-muted-foreground">Add a new social profile to manage.</p>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
             {accounts.map((account) => (
             <Card key={account.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleCardClick(account.id)}>
                 <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
