@@ -29,17 +29,18 @@ export async function handleLinkedInCallback(code: string, state: string) {
     const accessToken = tokenResponse.access_token;
     
     const userProfile = await getUserProfile(accessToken);
-    const fullName = `${userProfile.localizedFirstName} ${userProfile.localizedLastName}`;
+    const fullName = userProfile.name;
 
     const encryptedToken = await encrypt(accessToken);
     
     const accountsCollection = collection(db, 'connected_accounts');
-    const q = query(accountsCollection, where('platformId', '==', userProfile.id), where('owner', '==', userId));
+    // OIDC uses 'sub' as the unique identifier for the user.
+    const q = query(accountsCollection, where('platformId', '==', userProfile.sub), where('owner', '==', userId));
     const existingDocs = await getDocs(q);
 
     const accountData = {
         platform: 'LinkedIn',
-        platformId: userProfile.id,
+        platformId: userProfile.sub, // Use 'sub' from OIDC response
         name: fullName,
         username: fullName,
         encryptedToken: encryptedToken,

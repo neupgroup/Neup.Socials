@@ -23,18 +23,13 @@ type ErrorResponse = {
 };
 
 type LinkedInProfile = {
-    id: string;
-    localizedFirstName: string;
-    localizedLastName: string;
-    profilePicture: {
-        'displayImage~': {
-            elements: Array<{
-                identifiers: Array<{
-                    identifier: string;
-                }>
-            }>
-        }
-    }
+    sub: string; // OIDC uses 'sub' for user ID
+    name: string;
+    given_name: string;
+    family_name: string;
+    picture?: string;
+    email?: string;
+    email_verified?: boolean;
 }
 
 async function handleApiResponse<T>(res: Response): Promise<T> {
@@ -72,16 +67,12 @@ export async function exchangeCodeForToken(code: string): Promise<AccessTokenRes
 }
 
 /**
- * Fetches the user's basic profile information.
+ * Fetches the user's basic profile information using the OIDC userinfo endpoint.
  */
 export async function getUserProfile(accessToken: string): Promise<LinkedInProfile> {
-    // The fields parameter specifies which fields we want to retrieve for the user's profile.
-    const fields = 'fields=id,localizedFirstName,localizedLastName';
-    
-    const res = await fetch(`${API_BASE_URL}/me?${fields}`, {
+    const res = await fetch(`${API_BASE_URL}/userinfo`, {
         headers: {
             'Authorization': `Bearer ${accessToken}`,
-            'X-Restli-Protocol-Version': '2.0.0', // Required by LinkedIn API
         }
     });
     return handleApiResponse<LinkedInProfile>(res);
