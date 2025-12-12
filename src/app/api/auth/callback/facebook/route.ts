@@ -6,7 +6,7 @@ import { logError } from '@/lib/error-logging';
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
-  const state = searchParams.get('state');
+  let state = searchParams.get('state');
   const error = searchParams.get('error');
   const errorDescription = searchParams.get('error_description');
 
@@ -29,6 +29,9 @@ export async function GET(request: NextRequest) {
     });
     return NextResponse.redirect(new URL('/accounts/add?error=invalid-callback', request.url));
   }
+
+  // Decode the state parameter before validation
+  state = decodeURIComponent(state);
 
   const result = await handleFacebookCallback(code, state);
 
