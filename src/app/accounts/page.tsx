@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { PlusCircle, Twitter, Facebook, Linkedin, Instagram, MoreHorizontal, Loader2, Search, RefreshCw } from 'lucide-react';
 import {
@@ -83,28 +82,15 @@ export default function AccountsPage() {
       }
       
       if (loadMore && lastVisible) {
-        q = query(
-          collection(db, 'connected_accounts'),
-          where('owner', '==', owner),
-          orderBy('connectedOn', 'desc'),
-          startAfter(lastVisible),
-          limit(PAGE_SIZE)
-        );
-         if (search) {
-            q = query(
-              collection(db, 'connected_accounts'),
-              where('owner', '==', owner),
-              where('name', '>=', search),
-              where('name', '<=', search + '\uf8ff'),
-              orderBy('name'),
-              startAfter(lastVisible),
-              limit(PAGE_SIZE)
-            );
-        }
+        const baseQuery = search 
+            ? query(collection(db, 'connected_accounts'), where('owner', '==', owner), where('name', '>=', search), where('name', '<=', search + '\uf8ff'), orderBy('name'))
+            : query(collection(db, 'connected_accounts'), where('owner', '==', owner), orderBy('connectedOn', 'desc'));
+
+        q = query(baseQuery, startAfter(lastVisible), limit(PAGE_SIZE));
       }
 
-      const unsubscribe = onSnapshot(q, (snapshot) => {
-        const newAccounts = snapshot.docs.map(doc => {
+      const documentSnapshots = await getDocs(q);
+      const newAccounts = documentSnapshots.docs.map(doc => {
           const data = doc.data();
           return {
             id: doc.id,
@@ -119,15 +105,11 @@ export default function AccountsPage() {
           } as Account;
         });
 
-        setLastVisible(snapshot.docs[snapshot.docs.length - 1]);
-        setHasMore(newAccounts.length === PAGE_SIZE);
-        setAccounts(prev => loadMore ? [...prev, ...newAccounts] : newAccounts);
-        setLoading(false);
-        setLoadingMore(false);
-      });
-
-      return unsubscribe;
-
+      setLastVisible(documentSnapshots.docs[documentSnapshots.docs.length - 1]);
+      setHasMore(newAccounts.length === PAGE_SIZE);
+      setAccounts(prev => loadMore ? [...prev, ...newAccounts] : newAccounts);
+      setLoading(false);
+      setLoadingMore(false);
     } catch (error) {
       console.error("Error fetching accounts: ", error);
       toast({ title: 'Error fetching accounts', variant: 'destructive' });
@@ -153,7 +135,7 @@ export default function AccountsPage() {
       }
   }
   
-  const handleRowClick = (id: string) => {
+  const handleCardClick = (id: string) => {
     router.push(`/accounts/${id}`);
   };
 
@@ -166,6 +148,10 @@ export default function AccountsPage() {
                 title: 'Sync Complete',
                 description: `${result.postsSynced} new posts were synced for this account.`,
             });
+            // Manually update the lastSyncedAt time on the client to give immediate feedback
+            setAccounts(prevAccounts => prevAccounts.map(acc => 
+                acc.id === accountId ? { ...acc, lastSyncedAt: new Timestamp(Date.now() / 1000, 0) } : acc
+            ));
         } else {
             throw new Error(result.error || 'Unknown error during sync.');
         }
@@ -206,54 +192,78 @@ export default function AccountsPage() {
         </div>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-                <TableHeader>
-                <TableRow>
-                    <TableHead>Platform</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Status</TableHead>
-                </TableRow>
-                </TableHeader>
-                <TableBody>
-                {loading ? (
-                    <TableRow>
-                    <TableCell colSpan={3} className="text-center h-24">
-                        <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
-                    </TableCell>
-                    </TableRow>
-                ) : accounts.length === 0 ? (
-                    <TableRow>
-                    <TableCell colSpan={3} className="text-center text-muted-foreground h-24">
-                        No accounts found.
-                    </TableCell>
-                    </TableRow>
-                ) : (
-                    accounts.map((account) => (
-                    <TableRow key={account.id} onClick={() => handleRowClick(account.id)} className="cursor-pointer">
-                        <TableCell>
-                        <div className="flex items-center gap-3">
-                            {account.icon}
-                            <span className="font-medium">{account.platform}</span>
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {Array.from({length: 3}).map((_, i) => (
+                <Card key={i} className="animate-pulse">
+                    <CardContent className="p-6 flex items-center justify-between">
+                       <div className="flex items-center gap-4">
+                           <div className="h-10 w-10 rounded-full bg-muted"></div>
+                           <div>
+                               <div className="h-5 w-24 rounded-md bg-muted"></div>
+                               <div className="h-4 w-16 mt-1 rounded-md bg-muted"></div>
+                           </div>
+                       </div>
+                       <div className="h-6 w-16 rounded-full bg-muted"></div>
+                    </CardContent>
+                </Card>
+            ))}
+        </div>
+      ) : accounts.length === 0 ? (
+        <Card>
+            <CardContent className="p-12 text-center text-muted-foreground">
+                No accounts found. Connect one to get started.
+            </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {accounts.map((account) => (
+            <Card key={account.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleCardClick(account.id)}>
+                <CardContent className="p-6">
+                    <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-4">
+                            <div className="bg-muted p-3 rounded-full">
+                                {account.icon}
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-lg">{account.name}</h3>
+                                <p className="text-sm text-muted-foreground">@{account.username}</p>
+                            </div>
                         </div>
-                        </TableCell>
-                        <TableCell>{account.name}</TableCell>
-                        <TableCell>
-                        <Badge variant={account.status === 'Active' ? 'default' : 'destructive'}>{account.status}</Badge>
-                        </TableCell>
-                    </TableRow>
-                    ))
-                )}
-                </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+                         <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
+                                    <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleSyncPosts(account.id); }} disabled={syncingAccountId === account.id}>
+                                    {syncingAccountId === account.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <RefreshCw className="mr-2 h-4 w-4" />}
+                                    Sync Posts
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); router.push(`/accounts/${account.id}`) }}>View Details</DropdownMenuItem>
+                                <DropdownMenuItem className="text-destructive">Disconnect</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                    <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
+                        <div>
+                            <span>Status: </span>
+                            <Badge variant={account.status === 'Active' ? 'default' : 'destructive'} className="ml-1">{account.status}</Badge>
+                        </div>
+                        <div>
+                             <span>Last Synced: </span>
+                            <span className="font-medium">{account.lastSyncedAt ? formatDistanceToNow(account.lastSyncedAt.toDate(), { addSuffix: true }) : 'Never'}</span>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+            ))}
+        </div>
+      )}
       
       {hasMore && !loading && (
-        <div className="text-center">
+        <div className="text-center mt-6">
           <Button onClick={handleShowMore} disabled={loadingMore}>
             {loadingMore ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             Show More
