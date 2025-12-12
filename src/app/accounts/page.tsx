@@ -173,24 +173,17 @@ export default function AccountsPage() {
           <h1 className="text-3xl font-bold">Connected Accounts</h1>
           <p className="text-muted-foreground">Manage your connected social media accounts.</p>
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
-            <div className="relative">
-                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                 <Input 
-                    placeholder="Search by name..." 
-                    className="pl-10"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
-            </div>
-            <Button asChild>
-            <Link href="/accounts/add">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Connect New Account
-            </Link>
-            </Button>
-        </div>
       </div>
+      
+       <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input 
+                placeholder="Search by name..." 
+                className="pl-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+            />
+        </div>
 
       {loading ? (
         <div className="grid grid-cols-1 gap-4">
@@ -278,3 +271,5 @@ export default function AccountsPage() {
     </div>
   );
 }
+
+    
