@@ -193,10 +193,10 @@ export default function AccountsPage() {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-4">
             {Array.from({length: 3}).map((_, i) => (
                 <Card key={i} className="animate-pulse">
-                    <CardContent className="p-6 flex items-center justify-between">
+                    <CardContent className="p-4 flex items-center justify-between">
                        <div className="flex items-center gap-4">
                            <div className="h-10 w-10 rounded-full bg-muted"></div>
                            <div>
@@ -204,7 +204,7 @@ export default function AccountsPage() {
                                <div className="h-4 w-16 mt-1 rounded-md bg-muted"></div>
                            </div>
                        </div>
-                       <div className="h-6 w-16 rounded-full bg-muted"></div>
+                       <div className="h-8 w-24 rounded-md bg-muted"></div>
                     </CardContent>
                 </Card>
             ))}
@@ -216,23 +216,28 @@ export default function AccountsPage() {
             </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-4">
             {accounts.map((account) => (
             <Card key={account.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleCardClick(account.id)}>
-                <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-4">
-                            <div className="bg-muted p-3 rounded-full">
-                                {account.icon}
-                            </div>
-                            <div>
-                                <h3 className="font-bold text-lg">{account.name}</h3>
-                                <p className="text-sm text-muted-foreground">@{account.username}</p>
-                            </div>
+                <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-4 flex-1">
+                        <div className="bg-muted p-3 rounded-full">
+                            {account.icon}
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-lg">{account.name}</h3>
+                            <p className="text-sm text-muted-foreground">@{account.username}</p>
+                        </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto">
+                        <div className="text-xs text-muted-foreground text-left sm:text-right">
+                           <span>Last Synced: </span>
+                            <span className="font-medium">{account.lastSyncedAt ? formatDistanceToNow(account.lastSyncedAt.toDate(), { addSuffix: true }) : 'Never'}</span>
                         </div>
                          <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                                     <MoreHorizontal className="h-4 w-4" />
                                 </Button>
                             </DropdownMenuTrigger>
@@ -245,16 +250,6 @@ export default function AccountsPage() {
                                 <DropdownMenuItem className="text-destructive">Disconnect</DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
-                    </div>
-                    <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
-                        <div>
-                            <span>Status: </span>
-                            <Badge variant={account.status === 'Active' ? 'default' : 'destructive'} className="ml-1">{account.status}</Badge>
-                        </div>
-                        <div>
-                             <span>Last Synced: </span>
-                            <span className="font-medium">{account.lastSyncedAt ? formatDistanceToNow(account.lastSyncedAt.toDate(), { addSuffix: true }) : 'Never'}</span>
-                        </div>
                     </div>
                 </CardContent>
             </Card>
