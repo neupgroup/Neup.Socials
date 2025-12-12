@@ -10,8 +10,8 @@ const OAUTH_URL = 'https://www.linkedin.com/oauth/v2/accessToken';
 type AccessTokenResponse = {
   access_token: string;
   expires_in: number;
-  refresh_token: string;
-  refresh_token_expires_in: number;
+  refresh_token?: string;
+  refresh_token_expires_in?: number;
   scope: string;
 };
 
