@@ -6,6 +6,7 @@ import { db } from '@/lib/firebase';
 import { decrypt } from '@/lib/crypto';
 import { logError } from '../error-logging';
 import { publishToPage as publishToFacebookPage } from '@/core/facebook/api';
+import { publishToLinkedIn } from '@/core/linkedin/api';
 
 type PublicationResult = {
     accountId: string;
@@ -54,12 +55,21 @@ export async function publishContent(postCollectionId: string) {
         
         let response = null;
         let postLink = '';
+        let platformPostId = '';
 
         if (account.platform === 'Facebook') {
           response = await publishToFacebookPage(pageId, token, postCollectionData.content, postCollectionData.mediaUrls, postCollectionData.ctaType, postCollectionData.ctaLink);
-          const platformPostId = response.post_id || response.id;
+          platformPostId = response.post_id || response.id;
           postLink = `https://www.facebook.com/${platformPostId}`;
           console.log(`Successfully published to Facebook page: ${account.name} (${pageId}). Post ID: ${platformPostId}`);
+        } else if (account.platform === 'LinkedIn') {
+            const authorUrn = `urn:li:person:${pageId}`;
+            response = await publishToLinkedIn(token, authorUrn, postCollectionData.content);
+            platformPostId = response.id; // The URN of the post, e.g., urn:li:share:123
+            // The post ID is part of the URN
+            const simpleId = platformPostId.split(':').pop();
+            postLink = `https://www.linkedin.com/feed/update/${platformPostId}/`;
+             console.log(`Successfully published to LinkedIn: ${account.name}. Post ID: ${platformPostId}`);
         } else {
            console.warn(`Publishing for platform '${account.platform}' is not yet implemented.`);
            return null; // Skip unsupported platforms
@@ -70,7 +80,7 @@ export async function publishContent(postCollectionId: string) {
             postCollectionId: postCollectionId,
             accountId: accountId,
             platform: account.platform,
-            platformPostId: response.post_id || response.id,
+            platformPostId: platformPostId,
             message: postCollectionData.content,
             postLink: postLink,
             createdBy: postCollectionData.author,
@@ -120,5 +130,3 @@ export async function publishContent(postCollectionId: string) {
     throw error;
   }
 }
-
-    

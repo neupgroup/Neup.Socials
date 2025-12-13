@@ -19,7 +19,8 @@ import { collection, query, where, getDocs, onSnapshot, orderBy, limit, startAft
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
-import { syncPostsAction } from '@/actions/facebook/sync-posts';
+import { syncPostsAction as syncFacebookPostsAction } from '@/actions/facebook/sync-posts';
+import { syncLinkedInPostsAction } from '@/actions/linkedin/sync-posts';
 
 type Account = {
   id: string;
@@ -139,10 +140,21 @@ export default function AccountsPage() {
     router.push(`/accounts/${id}`);
   };
 
-  const handleSyncPosts = async (accountId: string) => {
-    setSyncingAccountId(accountId);
+  const handleSyncPosts = async (account: Account) => {
+    if (!account) return;
+    setSyncingAccountId(account.id);
     try {
-        const result = await syncPostsAction(accountId);
+        let result;
+        if (account.platform === 'Facebook') {
+            result = await syncFacebookPostsAction(account.id);
+        } else if (account.platform === 'LinkedIn') {
+            result = await syncLinkedInPostsAction(account.id);
+        } else {
+             toast({ title: 'Sync Not Available', description: `Post syncing is not yet implemented for ${account.platform}.` });
+             setSyncingAccountId(null);
+             return;
+        }
+        
         if (result.success) {
             toast({
                 title: 'Sync Complete',
@@ -150,7 +162,7 @@ export default function AccountsPage() {
             });
             // Manually update the lastSyncedAt time on the client to give immediate feedback
             setAccounts(prevAccounts => prevAccounts.map(acc => 
-                acc.id === accountId ? { ...acc, lastSyncedAt: new Timestamp(Date.now() / 1000, 0) } : acc
+                acc.id === account.id ? { ...acc, lastSyncedAt: new Timestamp(Date.now() / 1000, 0) } : acc
             ));
         } else {
             throw new Error(result.error || 'Unknown error during sync.');
@@ -245,7 +257,7 @@ export default function AccountsPage() {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleSyncPosts(account.id); }} disabled={syncingAccountId === account.id}>
+                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleSyncPosts(account); }} disabled={syncingAccountId === account.id}>
                                     {syncingAccountId === account.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <RefreshCw className="mr-2 h-4 w-4" />}
                                     Sync Posts
                                 </DropdownMenuItem>
@@ -271,5 +283,3 @@ export default function AccountsPage() {
     </div>
   );
 }
-
-    

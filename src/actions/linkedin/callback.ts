@@ -40,9 +40,9 @@ export async function handleLinkedInCallback(code: string, state: string) {
 
     const accountData = {
         platform: 'LinkedIn',
-        platformId: userProfile.sub, // Use 'sub' from OIDC response
+        platformId: userProfile.sub, // Use 'sub' from OIDC response as the user's URN component
         name: fullName,
-        username: fullName,
+        username: fullName, // LinkedIn doesn't have a distinct @username like other platforms
         encryptedToken: encryptedToken,
         status: 'Active',
         owner: userId,

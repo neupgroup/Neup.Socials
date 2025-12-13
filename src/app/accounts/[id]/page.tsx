@@ -15,7 +15,8 @@ import { useToast } from '@/hooks/use-toast';
 import { getPageInsightsAction } from '@/actions/facebook/insights';
 import { format } from 'date-fns';
 import { logError } from '@/lib/error-logging';
-import { syncPostsAction } from '@/actions/facebook/sync-posts';
+import { syncPostsAction as syncFacebookPostsAction } from '@/actions/facebook/sync-posts';
+import { syncLinkedInPostsAction } from '@/actions/linkedin/sync-posts';
 
 type Account = {
   id: string;
@@ -165,10 +166,20 @@ export default function AccountDetailPage() {
   }, [id, router, toast]);
 
   const handleSyncPosts = async () => {
-    if (!id) return;
+    if (!id || !account) return;
     setIsSyncing(true);
     try {
-        const result = await syncPostsAction(id);
+        let result;
+        if (account.platform === 'Facebook') {
+            result = await syncFacebookPostsAction(id);
+        } else if (account.platform === 'LinkedIn') {
+            result = await syncLinkedInPostsAction(id);
+        } else {
+            toast({ title: 'Sync Not Available', description: `Post syncing is not yet implemented for ${account.platform}.` });
+            setIsSyncing(false);
+            return;
+        }
+
         if (result.success) {
             toast({
                 title: 'Sync Complete',
@@ -230,12 +241,14 @@ export default function AccountDetailPage() {
             </div>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
-            <Button asChild variant="secondary">
-                <Link href={`/accounts/${id}/fetch`}>
-                    <History className="mr-2 h-4 w-4" />
-                    View Sync History
-                </Link>
-            </Button>
+            {account.platform === 'Facebook' && (
+                <Button asChild variant="secondary">
+                    <Link href={`/accounts/${id}/fetch`}>
+                        <History className="mr-2 h-4 w-4" />
+                        View Sync History
+                    </Link>
+                </Button>
+            )}
             <Button variant="outline" onClick={handleSyncPosts} disabled={isSyncing}>
                 {isSyncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <RefreshCw className="mr-2 h-4 w-4"/>}
                 Sync Posts

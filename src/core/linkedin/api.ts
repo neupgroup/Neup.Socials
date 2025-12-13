@@ -1,11 +1,13 @@
 
-
 /**
  * @fileoverview Core functions for interacting with the LinkedIn API.
  */
 'use server';
 
+import { logError } from '@/lib/error-logging';
+
 const API_BASE_URL = 'https://api.linkedin.com/v2';
+const REST_API_BASE_URL = 'https://api.linkedin.com/rest';
 const OAUTH_URL = 'https://www.linkedin.com/oauth/v2/accessToken';
 
 type AccessTokenResponse = {
@@ -17,9 +19,12 @@ type AccessTokenResponse = {
 };
 
 type ErrorResponse = {
-  error: string;
-  error_description: string;
+  error?: string;
+  error_description?: string;
   message?: string; // Adding this to catch more error details
+  serviceErrorCode?: number;
+  code?: string;
+  status?: number;
 };
 
 type LinkedInProfile = {
@@ -32,15 +37,38 @@ type LinkedInProfile = {
     email_verified?: boolean;
 }
 
+type Post = {
+  id: string;
+  author: string;
+  commentary: string;
+  visibility: 'PUBLIC' | 'CONNECTIONS';
+  distribution: {
+    feedDistribution: 'MAIN_FEED' | 'NONE';
+  };
+  lifecycleState: 'PUBLISHED';
+  isReshareDisabledByAuthor: boolean;
+}
+
+type PostResponse = {
+    id: string;
+    // The response also includes a 'x-restli-id' header with the full URN
+}
+
 async function handleApiResponse<T>(res: Response): Promise<T> {
-    const json = await res.json();
     if (!res.ok) {
+        const json = await res.json().catch(() => ({})); // Catch JSON parsing errors
         const error = json as ErrorResponse;
         console.error('LinkedIn API Error:', error);
-        // Use the more specific 'message' field if available
-        throw new Error(error.message || error.error_description || 'An unknown LinkedIn API error occurred.');
+        // Use a more detailed error message if available
+        const message = error.message || error.error_description || 'An unknown LinkedIn API error occurred.';
+        throw new Error(message);
     }
-    return json as T;
+    // For 201 Created from Posts API, the ID is in headers, body is empty
+    if (res.status === 201) {
+        const id = res.headers.get('x-restli-id');
+        return { id: id } as T;
+    }
+    return res.json() as T;
 }
 
 /**
@@ -76,4 +104,83 @@ export async function getUserProfile(accessToken: string): Promise<LinkedInProfi
         }
     });
     return handleApiResponse<LinkedInProfile>(res);
+}
+
+
+/**
+ * Publishes content to a LinkedIn member's feed.
+ * @param accessToken The access token for the user.
+ * @param authorUrn The URN of the author (e.g., 'urn:li:person:xxxx').
+ * @param content The text content of the post.
+ * @returns An object containing the ID of the created post.
+ */
+export async function publishToLinkedIn(
+  accessToken: string,
+  authorUrn: string,
+  content: string
+): Promise<PostResponse> {
+  const postData = {
+    author: authorUrn,
+    commentary: content,
+    visibility: "PUBLIC",
+    distribution: {
+      feedDistribution: "MAIN_FEED",
+      targetEntities: [],
+      thirdPartyDistributionChannels: []
+    },
+    lifecycleState: "PUBLISHED",
+    isReshareDisabledByAuthor: false
+  };
+
+  const res = await fetch(`${REST_API_BASE_URL}/posts`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+      'X-Restli-Protocol-Version': '2.0.0',
+      'Linkedin-Version': '202402', // Use a recent, valid version
+    },
+    body: JSON.stringify(postData),
+  });
+
+  return handleApiResponse<PostResponse>(res);
+}
+
+
+type FeedPost = {
+  id: string; // e.g., "urn:li:share:..."
+  author: string;
+  commentary: string;
+  createdAt: number;
+  publishedAt: number;
+};
+
+type FeedResponse = {
+  elements: FeedPost[];
+  paging: object;
+};
+
+/**
+ * Fetches posts for a given LinkedIn user.
+ * @param accessToken The access token for the user.
+ * @param authorUrn The URN of the author.
+ * @returns A list of posts.
+ */
+export async function getLinkedInPosts(accessToken: string, authorUrn: string): Promise<FeedResponse> {
+    const params = new URLSearchParams({
+        q: 'author',
+        author: authorUrn,
+        count: '25', // Fetch up to 25 posts
+        sortBy: 'CREATED'
+    });
+
+    const res = await fetch(`${REST_API_BASE_URL}/posts?${params.toString()}`, {
+        headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'X-Restli-Protocol-Version': '2.0.0',
+            'Linkedin-Version': '202402',
+        }
+    });
+
+    return handleApiResponse<FeedResponse>(res);
 }
