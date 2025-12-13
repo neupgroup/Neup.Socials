@@ -6,13 +6,17 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { PlusCircle, Loader2, Search, Twitter, Facebook, Linkedin, Instagram } from 'lucide-react';
+import { PlusCircle, Loader2, Search, Twitter, Facebook, Linkedin, Instagram, MoreHorizontal } from 'lucide-react';
 import { collection, getDocs, orderBy, query, limit, startAfter, where, QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { Input } from '@/components/ui/input';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 type Post = {
   id: string;
@@ -20,6 +24,7 @@ type Post = {
   platform: string;
   createdOn: any; // Firestore Timestamp
   postLink: string;
+  postCollectionId: string;
 };
 
 const PlatformIcon = ({ platform }: { platform: string }) => {
@@ -83,6 +88,7 @@ export default function ContentDashboardPage() {
           platform: data.platform,
           createdOn: data.createdOn,
           postLink: data.postLink,
+          postCollectionId: data.postCollectionId,
         } as Post;
       });
 
@@ -108,7 +114,7 @@ export default function ContentDashboardPage() {
   }, [searchTerm]);
 
 
-  const handleRowClick = (id: string) => {
+  const handleCardClick = (id: string) => {
     router.push(`/content/${id}`);
   };
 
@@ -144,53 +150,70 @@ export default function ContentDashboardPage() {
         </div>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-                <TableHeader>
-                <TableRow>
-                    <TableHead>Platform</TableHead>
-                    <TableHead>Content</TableHead>
-                    <TableHead>Date Published</TableHead>
-                </TableRow>
-                </TableHeader>
-                <TableBody>
-                {loading ? (
-                    <TableRow>
-                    <TableCell colSpan={3} className="text-center h-24">
-                        <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
-                    </TableCell>
-                    </TableRow>
-                ) : posts.length === 0 ? (
-                    <TableRow>
-                    <TableCell colSpan={3} className="text-center text-muted-foreground h-24">
+       {loading ? (
+        <div className="grid grid-cols-1 gap-4">
+            {Array.from({length: 3}).map((_, i) => (
+                <Card key={i} className="animate-pulse">
+                    <CardContent className="p-4 flex items-center justify-between">
+                       <div className="flex items-center gap-4">
+                           <div className="h-10 w-10 rounded-full bg-muted"></div>
+                           <div>
+                               <div className="h-5 w-40 rounded-md bg-muted"></div>
+                               <div className="h-4 w-24 mt-1 rounded-md bg-muted"></div>
+                           </div>
+                       </div>
+                       <div className="h-8 w-24 rounded-md bg-muted"></div>
+                    </CardContent>
+                </Card>
+            ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4">
+            {posts.length === 0 ? (
+                <Card>
+                    <CardContent className="p-8 text-center text-muted-foreground">
                         No posts found.
-                    </TableCell>
-                    </TableRow>
-                ) : (
-                    posts.map((post) => (
-                    <TableRow 
-                        key={post.id} 
-                        onClick={() => handleRowClick(post.id)}
-                        className="cursor-pointer"
-                    >
-                        <TableCell>
-                        <PlatformIcon platform={post.platform} />
-                        </TableCell>
-                        <TableCell className="font-medium max-w-sm truncate">{post.message}</TableCell>
-                        <TableCell className="whitespace-nowrap">{post.createdOn ? format(post.createdOn.toDate(), 'PP p') : '-'}</TableCell>
-                    </TableRow>
-                    ))
-                )}
-                </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+                    </CardContent>
+                </Card>
+            ) : (
+                posts.map((post) => (
+                    <Card key={post.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleCardClick(post.id)}>
+                        <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <div className="flex items-center gap-4 flex-1 overflow-hidden">
+                                <div className="bg-muted p-3 rounded-full">
+                                    <PlatformIcon platform={post.platform} />
+                                </div>
+                                <div className="overflow-hidden">
+                                    <p className="font-medium truncate">{post.message}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Published {post.createdOn ? formatDistanceToNow(post.createdOn.toDate(), { addSuffix: true }) : 'on an unknown date'}
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto">
+                                 <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                                            <MoreHorizontal className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); router.push(`/content/${post.id}`) }}>View Details</DropdownMenuItem>
+                                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); router.push(`/content/collection/${post.postCollectionId}`) }}>View Collection</DropdownMenuItem>
+                                        <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+                        </CardContent>
+                    </Card>
+                ))
+            )}
+        </div>
+      )}
       
-       {hasMore && !loadingMore && hasMore && (
-        <div className="text-center">
+       {!loading && hasMore && (
+        <div className="text-center mt-6">
           <Button onClick={handleShowMore} disabled={loadingMore}>
             {loadingMore ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             Show More
