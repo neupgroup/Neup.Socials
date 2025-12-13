@@ -131,23 +131,16 @@ export default function ContentDashboardPage() {
           <h1 className="text-3xl font-bold">Content Feed</h1>
           <p className="text-muted-foreground">A unified feed of all your published posts.</p>
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
-           <div className="relative">
-                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                 <Input 
-                    placeholder="Search content..." 
-                    className="pl-10"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
-            </div>
-            <Button asChild>
-            <Link href="/content/create">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Create New Post
-            </Link>
-            </Button>
-        </div>
+      </div>
+      
+      <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input 
+              placeholder="Search content..." 
+              className="pl-10"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+          />
       </div>
 
        {loading ? (
@@ -169,10 +162,26 @@ export default function ContentDashboardPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4">
+             <Card
+                key="add-new-post"
+                className="hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary"
+                onClick={() => router.push('/content/create')}
+            >
+                <CardContent className="p-4 flex items-center justify-center text-center h-full min-h-[110px]">
+                    <div className="flex items-center gap-4">
+                        <PlusCircle className="h-8 w-8 text-muted-foreground" />
+                        <div>
+                            <h3 className="font-bold text-lg">Create New Post</h3>
+                            <p className="text-sm text-muted-foreground">Draft a new post collection for your channels.</p>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
             {posts.length === 0 ? (
                 <Card>
                     <CardContent className="p-8 text-center text-muted-foreground">
-                        No posts found.
+                        No posts found for your search term.
                     </CardContent>
                 </Card>
             ) : (
