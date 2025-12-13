@@ -64,10 +64,9 @@ export async function publishContent(postCollectionId: string) {
           console.log(`Successfully published to Facebook page: ${account.name} (${pageId}). Post ID: ${platformPostId}`);
         } else if (account.platform === 'LinkedIn') {
             const authorUrn = `urn:li:person:${pageId}`;
-            response = await publishToLinkedIn(token, authorUrn, postCollectionData.content);
+            response = await publishToLinkedIn(token, authorUrn, postCollectionData.content, postCollectionData.mediaUrls);
             platformPostId = response.id; // The URN of the post, e.g., urn:li:share:123
-            // The post ID is part of the URN
-            const simpleId = platformPostId.split(':').pop();
+            // The post link for UGC posts is different
             postLink = `https://www.linkedin.com/feed/update/${platformPostId}/`;
              console.log(`Successfully published to LinkedIn: ${account.name}. Post ID: ${platformPostId}`);
         } else {
@@ -130,3 +129,5 @@ export async function publishContent(postCollectionId: string) {
     throw error;
   }
 }
+
+    
