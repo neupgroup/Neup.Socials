@@ -37,22 +37,22 @@ type LinkedInProfile = {
     email_verified?: boolean;
 }
 
-type Post = {
-  id: string;
-  author: string;
-  commentary: string;
-  visibility: 'PUBLIC' | 'CONNECTIONS';
-  distribution: {
-    feedDistribution: 'MAIN_FEED' | 'NONE';
-  };
-  lifecycleState: 'PUBLISHED';
-  isReshareDisabledByAuthor: boolean;
-}
-
 type PostResponse = {
     id: string;
-    // The response also includes a 'x-restli-id' header with the full URN
 }
+
+type FeedPost = {
+  id: string; // e.g., "urn:li:share:..."
+  author: string;
+  commentary: string;
+  createdAt: number;
+  publishedAt: number;
+};
+
+type FeedResponse = {
+  elements: FeedPost[];
+  paging: object;
+};
 
 async function handleApiResponse<T>(res: Response): Promise<T> {
     if (!res.ok) {
@@ -108,7 +108,7 @@ export async function getUserProfile(accessToken: string): Promise<LinkedInProfi
 
 
 /**
- * Publishes content to a LinkedIn member's feed.
+ * Publishes content to a LinkedIn member's feed using the UGC Posts API.
  * @param accessToken The access token for the user.
  * @param authorUrn The URN of the author (e.g., 'urn:li:person:xxxx').
  * @param content The text content of the post.
@@ -121,24 +121,26 @@ export async function publishToLinkedIn(
 ): Promise<PostResponse> {
   const postData = {
     author: authorUrn,
-    commentary: content,
-    visibility: "PUBLIC",
-    distribution: {
-      feedDistribution: "MAIN_FEED",
-      targetEntities: [],
-      thirdPartyDistributionChannels: []
+    lifecycleState: 'PUBLISHED',
+    specificContent: {
+      'com.linkedin.ugc.ShareContent': {
+        shareCommentary: {
+          text: content,
+        },
+        shareMediaCategory: 'NONE',
+      },
     },
-    lifecycleState: "PUBLISHED",
-    isReshareDisabledByAuthor: false
+    visibility: {
+      'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC',
+    },
   };
 
-  const res = await fetch(`${REST_API_BASE_URL}/posts`, {
+  const res = await fetch(`${API_BASE_URL}/ugcPosts`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
       'X-Restli-Protocol-Version': '2.0.0',
-      'Linkedin-Version': '202402', // Use a recent, valid version
     },
     body: JSON.stringify(postData),
   });
@@ -146,19 +148,6 @@ export async function publishToLinkedIn(
   return handleApiResponse<PostResponse>(res);
 }
 
-
-type FeedPost = {
-  id: string; // e.g., "urn:li:share:..."
-  author: string;
-  commentary: string;
-  createdAt: number;
-  publishedAt: number;
-};
-
-type FeedResponse = {
-  elements: FeedPost[];
-  paging: object;
-};
 
 /**
  * Fetches posts for a given LinkedIn user.
