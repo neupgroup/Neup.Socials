@@ -27,6 +27,12 @@ type SendMessageResponse = {
     }[];
 };
 
+type AccountNameResponse = {
+    verified_name: string;
+    name_status: 'APPROVED' | 'PENDING_REVIEW' | 'REJECTED';
+    id: string;
+}
+
 async function handleApiResponse<T>(res: Response): Promise<T> {
     const json = await res.json();
     if (!res.ok) {
@@ -47,7 +53,7 @@ async function handleApiResponse<T>(res: Response): Promise<T> {
  */
 export async function sendTextMessage(
     accessToken: string,
-    phoneNumberId: string,
+    phoneNumberId: string, 
     recipientPhoneNumber: string, 
     message: string
 ): Promise<SendMessageResponse> {
@@ -77,4 +83,23 @@ export async function sendTextMessage(
     });
 
     return handleApiResponse<SendMessageResponse>(res);
+}
+
+/**
+ * Fetches the display name and status for a given WhatsApp Business Phone Number ID.
+ * @param phoneNumberId The ID of the phone number.
+ * @param accessToken The access token associated with the WhatsApp Business Account.
+ * @returns An object with the verified_name and name_status.
+ */
+export async function getWhatsAppAccountName(
+    phoneNumberId: string,
+    accessToken: string
+): Promise<AccountNameResponse> {
+    const params = new URLSearchParams({
+        fields: 'verified_name,name_status',
+        access_token: accessToken,
+    });
+
+    const res = await fetch(`${GRAPH_API_BASE_URL}/${phoneNumberId}?${params.toString()}`);
+    return handleApiResponse<AccountNameResponse>(res);
 }

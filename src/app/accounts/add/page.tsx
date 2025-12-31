@@ -20,13 +20,13 @@ import { getFacebookAuthUrl } from '@/actions/facebook/auth';
 import { getInstagramAuthUrl } from '@/actions/instagram/auth';
 import { getLinkedInAuthUrl } from '@/actions/linkedin/auth';
 import { encrypt } from '@/lib/crypto';
+import { getWhatsAppAccountName } from '@/core/whatsapp/api';
 
 
 const formSchema = z.object({
   platform: z.enum(['Facebook', 'Instagram', 'Twitter', 'LinkedIn', 'WhatsApp'], {required_error: "Please select a platform."}),
   username: z.string().optional(),
   password: z.string().optional(),
-  accountName: z.string().optional(),
   phoneNumberId: z.string().optional(),
   accessToken: z.string().optional(),
   metaVerifyToken: z.string().optional(),
@@ -40,12 +40,12 @@ const formSchema = z.object({
     path: ['username'],
 }).refine(data => {
     if (data.platform === 'WhatsApp') {
-        return !!data.accountName && !!data.phoneNumberId && !!data.accessToken && !!data.metaVerifyToken;
+        return !!data.phoneNumberId && !!data.accessToken && !!data.metaVerifyToken;
     }
     return true;
 }, {
     message: 'All WhatsApp fields are required.',
-    path: ['accountName'],
+    path: ['phoneNumberId'],
 });
 
 
@@ -106,14 +106,21 @@ export default function AddAccountPage() {
     setIsSubmitting(true);
     try {
       if (data.platform === 'WhatsApp') {
+        const accountNameResult = await getWhatsAppAccountName(data.phoneNumberId!, data.accessToken!);
+        
+        if (!accountNameResult.verified_name) {
+          throw new Error('Could not fetch display name for this Phone Number ID. Please check the ID and Access Token.');
+        }
+
         const encryptedAccessToken = await encrypt(data.accessToken!);
         const encryptedVerifyToken = await encrypt(data.metaVerifyToken!);
 
         await addDoc(collection(db, 'connected_accounts'), {
             platform: 'WhatsApp',
             platformId: data.phoneNumberId!,
-            name: data.accountName!,
-            username: data.phoneNumberId!,
+            name: accountNameResult.verified_name,
+            username: data.phoneNumberId!, // Use phone number ID as username for consistency
+            nameStatus: accountNameResult.name_status,
             encryptedToken: encryptedAccessToken,
             metaVerifyToken: encryptedVerifyToken,
             status: 'Active',
@@ -216,11 +223,6 @@ export default function AddAccountPage() {
                 
                 {isWhatsAppFlow && (
                     <div className="space-y-6">
-                        <div className="space-y-2">
-                            <Label htmlFor="accountName">Account Name</Label>
-                            <Controller name="accountName" control={control} render={({ field }) => <Input id="accountName" {...field} placeholder="e.g., Main Support Line" />} />
-                            {errors.accountName && <p className="text-sm text-destructive">{errors.accountName.message}</p>}
-                        </div>
                          <div className="space-y-2">
                             <Label htmlFor="phoneNumberId">Phone Number ID</Label>
                             <Controller name="phoneNumberId" control={control} render={({ field }) => <Input id="phoneNumberId" {...field} placeholder="From Meta Developer Dashboard" />} />
