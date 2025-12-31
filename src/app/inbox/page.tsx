@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -6,12 +5,13 @@ import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Send, Twitter, Facebook, Linkedin, Loader2 } from 'lucide-react';
+import { Search, Send, Twitter, Facebook, Linkedin, Loader2, MessageSquarePlus } from 'lucide-react';
 import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, getDocs, limit, startAfter, where, QueryDocumentSnapshot, DocumentData, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { formatDistanceToNow } from 'date-fns';
 import { sendReplyAction } from '@/actions/inbox/sender';
 import { useToast } from '@/hooks/use-toast';
+import { NewMessageDialog } from '@/components/new-message-dialog';
 
 type Message = {
   id: string;
@@ -199,21 +199,33 @@ export default function InboxPage() {
       }
   }
 
+  const handleNewConversation = (conversation: Conversation) => {
+      setConversations(prev => [conversation, ...prev]);
+      setSelectedConversation(conversation);
+  }
+
   return (
     <div className="h-[calc(100vh-theme(spacing.28))] flex flex-col">
       <h1 className="text-3xl font-bold mb-6">Unified Inbox</h1>
       <Card className="flex-1">
         <div className="grid md:grid-cols-[300px_1fr] lg:grid-cols-[350px_1fr] h-full">
           <div className="border-r flex flex-col">
-            <div className="p-4 border-b">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input 
-                    placeholder="Search by name..." 
-                    className="pl-10"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
+            <div className="p-4 border-b space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                        placeholder="Search by name..." 
+                        className="pl-10"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+                <NewMessageDialog onNewConversation={handleNewConversation}>
+                    <Button variant="outline" size="icon">
+                        <MessageSquarePlus className="h-4 w-4" />
+                    </Button>
+                </NewMessageDialog>
               </div>
             </div>
             <div className="flex-1 overflow-y-auto">
