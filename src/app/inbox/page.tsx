@@ -24,6 +24,7 @@ type Conversation = {
   id: string;
   contactName: string;
   contactId: string; // The actual ID for the platform (e.g., phone number for WhatsApp)
+  channelId: string; // The ID of the connected_accounts doc this convo is through
   platform: string;
   lastMessage: string;
   lastMessageAt: any;
@@ -164,7 +165,7 @@ export default function InboxPage() {
     const currentReply = reply;
     setReply('');
 
-    const result = await sendReplyAction(selectedConversation.platform, selectedConversation.contactId, currentReply);
+    const result = await sendReplyAction(selectedConversation.platform, selectedConversation.channelId, selectedConversation.contactId, currentReply);
     
     setSending(false);
 

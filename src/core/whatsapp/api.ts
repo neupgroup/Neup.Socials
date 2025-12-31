@@ -39,19 +39,24 @@ async function handleApiResponse<T>(res: Response): Promise<T> {
 
 /**
  * Sends a text message to a WhatsApp user.
+ * @param accessToken The WhatsApp Business access token.
+ * @param phoneNumberId The ID of the phone number sending the message.
  * @param recipientPhoneNumber The recipient's phone number.
  * @param message The text message to send.
  * @returns The response from the WhatsApp API.
  */
-export async function sendTextMessage(recipientPhoneNumber: string, message: string): Promise<SendMessageResponse> {
-    const WHATSAPP_PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
-    const WHATSAPP_ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN;
+export async function sendTextMessage(
+    accessToken: string,
+    phoneNumberId: string,
+    recipientPhoneNumber: string, 
+    message: string
+): Promise<SendMessageResponse> {
 
-    if (!WHATSAPP_PHONE_NUMBER_ID || !WHATSAPP_ACCESS_TOKEN) {
-        throw new Error('WhatsApp environment variables are not configured.');
+    if (!phoneNumberId || !accessToken) {
+        throw new Error('WhatsApp access token or phone number ID are missing.');
     }
     
-    const endpoint = `${GRAPH_API_BASE_URL}/${WHATSAPP_PHONE_NUMBER_ID}/messages`;
+    const endpoint = `${GRAPH_API_BASE_URL}/${phoneNumberId}/messages`;
     
     const body = {
         messaging_product: 'whatsapp',
@@ -65,7 +70,7 @@ export async function sendTextMessage(recipientPhoneNumber: string, message: str
     const res = await fetch(endpoint, {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${WHATSAPP_ACCESS_TOKEN}`,
+            'Authorization': `Bearer ${accessToken}`,
             'Content-Type': 'application/json',
         },
         body: JSON.stringify(body),

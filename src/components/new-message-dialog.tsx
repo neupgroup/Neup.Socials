@@ -10,6 +10,7 @@ import {
   DialogTrigger,
   DialogFooter,
 } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,11 +26,17 @@ type Conversation = {
   contactName: string;
   contactId: string;
   platform: string;
+  channelId: string;
   lastMessage: string;
   lastMessageAt: any;
   avatar: string;
   unread: boolean;
 };
+
+type WhatsAppAccount = {
+    id: string;
+    name: string;
+}
 
 interface NewMessageDialogProps {
   children: React.ReactNode;
@@ -40,13 +47,42 @@ export function NewMessageDialog({ children, onNewConversation }: NewMessageDial
   const [open, setOpen] = React.useState(false);
   const [recipient, setRecipient] = React.useState('');
   const [message, setMessage] = React.useState('');
+  const [selectedChannelId, setSelectedChannelId] = React.useState<string | undefined>();
+  const [whatsAppAccounts, setWhatsAppAccounts] = React.useState<WhatsAppAccount[]>([]);
+  const [isLoadingAccounts, setIsLoadingAccounts] = React.useState(false);
   const [isSending, setIsSending] = React.useState(false);
   const { toast } = useToast();
 
+  React.useEffect(() => {
+    if (open) {
+        const fetchWhatsAppAccounts = async () => {
+            setIsLoadingAccounts(true);
+            try {
+                const accountsQuery = query(collection(db, 'connected_accounts'), where('platform', '==', 'WhatsApp'));
+                const querySnapshot = await getDocs(accountsQuery);
+                const accounts = querySnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    name: doc.data().name,
+                }));
+                setWhatsAppAccounts(accounts);
+                if (accounts.length > 0) {
+                    setSelectedChannelId(accounts[0].id);
+                }
+            } catch (error) {
+                toast({ title: 'Could not load WhatsApp accounts', variant: 'destructive' });
+            } finally {
+                setIsLoadingAccounts(false);
+            }
+        };
+        fetchWhatsAppAccounts();
+    }
+  }, [open, toast]);
+
   const handleSend = async () => {
-    if (!recipient.trim() || !message.trim()) {
+    if (!recipient.trim() || !message.trim() || !selectedChannelId) {
       toast({
-        title: 'Recipient and message cannot be empty.',
+        title: 'All fields are required.',
+        description: 'Please select a sending number, enter a recipient, and a message.',
         variant: 'destructive',
       });
       return;
@@ -55,24 +91,26 @@ export function NewMessageDialog({ children, onNewConversation }: NewMessageDial
     setIsSending(true);
 
     try {
-        const result = await sendReplyAction('WhatsApp', recipient, message);
+        // Since this is a new conversation, we always use the WhatsApp platform for now
+        const result = await sendReplyAction('WhatsApp', selectedChannelId, recipient, message);
 
         if (result.success) {
-            // Check if conversation already exists
+            // Check if conversation already exists for this channel and recipient
             const convosRef = collection(db, 'conversations');
-            const q = query(convosRef, where('contactId', '==', recipient), where('platform', '==', 'WhatsApp'));
+            const q = query(convosRef, where('contactId', '==', recipient), where('channelId', '==', selectedChannelId));
             const existingConvos = await getDocs(q);
 
             let convoId: string;
             if (existingConvos.empty) {
-                // Create a new conversation
+                // Create a new conversation document
                 const newConvoRef = await addDoc(convosRef, {
                     contactId: recipient,
                     contactName: recipient, // Use phone number as name for now
                     platform: 'WhatsApp',
+                    channelId: selectedChannelId,
                     lastMessage: message,
                     lastMessageAt: serverTimestamp(),
-                    unread: false,
+                    unread: false, // It's not unread for the agent
                     avatar: recipient.slice(-2) // Use last 2 digits for avatar placeholder
                 });
                 convoId = newConvoRef.id;
@@ -80,16 +118,17 @@ export function NewMessageDialog({ children, onNewConversation }: NewMessageDial
                 convoId = existingConvos.docs[0].id;
             }
             
-            // Add message to the subcollection
+            // Add the new message to the messages subcollection
             const messagesCol = collection(db, 'conversations', convoId, 'messages');
             await addDoc(messagesCol, { text: message, sender: 'agent', timestamp: serverTimestamp() });
 
-            // Notify parent component
+            // Notify parent component to update the UI
             const newConversationData: Conversation = {
                 id: convoId,
                 contactId: recipient,
                 contactName: recipient,
                 platform: 'WhatsApp',
+                channelId: selectedChannelId,
                 lastMessage: message,
                 lastMessageAt: new Date(),
                 unread: false,
@@ -128,6 +167,21 @@ export function NewMessageDialog({ children, onNewConversation }: NewMessageDial
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="from" className="text-right">
+              From
+            </Label>
+            <Select onValueChange={setSelectedChannelId} defaultValue={selectedChannelId} disabled={isLoadingAccounts || isSending}>
+                <SelectTrigger id="from" className="col-span-3">
+                    <SelectValue placeholder={isLoadingAccounts ? 'Loading...' : 'Select a number...'} />
+                </SelectTrigger>
+                <SelectContent>
+                    {whatsAppAccounts.map(acc => (
+                        <SelectItem key={acc.id} value={acc.id}>{acc.name}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="recipient" className="text-right">
               To
             </Label>
@@ -136,7 +190,7 @@ export function NewMessageDialog({ children, onNewConversation }: NewMessageDial
               value={recipient}
               onChange={(e) => setRecipient(e.target.value)}
               className="col-span-3"
-              placeholder="e.g., 97798xxxxxxxx"
+              placeholder="e.g., 15551234567"
               disabled={isSending}
             />
           </div>
@@ -156,7 +210,7 @@ export function NewMessageDialog({ children, onNewConversation }: NewMessageDial
           </div>
         </div>
         <DialogFooter>
-          <Button onClick={handleSend} disabled={isSending}>
+          <Button onClick={handleSend} disabled={isSending || isLoadingAccounts || whatsAppAccounts.length === 0}>
             {isSending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Send Message
           </Button>
