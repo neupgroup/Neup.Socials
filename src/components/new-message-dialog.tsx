@@ -18,7 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { sendReplyAction } from '@/actions/inbox/sender';
-import { collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 type Conversation = {
@@ -130,7 +130,7 @@ export function NewMessageDialog({ children, onNewConversation }: NewMessageDial
                 platform: 'WhatsApp',
                 channelId: selectedChannelId,
                 lastMessage: message,
-                lastMessageAt: new Date(),
+                lastMessageAt: Timestamp.now(),
                 unread: false,
                 avatar: recipient.slice(-2),
             };
