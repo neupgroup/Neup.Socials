@@ -1,0 +1,75 @@
+/**
+ * @fileoverview Core functions for interacting with the WhatsApp Business Cloud API.
+ */
+'use server';
+
+const API_VERSION = 'v20.0';
+const GRAPH_API_BASE_URL = `https://graph.facebook.com/${API_VERSION}`;
+
+type ErrorResponse = {
+  error: {
+    message: string;
+    type: string;
+    code: number;
+    error_subcode?: number;
+    fbtrace_id: string;
+  };
+};
+
+type SendMessageResponse = {
+    messaging_product: 'whatsapp';
+    contacts: {
+        input: string;
+        wa_id: string;
+    }[];
+    messages: {
+        id: string;
+    }[];
+};
+
+async function handleApiResponse<T>(res: Response): Promise<T> {
+    const json = await res.json();
+    if (!res.ok) {
+        const error = json as ErrorResponse;
+        console.error('WhatsApp API Error:', error);
+        throw new Error(error.error?.message || 'An unknown WhatsApp API error occurred.');
+    }
+    return json as T;
+}
+
+/**
+ * Sends a text message to a WhatsApp user.
+ * @param recipientPhoneNumber The recipient's phone number.
+ * @param message The text message to send.
+ * @returns The response from the WhatsApp API.
+ */
+export async function sendTextMessage(recipientPhoneNumber: string, message: string): Promise<SendMessageResponse> {
+    const WHATSAPP_PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
+    const WHATSAPP_ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN;
+
+    if (!WHATSAPP_PHONE_NUMBER_ID || !WHATSAPP_ACCESS_TOKEN) {
+        throw new Error('WhatsApp environment variables are not configured.');
+    }
+    
+    const endpoint = `${GRAPH_API_BASE_URL}/${WHATSAPP_PHONE_NUMBER_ID}/messages`;
+    
+    const body = {
+        messaging_product: 'whatsapp',
+        to: recipientPhoneNumber,
+        type: 'text',
+        text: {
+            body: message,
+        },
+    };
+
+    const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${WHATSAPP_ACCESS_TOKEN}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+    });
+
+    return handleApiResponse<SendMessageResponse>(res);
+}

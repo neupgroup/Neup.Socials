@@ -7,9 +7,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Send, Twitter, Facebook, Linkedin, Loader2 } from 'lucide-react';
-import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, getDocs, limit, startAfter, where, QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, getDocs, limit, startAfter, where, QueryDocumentSnapshot, DocumentData, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { formatDistanceToNow } from 'date-fns';
+import { sendReplyAction } from '@/actions/inbox/sender';
+import { useToast } from '@/hooks/use-toast';
 
 type Message = {
   id: string;
@@ -21,6 +23,7 @@ type Message = {
 type Conversation = {
   id: string;
   contactName: string;
+  contactId: string; // The actual ID for the platform (e.g., phone number for WhatsApp)
   platform: string;
   lastMessage: string;
   lastMessageAt: any;
@@ -62,6 +65,7 @@ export default function InboxPage() {
   const [searchTerm, setSearchTerm] = React.useState('');
   
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
   const fetchConversations = React.useCallback(async (loadMore = false, search = '') => {
     if(!loadMore) setLoading(true);
@@ -145,15 +149,48 @@ export default function InboxPage() {
 
   const handleSendReply = async () => {
     if (!reply.trim() || !selectedConversation) return;
+    
     setSending(true);
-    const messagesCol = collection(db, 'conversations', selectedConversation.id, 'messages');
-    await addDoc(messagesCol, {
-      text: reply,
-      sender: 'agent',
-      timestamp: serverTimestamp(),
-    });
+    
+    // Optimistically add message to UI
+    const tempId = `temp_${Date.now()}`;
+    const newMessage: Message = {
+        id: tempId,
+        text: reply,
+        sender: 'agent',
+        timestamp: new Date()
+    };
+    setMessages(prev => [...prev, newMessage]);
+    const currentReply = reply;
     setReply('');
+
+    const result = await sendReplyAction(selectedConversation.platform, selectedConversation.contactId, currentReply);
+    
     setSending(false);
+
+    if (result.success && result.messageId) {
+        // Update local message with real data from DB after server responds
+        const messagesCol = collection(db, 'conversations', selectedConversation.id, 'messages');
+        await addDoc(messagesCol, { text: currentReply, sender: 'agent', timestamp: serverTimestamp() });
+        
+        // Also update the last message on the conversation
+        const convoDocRef = doc(db, 'conversations', selectedConversation.id);
+        await updateDoc(convoDocRef, {
+            lastMessage: currentReply,
+            lastMessageAt: serverTimestamp(),
+            unread: false // The agent is replying, so it's not unread
+        });
+
+    } else {
+        toast({
+            title: 'Failed to send message',
+            description: result.error || 'An unknown error occurred.',
+            variant: 'destructive'
+        });
+        // Remove optimistic message on failure
+        setMessages(prev => prev.filter(m => m.id !== tempId));
+        setReply(currentReply);
+    }
   };
   
   const handleShowMore = () => {
