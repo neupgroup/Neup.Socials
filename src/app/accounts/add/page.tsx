@@ -22,26 +22,34 @@ import { getLinkedInAuthUrl } from '@/actions/linkedin/auth';
 import { encrypt } from '@/lib/crypto';
 
 
-const legacyFormSchema = z.object({
-  platform: z.enum(['Twitter'], {required_error: "Please select a platform."}),
-  username: z.string().min(1, 'Username is required.'),
-  password: z.string().min(1, 'Password is required.'),
-});
-
-const whatsAppFormSchema = z.object({
-    platform: z.literal('WhatsApp'),
-    accountName: z.string().min(3, 'Account name is required.'),
-    phoneNumberId: z.string().min(10, 'Phone Number ID is required.'),
-    accessToken: z.string().min(20, 'Access Token is required.'),
-    metaVerifyToken: z.string().min(10, 'Verify Token is required.'),
-});
-
-const platformSchema = z.object({
+const formSchema = z.object({
   platform: z.enum(['Facebook', 'Instagram', 'Twitter', 'LinkedIn', 'WhatsApp'], {required_error: "Please select a platform."}),
+  username: z.string().optional(),
+  password: z.string().optional(),
+  accountName: z.string().optional(),
+  phoneNumberId: z.string().optional(),
+  accessToken: z.string().optional(),
+  metaVerifyToken: z.string().optional(),
+}).refine(data => {
+    if (data.platform === 'Twitter') {
+        return !!data.username && !!data.password;
+    }
+    return true;
+}, {
+    message: 'Username and password are required for Twitter.',
+    path: ['username'],
+}).refine(data => {
+    if (data.platform === 'WhatsApp') {
+        return !!data.accountName && !!data.phoneNumberId && !!data.accessToken && !!data.metaVerifyToken;
+    }
+    return true;
+}, {
+    message: 'All WhatsApp fields are required.',
+    path: ['accountName'],
 });
 
-type LegacyFormValues = z.infer<typeof legacyFormSchema>;
-type WhatsAppFormValues = z.infer<typeof whatsAppFormSchema>;
+
+type FormValues = z.infer<typeof formSchema>;
 
 const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
@@ -65,20 +73,14 @@ export default function AddAccountPage() {
   
   const userId = 'neupkishor';
 
-  const { control, handleSubmit, watch, formState: { errors } } = useForm({
-    resolver: zodResolver(platformSchema),
+  const { control, handleSubmit, watch, formState: { errors } } = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      platform: undefined,
+    }
   });
   
   const selectedPlatform = watch('platform');
-
-  const { control: whatsAppControl, handleSubmit: handleWhatsAppSubmit, formState: { errors: whatsAppErrors } } = useForm<WhatsAppFormValues>({
-      resolver: zodResolver(whatsAppFormSchema),
-  });
-
-  const { control: legacyControl, handleSubmit: handleLegacySubmit, formState: { errors: legacyErrors } } = useForm<LegacyFormValues>({
-      resolver: zodResolver(legacyFormSchema),
-  });
-
 
   const handleOAuthConnect = async () => {
     if (!selectedPlatform) return;
@@ -100,37 +102,18 @@ export default function AddAccountPage() {
     }
   };
   
-  const onLegacySubmit = async (data: LegacyFormValues) => {
+  const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
     try {
-      await addDoc(collection(db, 'connected_accounts'), {
-        platform: data.platform,
-        username: data.username,
-        name: data.username,
-        status: 'Active',
-        connectedOn: serverTimestamp(),
-        owner: userId,
-      });
-      toast({ title: `${data.platform} account connected successfully!` });
-      router.push('/accounts');
-    } catch (error) {
-      console.error(`Error connecting ${data.platform}: `, error);
-      toast({ title: `Failed to connect ${data.platform}`, description: 'An unexpected error occurred.', variant: 'destructive' });
-      setIsSubmitting(false);
-    }
-  };
-
-  const onWhatsAppSubmit = async (data: WhatsAppFormValues) => {
-    setIsSubmitting(true);
-    try {
-        const encryptedAccessToken = await encrypt(data.accessToken);
-        const encryptedVerifyToken = await encrypt(data.metaVerifyToken);
+      if (data.platform === 'WhatsApp') {
+        const encryptedAccessToken = await encrypt(data.accessToken!);
+        const encryptedVerifyToken = await encrypt(data.metaVerifyToken!);
 
         await addDoc(collection(db, 'connected_accounts'), {
             platform: 'WhatsApp',
-            platformId: data.phoneNumberId,
-            name: data.accountName,
-            username: data.phoneNumberId,
+            platformId: data.phoneNumberId!,
+            name: data.accountName!,
+            username: data.phoneNumberId!,
             encryptedToken: encryptedAccessToken,
             metaVerifyToken: encryptedVerifyToken,
             status: 'Active',
@@ -142,17 +125,28 @@ export default function AddAccountPage() {
 
         toast({ title: 'WhatsApp account connected successfully!' });
         router.push('/accounts');
-
+      } else if (data.platform === 'Twitter') {
+         await addDoc(collection(db, 'connected_accounts'), {
+            platform: data.platform,
+            username: data.username,
+            name: data.username,
+            status: 'Active',
+            connectedOn: serverTimestamp(),
+            owner: userId,
+        });
+        toast({ title: `${data.platform} account connected successfully!` });
+        router.push('/accounts');
+      }
     } catch (error: any) {
-        console.error("Error connecting WhatsApp: ", error);
-        toast({ title: 'Failed to connect WhatsApp', description: error.message || 'An unexpected error occurred.', variant: 'destructive' });
-        setIsSubmitting(false);
+      console.error(`Error connecting ${data.platform}: `, error);
+      toast({ title: `Failed to connect ${data.platform}`, description: error.message || 'An unexpected error occurred.', variant: 'destructive' });
+      setIsSubmitting(false);
     }
-  }
-
+  };
 
   const isOauthFlow = selectedPlatform && platformDetails[selectedPlatform]?.isOauth;
   const isWhatsAppFlow = selectedPlatform === 'WhatsApp';
+  const isLegacyFlow = selectedPlatform === 'Twitter';
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -178,7 +172,7 @@ export default function AddAccountPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" autoComplete="off">
             <div className="space-y-2">
               <Label htmlFor="platform">Platform</Label>
                <Controller
@@ -213,7 +207,7 @@ export default function AddAccountPage() {
                     <p className="text-muted-foreground mb-4">
                         You will be redirected to {selectedPlatform} to authorize the connection.
                     </p>
-                    <Button onClick={handleOAuthConnect} disabled={isSubmitting}>
+                    <Button onClick={handleOAuthConnect} disabled={isSubmitting} type="button">
                         {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Continue to {selectedPlatform}
                     </Button>
@@ -221,59 +215,56 @@ export default function AddAccountPage() {
                 )}
                 
                 {isWhatsAppFlow && (
-                    <form onSubmit={handleWhatsAppSubmit(onWhatsAppSubmit)} className="space-y-6" autoComplete="off">
+                    <div className="space-y-6">
                         <div className="space-y-2">
                             <Label htmlFor="accountName">Account Name</Label>
-                            <Controller name="accountName" control={whatsAppControl} render={({ field }) => <Input id="accountName" {...field} placeholder="e.g., Main Support Line" />} />
-                            {whatsAppErrors.accountName && <p className="text-sm text-destructive">{whatsAppErrors.accountName.message}</p>}
+                            <Controller name="accountName" control={control} render={({ field }) => <Input id="accountName" {...field} placeholder="e.g., Main Support Line" />} />
+                            {errors.accountName && <p className="text-sm text-destructive">{errors.accountName.message}</p>}
                         </div>
                          <div className="space-y-2">
                             <Label htmlFor="phoneNumberId">Phone Number ID</Label>
-                            <Controller name="phoneNumberId" control={whatsAppControl} render={({ field }) => <Input id="phoneNumberId" {...field} placeholder="From Meta Developer Dashboard" />} />
-                            {whatsAppErrors.phoneNumberId && <p className="text-sm text-destructive">{whatsAppErrors.phoneNumberId.message}</p>}
+                            <Controller name="phoneNumberId" control={control} render={({ field }) => <Input id="phoneNumberId" {...field} placeholder="From Meta Developer Dashboard" />} />
+                            {errors.phoneNumberId && <p className="text-sm text-destructive">{errors.phoneNumberId.message}</p>}
                         </div>
                          <div className="space-y-2">
                             <Label htmlFor="accessToken">Access Token</Label>
-                            <Controller name="accessToken" control={whatsAppControl} render={({ field }) => <Input id="accessToken" type="password" {...field} placeholder="Permanent API Access Token" />} />
-                            {whatsAppErrors.accessToken && <p className="text-sm text-destructive">{whatsAppErrors.accessToken.message}</p>}
+                            <Controller name="accessToken" control={control} render={({ field }) => <Input id="accessToken" type="password" {...field} placeholder="Permanent API Access Token" />} />
+                            {errors.accessToken && <p className="text-sm text-destructive">{errors.accessToken.message}</p>}
                         </div>
                          <div className="space-y-2">
                             <Label htmlFor="metaVerifyToken">Meta Verify Token</Label>
-                            <Controller name="metaVerifyToken" control={whatsAppControl} render={({ field }) => <Input id="metaVerifyToken" type="password" {...field} placeholder="For webhook verification" />} />
-                            {whatsAppErrors.metaVerifyToken && <p className="text-sm text-destructive">{whatsAppErrors.metaVerifyToken.message}</p>}
+                            <Controller name="metaVerifyToken" control={control} render={({ field }) => <Input id="metaVerifyToken" type="password" {...field} placeholder="For webhook verification" />} />
+                            {errors.metaVerifyToken && <p className="text-sm text-destructive">{errors.metaVerifyToken.message}</p>}
                         </div>
-                        <div className="flex justify-end pt-4">
-                            <Button type="submit" disabled={isSubmitting}>
-                                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Connect WhatsApp
-                            </Button>
-                        </div>
-                    </form>
+                    </div>
                 )}
 
-                {!isOauthFlow && !isWhatsAppFlow && (
-                    <form onSubmit={handleLegacySubmit(onLegacySubmit)} className="space-y-6" autoComplete="off">
+                {isLegacyFlow && (
+                    <div className="space-y-6">
                         <div className="space-y-2">
                             <Label htmlFor="username">Username or Email</Label>
-                            <Controller name="username" control={legacyControl} render={({ field }) => <Input id="username" {...field} placeholder="e.g., @yourhandle" autoComplete="off" />} />
-                            {legacyErrors.username && <p className="text-sm text-destructive">{legacyErrors.username.message}</p>}
+                            <Controller name="username" control={control} render={({ field }) => <Input id="username" {...field} placeholder="e.g., @yourhandle" autoComplete="off" />} />
+                            {errors.username && <p className="text-sm text-destructive">{errors.username.message}</p>}
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="password">Password</Label>
-                            <Controller name="password" control={legacyControl} render={({ field }) => <Input id="password" type="password" {...field} placeholder="••••••••" autoComplete="new-password"/>} />
-                            {legacyErrors.password && <p className="text-sm text-destructive">{legacyErrors.password.message}</p>}
+                            <Controller name="password" control={control} render={({ field }) => <Input id="password" type="password" {...field} placeholder="••••••••" autoComplete="new-password"/>} />
+                            {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
                         </div>
-                        <div className="flex justify-end pt-4">
-                            <Button type="submit" disabled={isSubmitting}>
-                                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Connect Account
-                            </Button>
-                        </div>
-                    </form>
+                    </div>
+                )}
+
+                {(isWhatsAppFlow || isLegacyFlow) && (
+                    <div className="flex justify-end pt-4">
+                        <Button type="submit" disabled={isSubmitting}>
+                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Connect {selectedPlatform}
+                        </Button>
+                    </div>
                 )}
               </>
             )}
-          </div>
+          </form>
         </CardContent>
       </Card>
     </div>
