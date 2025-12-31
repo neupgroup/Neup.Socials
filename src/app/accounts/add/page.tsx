@@ -19,21 +19,43 @@ import { db } from '@/lib/firebase';
 import { getFacebookAuthUrl } from '@/actions/facebook/auth';
 import { getInstagramAuthUrl } from '@/actions/instagram/auth';
 import { getLinkedInAuthUrl } from '@/actions/linkedin/auth';
+import { encrypt } from '@/lib/crypto';
 
 
-const formSchema = z.object({
-  platform: z.enum(['Facebook', 'Instagram', 'Twitter', 'LinkedIn'], {required_error: "Please select a platform."}),
+const legacyFormSchema = z.object({
+  platform: z.enum(['Twitter'], {required_error: "Please select a platform."}),
   username: z.string().min(1, 'Username is required.'),
   password: z.string().min(1, 'Password is required.'),
 });
 
-type FormValues = z.infer<typeof formSchema>;
+const whatsAppFormSchema = z.object({
+    platform: z.literal('WhatsApp'),
+    accountName: z.string().min(3, 'Account name is required.'),
+    phoneNumberId: z.string().min(10, 'Phone Number ID is required.'),
+    accessToken: z.string().min(20, 'Access Token is required.'),
+    metaVerifyToken: z.string().min(10, 'Verify Token is required.'),
+});
+
+const platformSchema = z.object({
+  platform: z.enum(['Facebook', 'Instagram', 'Twitter', 'LinkedIn', 'WhatsApp'], {required_error: "Please select a platform."}),
+});
+
+type LegacyFormValues = z.infer<typeof legacyFormSchema>;
+type WhatsAppFormValues = z.infer<typeof whatsAppFormSchema>;
+
+const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+      <path d="M.052 24l1.688-6.164a11.91 11.91 0 01-1.74-6.36C.002 5.075 5.373 0 12.002 0s11.998 5.074 11.998 11.474c0 6.4-5.372 11.475-11.998 11.475a11.859 11.859 0 01-5.94-1.542L.052 24zm6.65-3.666a9.888 9.888 0 0011.082-9.556c0-5.473-4.437-9.91-9.91-9.91-5.473 0-9.91 4.437-9.91 9.91a9.89 9.89 0 003.834 7.62l-1.12 4.09 4.2-1.074zM12.002 2.148c4.34 0 7.864 3.525 7.864 7.864s-3.524 7.864-7.864 7.864-7.864-3.525-7.864-7.864c0-2.12.842-4.045 2.215-5.48a7.765 7.765 0 015.65-2.384zm-3.097 2.922c-.15-.002-.325.042-.47.27-.144.228-.48.77-.582.92-.102.148-.204.168-.346.102-.143-.064-1.012-.468-1.928-1.19a6.685 6.685 0 01-1.39-1.623c-.144-.246-.072-.38.06-.504.12-.11.264-.288.396-.432.108-.12.144-.204.216-.348.072-.143.036-.264-.012-.348-.05-.084-.468-.996-.636-1.356-.156-.324-.312-.276-.432-.282-.11-.006-.24-.006-.372-.006-.131 0-.347.042-.522.282-.174.24-.66.636-.66 1.542 0 .906.672 1.782.768 1.902.096.12 1.32 2.016 3.204 2.82.42.18.768.288 1.032.372.432.144.828.12 1.14.072.36-.06.996-.528 1.14-1.032.143-.504.143-.924.108-1.008-.036-.084-.144-.132-.3-.216z"/>
+    </svg>
+);
+
 
 const platformDetails = {
     Facebook: { icon: <Facebook className="h-5 w-5 text-blue-600" />, isOauth: true, handler: getFacebookAuthUrl },
     Instagram: { icon: <Instagram className="h-5 w-5 text-pink-500" />, isOauth: true, handler: getInstagramAuthUrl },
     LinkedIn: { icon: <Linkedin className="h-5 w-5 text-blue-700" />, isOauth: true, handler: getLinkedInAuthUrl },
     Twitter: { icon: <Twitter className="h-5 w-5 text-blue-400" />, isOauth: false },
+    WhatsApp: { icon: <WhatsAppIcon className="h-5 w-5 text-green-500" />, isOauth: false }
 }
 
 export default function AddAccountPage() {
@@ -41,24 +63,22 @@ export default function AddAccountPage() {
   const router = useRouter();
   const { toast } = useToast();
   
-  // This should be replaced with the actual logged-in user's ID
   const userId = 'neupkishor';
 
-  const {
-    control,
-    handleSubmit,
-    watch,
-    formState: { errors },
-  } = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      platform: undefined,
-      username: '',
-      password: '',
-    },
+  const { control, handleSubmit, watch, formState: { errors } } = useForm({
+    resolver: zodResolver(platformSchema),
+  });
+  
+  const selectedPlatform = watch('platform');
+
+  const { control: whatsAppControl, handleSubmit: handleWhatsAppSubmit, formState: { errors: whatsAppErrors } } = useForm<WhatsAppFormValues>({
+      resolver: zodResolver(whatsAppFormSchema),
   });
 
-  const selectedPlatform = watch('platform');
+  const { control: legacyControl, handleSubmit: handleLegacySubmit, formState: { errors: legacyErrors } } = useForm<LegacyFormValues>({
+      resolver: zodResolver(legacyFormSchema),
+  });
+
 
   const handleOAuthConnect = async () => {
     if (!selectedPlatform) return;
@@ -80,14 +100,13 @@ export default function AddAccountPage() {
     }
   };
   
-  const onSubmit = async (data: FormValues) => {
+  const onLegacySubmit = async (data: LegacyFormValues) => {
     setIsSubmitting(true);
     try {
       await addDoc(collection(db, 'connected_accounts'), {
         platform: data.platform,
         username: data.username,
-        // In a real app, you would not store the password. This is for simulation.
-        name: data.platform === 'LinkedIn' ? `${data.username}'s Company` : data.username,
+        name: data.username,
         status: 'Active',
         connectedOn: serverTimestamp(),
         owner: userId,
@@ -96,16 +115,44 @@ export default function AddAccountPage() {
       router.push('/accounts');
     } catch (error) {
       console.error(`Error connecting ${data.platform}: `, error);
-      toast({
-        title: `Failed to connect ${data.platform}`,
-        description: 'An unexpected error occurred. Please try again.',
-        variant: 'destructive',
-      });
+      toast({ title: `Failed to connect ${data.platform}`, description: 'An unexpected error occurred.', variant: 'destructive' });
       setIsSubmitting(false);
     }
   };
 
+  const onWhatsAppSubmit = async (data: WhatsAppFormValues) => {
+    setIsSubmitting(true);
+    try {
+        const encryptedAccessToken = await encrypt(data.accessToken);
+        const encryptedVerifyToken = await encrypt(data.metaVerifyToken);
+
+        await addDoc(collection(db, 'connected_accounts'), {
+            platform: 'WhatsApp',
+            platformId: data.phoneNumberId,
+            name: data.accountName,
+            username: data.phoneNumberId,
+            encryptedToken: encryptedAccessToken,
+            metaVerifyToken: encryptedVerifyToken,
+            status: 'Active',
+            owner: userId,
+            connectedOn: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+            lastSyncedAt: null,
+        });
+
+        toast({ title: 'WhatsApp account connected successfully!' });
+        router.push('/accounts');
+
+    } catch (error: any) {
+        console.error("Error connecting WhatsApp: ", error);
+        toast({ title: 'Failed to connect WhatsApp', description: error.message || 'An unexpected error occurred.', variant: 'destructive' });
+        setIsSubmitting(false);
+    }
+  }
+
+
   const isOauthFlow = selectedPlatform && platformDetails[selectedPlatform]?.isOauth;
+  const isWhatsAppFlow = selectedPlatform === 'WhatsApp';
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -118,7 +165,7 @@ export default function AddAccountPage() {
         <div>
           <h1 className="text-3xl font-bold">Connect a New Account</h1>
           <p className="text-muted-foreground">
-            Select a platform and enter your credentials to get started.
+            Select a platform to get started.
           </p>
         </div>
       </div>
@@ -127,7 +174,7 @@ export default function AddAccountPage() {
         <CardHeader>
           <CardTitle>Account Details</CardTitle>
           <CardDescription>
-            We will securely connect to your account. We do not store your passwords for most platforms.
+            {isOauthFlow ? 'You will be securely redirected to authorize your account.' : 'Please provide the necessary credentials for connection.'}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -160,49 +207,71 @@ export default function AddAccountPage() {
             </div>
 
             {selectedPlatform && (
-              isOauthFlow ? (
-                <div className="text-center p-4 border-dashed border-2 rounded-lg">
-                  <p className="text-muted-foreground mb-4">
-                    You will be redirected to {selectedPlatform} to authorize the connection.
-                  </p>
-                   <Button onClick={handleOAuthConnect} disabled={isSubmitting}>
-                      {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Continue to {selectedPlatform}
-                  </Button>
-                </div>
-              ) : (
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" autoComplete="off">
-                  <div className="space-y-2">
-                    <Label htmlFor="username">Username or Email</Label>
-                    <Controller
-                      name="username"
-                      control={control}
-                      render={({ field }) => <Input id="username" {...field} placeholder="e.g., @yourhandle" autoComplete="off" />}
-                    />
-                    {errors.username && (
-                      <p className="text-sm text-destructive">{errors.username.message}</p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
-                    <Controller
-                      name="password"
-                      control={control}
-                      render={({ field }) => <Input id="password" type="password" {...field} placeholder="••••••••" autoComplete="new-password"/>}
-                    />
-                    {errors.password && (
-                      <p className="text-sm text-destructive">{errors.password.message}</p>
-                    )}
-                  </div>
-                   <div className="flex justify-end pt-4">
-                      <Button type="submit" disabled={isSubmitting}>
+              <>
+                {isOauthFlow && (
+                    <div className="text-center p-4 border-dashed border-2 rounded-lg">
+                    <p className="text-muted-foreground mb-4">
+                        You will be redirected to {selectedPlatform} to authorize the connection.
+                    </p>
+                    <Button onClick={handleOAuthConnect} disabled={isSubmitting}>
                         {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Connect Account
-                      </Button>
+                        Continue to {selectedPlatform}
+                    </Button>
                     </div>
-                </form>
-              )
+                )}
+                
+                {isWhatsAppFlow && (
+                    <form onSubmit={handleWhatsAppSubmit(onWhatsAppSubmit)} className="space-y-6" autoComplete="off">
+                        <div className="space-y-2">
+                            <Label htmlFor="accountName">Account Name</Label>
+                            <Controller name="accountName" control={whatsAppControl} render={({ field }) => <Input id="accountName" {...field} placeholder="e.g., Main Support Line" />} />
+                            {whatsAppErrors.accountName && <p className="text-sm text-destructive">{whatsAppErrors.accountName.message}</p>}
+                        </div>
+                         <div className="space-y-2">
+                            <Label htmlFor="phoneNumberId">Phone Number ID</Label>
+                            <Controller name="phoneNumberId" control={whatsAppControl} render={({ field }) => <Input id="phoneNumberId" {...field} placeholder="From Meta Developer Dashboard" />} />
+                            {whatsAppErrors.phoneNumberId && <p className="text-sm text-destructive">{whatsAppErrors.phoneNumberId.message}</p>}
+                        </div>
+                         <div className="space-y-2">
+                            <Label htmlFor="accessToken">Access Token</Label>
+                            <Controller name="accessToken" control={whatsAppControl} render={({ field }) => <Input id="accessToken" type="password" {...field} placeholder="Permanent API Access Token" />} />
+                            {whatsAppErrors.accessToken && <p className="text-sm text-destructive">{whatsAppErrors.accessToken.message}</p>}
+                        </div>
+                         <div className="space-y-2">
+                            <Label htmlFor="metaVerifyToken">Meta Verify Token</Label>
+                            <Controller name="metaVerifyToken" control={whatsAppControl} render={({ field }) => <Input id="metaVerifyToken" type="password" {...field} placeholder="For webhook verification" />} />
+                            {whatsAppErrors.metaVerifyToken && <p className="text-sm text-destructive">{whatsAppErrors.metaVerifyToken.message}</p>}
+                        </div>
+                        <div className="flex justify-end pt-4">
+                            <Button type="submit" disabled={isSubmitting}>
+                                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Connect WhatsApp
+                            </Button>
+                        </div>
+                    </form>
+                )}
+
+                {!isOauthFlow && !isWhatsAppFlow && (
+                    <form onSubmit={handleLegacySubmit(onLegacySubmit)} className="space-y-6" autoComplete="off">
+                        <div className="space-y-2">
+                            <Label htmlFor="username">Username or Email</Label>
+                            <Controller name="username" control={legacyControl} render={({ field }) => <Input id="username" {...field} placeholder="e.g., @yourhandle" autoComplete="off" />} />
+                            {legacyErrors.username && <p className="text-sm text-destructive">{legacyErrors.username.message}</p>}
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="password">Password</Label>
+                            <Controller name="password" control={legacyControl} render={({ field }) => <Input id="password" type="password" {...field} placeholder="••••••••" autoComplete="new-password"/>} />
+                            {legacyErrors.password && <p className="text-sm text-destructive">{legacyErrors.password.message}</p>}
+                        </div>
+                        <div className="flex justify-end pt-4">
+                            <Button type="submit" disabled={isSubmitting}>
+                                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Connect Account
+                            </Button>
+                        </div>
+                    </form>
+                )}
+              </>
             )}
           </div>
         </CardContent>
