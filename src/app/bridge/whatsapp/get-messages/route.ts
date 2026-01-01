@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -33,37 +34,15 @@ export async function GET(request: Request) {
     const challenge = searchParams.get('hub.challenge');
 
     if (mode === 'subscribe' && token) {
-        try {
-            // Find an account that matches the verify token
-            const accountsRef = collection(db, 'connected_accounts');
-            const q = query(accountsRef, where('platform', '==', 'WhatsApp'));
-            const querySnapshot = await getDocs(q);
-            
-            let isValidToken = false;
-            for (const doc of querySnapshot.docs) {
-                // In a real app, you'd decrypt this. For now, we assume it's stored plaintext for verification
-                // but this is NOT secure for production. The token should be encrypted.
-                if (doc.data().metaVerifyToken === token) {
-                    isValidToken = true;
-                    break;
-                }
-            }
+        // Use a single environment variable for verification
+        const verifyToken = process.env.META_VERIFY_TOKEN;
 
-            if (isValidToken) {
-                console.log('WhatsApp webhook verified successfully.');
-                return new NextResponse(challenge, { status: 200 });
-            } else {
-                 console.warn(`WhatsApp webhook verification failed: No account found with verify_token: ${token}`);
-                return new NextResponse('Forbidden', { status: 403 });
-            }
-        } catch (error: any) {
-            await logError({
-                process: 'whatsapp-webhook-get',
-                location: 'Webhook Verification',
-                errorMessage: 'Error during webhook verification in Firestore.',
-                context: { error: error.message }
-            });
-            return new NextResponse('Internal Server Error', { status: 500 });
+        if (token === verifyToken) {
+            console.log('WhatsApp webhook verified successfully.');
+            return new NextResponse(challenge, { status: 200 });
+        } else {
+            console.warn(`WhatsApp webhook verification failed: Token mismatch.`);
+            return new NextResponse('Forbidden', { status: 403 });
         }
     } else {
         console.warn('WhatsApp webhook verification failed: Missing mode or token.');

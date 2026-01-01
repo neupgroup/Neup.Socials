@@ -29,7 +29,6 @@ const formSchema = z.object({
   password: z.string().optional(),
   phoneNumberId: z.string().optional(),
   accessToken: z.string().optional(),
-  metaVerifyToken: z.string().optional(),
 }).refine(data => {
     if (data.platform === 'Twitter') {
         return !!data.username && !!data.password;
@@ -40,11 +39,11 @@ const formSchema = z.object({
     path: ['username'],
 }).refine(data => {
     if (data.platform === 'WhatsApp') {
-        return !!data.phoneNumberId && !!data.accessToken && !!data.metaVerifyToken;
+        return !!data.phoneNumberId && !!data.accessToken;
     }
     return true;
 }, {
-    message: 'All WhatsApp fields are required.',
+    message: 'Phone Number ID and Access Token are required.',
     path: ['phoneNumberId'],
 });
 
@@ -113,7 +112,6 @@ export default function AddAccountPage() {
         }
 
         const encryptedAccessToken = await encrypt(data.accessToken!);
-        const encryptedVerifyToken = await encrypt(data.metaVerifyToken!);
 
         await addDoc(collection(db, 'connected_accounts'), {
             platform: 'WhatsApp',
@@ -122,7 +120,6 @@ export default function AddAccountPage() {
             username: data.phoneNumberId!, // Use phone number ID as username for consistency
             nameStatus: accountNameResult.name_status,
             encryptedToken: encryptedAccessToken,
-            metaVerifyToken: encryptedVerifyToken,
             status: 'Active',
             owner: userId,
             connectedOn: serverTimestamp(),
@@ -232,11 +229,6 @@ export default function AddAccountPage() {
                             <Label htmlFor="accessToken">Access Token</Label>
                             <Controller name="accessToken" control={control} render={({ field }) => <Input id="accessToken" type="password" {...field} placeholder="Permanent API Access Token" />} />
                             {errors.accessToken && <p className="text-sm text-destructive">{errors.accessToken.message}</p>}
-                        </div>
-                         <div className="space-y-2">
-                            <Label htmlFor="metaVerifyToken">Meta Verify Token</Label>
-                            <Controller name="metaVerifyToken" control={control} render={({ field }) => <Input id="metaVerifyToken" type="password" {...field} placeholder="For webhook verification" />} />
-                            {errors.metaVerifyToken && <p className="text-sm text-destructive">{errors.metaVerifyToken.message}</p>}
                         </div>
                     </div>
                 )}
