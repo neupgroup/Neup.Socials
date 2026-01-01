@@ -18,13 +18,13 @@ export async function getInstagramAuthUrl(userId: string): Promise<string> {
   try {
     const state = await generateRandomState(userId);
 
-    if (!process.env.INSTAGRAM_APP_ID || !process.env.INSTAGRAM_REDIRECT_URI) {
-      throw new Error('Instagram environment variables are not set.');
+    if (!process.env.INSTAGRAM_APP_ID) {
+      throw new Error('Instagram App ID environment variable is not set.');
     }
 
     const params = new URLSearchParams({
       client_id: process.env.INSTAGRAM_APP_ID!,
-      redirect_uri: process.env.INSTAGRAM_REDIRECT_URI!,
+      redirect_uri: 'https://khanalcwani.com/bridge/api/v1/auth/callback/instagram',
       scope: 'user_profile,user_media',
       response_type: 'code',
       state: encodeURIComponent(state),

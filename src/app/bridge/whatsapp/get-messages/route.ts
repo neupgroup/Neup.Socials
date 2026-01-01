@@ -34,8 +34,8 @@ export async function GET(request: Request) {
     const challenge = searchParams.get('hub.challenge');
 
     if (mode === 'subscribe' && token) {
-        // Use a single environment variable for verification
-        const verifyToken = process.env.META_VERIFY_TOKEN;
+        // Hardcoded verification token for WhatsApp webhook
+        const verifyToken = 'neup_meta_webhook_verify_token_2024';
 
         if (token === verifyToken) {
             console.log('WhatsApp webhook verified successfully.');

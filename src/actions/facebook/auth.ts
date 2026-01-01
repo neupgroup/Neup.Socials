@@ -18,13 +18,13 @@ export async function getFacebookAuthUrl(userId: string): Promise<string> {
     // The state parameter is used for security purposes to prevent CSRF attacks.
     const state = await generateRandomState(userId);
 
-    if (!process.env.FB_APP_ID || !process.env.FB_REDIRECT_URI) {
-      throw new Error('Facebook environment variables are not set.');
+    if (!process.env.FB_APP_ID) {
+      throw new Error('Facebook App ID environment variable is not set.');
     }
 
     const params = new URLSearchParams({
       client_id: process.env.FB_APP_ID!,
-      redirect_uri: process.env.FB_REDIRECT_URI!,
+      redirect_uri: 'https://khanalcwani.com/bridge/api/v1/auth/callback/facebook',
       state: encodeURIComponent(state),
       // These scopes request permissions to manage pages and read engagement.
       scope: 'pages_manage_posts,pages_read_engagement,pages_show_list,business_management,read_insights',

@@ -18,17 +18,17 @@ export async function getLinkedInAuthUrl(userId: string): Promise<string> {
   try {
     const state = await generateRandomState(userId);
 
-    if (!process.env.LINKEDIN_CLIENT_ID || !process.env.LINKEDIN_REDIRECT_URI) {
-      throw new Error('LinkedIn environment variables are not set.');
+    if (!process.env.LINKEDIN_CLIENT_ID) {
+      throw new Error('LinkedIn Client ID environment variable is not set.');
     }
-    
+
     // Scopes for OIDC login and posting on behalf of the user.
     const scope = 'openid profile w_member_social';
 
     const params = new URLSearchParams({
       response_type: 'code',
       client_id: process.env.LINKEDIN_CLIENT_ID!,
-      redirect_uri: process.env.LINKEDIN_REDIRECT_URI!,
+      redirect_uri: 'https://khanalcwani.com/bridge/api/v1/auth/callback/linkedin',
       state: encodeURIComponent(state),
       scope,
     });
