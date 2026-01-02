@@ -51,9 +51,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
+  const isAppPage = !['/'].includes(pathname) && !pathname.startsWith('/landing');
 
   // This layout will only apply to the root page, not to the main app pages.
-  if (pathname !== '/') {
+  if (isAppPage) {
     return (
         <html lang="en" suppressHydrationWarning>
             <head>
@@ -62,6 +63,24 @@ export default function RootLayout({
                 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
             </head>
             <body className="font-body antialiased">
+                <ProgressBar />
+                {children}
+                <Toaster />
+            </body>
+        </html>
+    );
+  }
+
+
+  if (pathname.startsWith('/landing')) {
+      return (
+        <html lang="en" suppressHydrationWarning>
+            <head>
+                <link rel="preconnect" href="https://fonts.googleapis.com" />
+                <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+            </head>
+            <body>
                 <ProgressBar />
                 {children}
                 <Toaster />
@@ -99,11 +118,15 @@ export default function RootLayout({
                     <DropdownMenuContent className="w-56" align="end" forceMount>
                       <DropdownMenuLabel className="font-normal">
                         <div className="flex flex-col space-y-1">
-                          <p className="text-sm font-medium leading-none">Not Logged In</p>
+                          <p className="text-sm font-medium leading-none">Neup Admin</p>
+                           <p className="text-xs leading-none text-muted-foreground">
+                            admin@neup.social
+                          </p>
                         </div>
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem>Log In</DropdownMenuItem>
+                       <DropdownMenuItem asChild><Link href="/analytics">Go to App</Link></DropdownMenuItem>
+                      <DropdownMenuItem>Log out</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -127,7 +150,7 @@ export default function RootLayout({
                         <SidebarMenuItem key={item.href}>
                           <Link href={item.href}>
                             <SidebarMenuButton
-                              isActive={pathname.startsWith(item.href)}
+                              isActive={pathname === item.href}
                               tooltip={item.label}
                             >
                               <item.icon />
