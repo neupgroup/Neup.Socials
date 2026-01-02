@@ -4,15 +4,11 @@
 import * as React from 'react';
 import Link from 'next/link';
 import {
-  Calendar,
-  Inbox,
-  LayoutGrid,
   Settings,
   Users,
   MessageSquareText,
-  PlusSquare,
   AlertTriangle,
-  Upload,
+  LayoutGrid
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
@@ -44,12 +40,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { ProgressBar } from '@/components/progress-bar';
 
 const navItems = [
-  { href: '/analytics', icon: LayoutGrid, label: 'Analytics' },
-  { href: '/schedule', icon: Calendar, label: 'Schedule' },
-  { href: '/content', icon: PlusSquare, label: 'Content' },
-  { href: '/inbox', icon: Inbox, label: 'Inbox' },
-  { href: '/uploads', icon: Upload, label: 'Uploads' },
-  { href: '/accounts', icon: Users, label: 'Accounts' },
+  { href: '/', icon: LayoutGrid, label: 'Dashboard' },
   { href: '/settings', icon: Settings, label: 'Settings' },
   { href: '/root/errors', icon: AlertTriangle, label: 'Errors'},
 ];
@@ -60,6 +51,24 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
+
+  // This layout will only apply to the root page, not to the main app pages.
+  if (pathname !== '/') {
+    return (
+        <html lang="en" suppressHydrationWarning>
+            <head>
+                <link rel="preconnect" href="https://fonts.googleapis.com" />
+                <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+            </head>
+            <body className="font-body antialiased">
+                <ProgressBar />
+                {children}
+                <Toaster />
+            </body>
+        </html>
+    );
+  }
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -73,7 +82,6 @@ export default function RootLayout({
         <SidebarProvider>
           <div className="flex min-h-screen w-full flex-col">
             
-            {/* HEADER - full width background + container */}
             <header className="sticky top-0 z-10 border-b bg-background/80 backdrop-blur-sm shadow-sm">
               <div className="container flex h-14 items-center justify-between px-4 sm:px-6">
                 <SidebarTrigger className="md:hidden" />
@@ -91,25 +99,17 @@ export default function RootLayout({
                     <DropdownMenuContent className="w-56" align="end" forceMount>
                       <DropdownMenuLabel className="font-normal">
                         <div className="flex flex-col space-y-1">
-                          <p className="text-sm font-medium leading-none">Neup Admin</p>
-                          <p className="text-xs leading-none text-muted-foreground">
-                            admin@neup.socials
-                          </p>
+                          <p className="text-sm font-medium leading-none">Not Logged In</p>
                         </div>
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem>Profile</DropdownMenuItem>
-                      <DropdownMenuItem>Billing</DropdownMenuItem>
-                      <DropdownMenuItem>Settings</DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem>Log out</DropdownMenuItem>
+                      <DropdownMenuItem>Log In</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
               </div>
             </header>
 
-            {/* MAIN - full width background + container */}
             <main className="flex-1 bg-background">
               <div className="container flex p-0">
                 <Sidebar>
@@ -139,22 +139,12 @@ export default function RootLayout({
                     </SidebarMenu>
                   </SidebarContent>
                   <SidebarFooter className="p-4">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-9 w-9">
-                        <AvatarImage src="https://placehold.co/40x40" alt="@shadcn" />
-                        <AvatarFallback>NS</AvatarFallback>
-                      </Avatar>
-                      <div className="flex flex-col text-sm group-data-[collapsible=icon]:hidden">
-                        <span className="font-medium">Neup Admin</span>
-                        <span className="text-muted-foreground">admin@neup.socials</span>
-                      </div>
-                    </div>
+                     {/* Footer can be empty or have a generic message */}
                   </SidebarFooter>
                 </Sidebar>
 
-                {/* CONTENT */}
                 <SidebarInset>
-                  <div className="flex-1 p-6">{children}</div>
+                  <div className="flex-1">{children}</div>
                 </SidebarInset>
               </div>
             </main>
