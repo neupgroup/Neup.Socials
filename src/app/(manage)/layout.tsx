@@ -42,6 +42,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Toaster } from "@/components/ui/toaster";
 
 const navItems = [
+  { href: '/', icon: LayoutGrid, label: 'Dashboard' },
   { href: '/analytics', icon: LayoutGrid, label: 'Analytics' },
   { href: '/schedule', icon: Calendar, label: 'Schedule' },
   { href: '/content', icon: PlusSquare, label: 'Content' },
@@ -50,7 +51,7 @@ const navItems = [
   { href: '/accounts', icon: Users, label: 'Accounts' },
   { href: '/switch', icon: ArrowRightLeft, label: 'Switch' },
   { href: '/settings', icon: Settings, label: 'Settings' },
-  { href: '/root/errors', icon: AlertTriangle, label: 'Errors'},
+  { href: '/root/errors', icon: AlertTriangle, label: 'Errors' },
 ];
 
 const allowedPaths = navItems.map(item => item.href);
@@ -61,12 +62,12 @@ export default function AppLayout({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
-  
+
   // This check allows nested routes like /accounts/[id]
   const isAllowed = allowedPaths.some(path => pathname.startsWith(path));
 
   if (!isAllowed) {
-      notFound();
+    notFound();
   }
 
   return (
