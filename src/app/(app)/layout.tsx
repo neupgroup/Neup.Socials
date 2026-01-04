@@ -62,6 +62,7 @@ export default function AppLayout({
 }>) {
   const pathname = usePathname();
   
+  // This check allows nested routes like /accounts/[id]
   const isAllowed = allowedPaths.some(path => pathname.startsWith(path));
 
   if (!isAllowed) {
@@ -154,6 +155,7 @@ export default function AppLayout({
           </div>
         </main>
       </div>
+      <Toaster />
     </SidebarProvider>
   );
 }
