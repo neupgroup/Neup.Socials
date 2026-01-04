@@ -1,7 +1,7 @@
 
 'use server';
 
-import { collection, query, where, getDocs, addDoc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, updateDoc, serverTimestamp, Timestamp, collectionGroup, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { logError } from '@/lib/error-logging';
 
@@ -44,6 +44,7 @@ export async function processWhatsAppWebhook(payload: any) {
                 continue;
             }
 
+
             const fromPhoneNumber = message.from; // Raw number from WhatsApp (e.g., "977984...")
             const userProfileName = contact?.profile?.name || 'Unknown User';
             const businessPhoneNumberId = metadata.phone_number_id;
@@ -51,13 +52,30 @@ export async function processWhatsAppWebhook(payload: any) {
             console.log(`📨 [Service] Processing message from ${fromPhoneNumber} (ID: ${businessPhoneNumberId})`);
 
             try {
+                // Global duplicate check to ensure idempotency
+                const globalMsgQuery = query(collectionGroup(db, 'messages'), where('platformMessageId', '==', message.id));
+                const globalMsgSnap = await getDocs(globalMsgQuery);
+
+                if (!globalMsgSnap.empty) {
+                    console.log(`⚠️ [Service] Message ${message.id} ALREADY PROCESSED (Global Check), skipping.`);
+                    continue;
+                }
+
                 // 1. Find the 'connected_accounts' document that matches the business phone number ID
                 const accountsRef = collection(db, 'connected_accounts');
-                const accountQuery = query(accountsRef, where('platform', '==', 'WhatsApp'), where('platformId', '==', businessPhoneNumberId));
-                const accountSnapshot = await getDocs(accountQuery);
+                let accountQuery = query(accountsRef, where('platform', '==', 'WhatsApp'), where('platformId', '==', businessPhoneNumberId));
+                let accountSnapshot = await getDocs(accountQuery);
 
                 if (accountSnapshot.empty) {
-                    throw new Error(`No connected WhatsApp account found for phone number ID: ${businessPhoneNumberId}`);
+                    console.log(`⚠️ [Service] Account ID ${businessPhoneNumberId} not found. Checking for default/any WhatsApp account...`);
+                    // Fallback to allow conversation creation even if ID mapping is missing
+                    accountQuery = query(accountsRef, where('platform', '==', 'WhatsApp'), limit(1));
+                    accountSnapshot = await getDocs(accountQuery);
+
+                    if (accountSnapshot.empty) {
+                        throw new Error(`No connected WhatsApp account found for phone number ID: ${businessPhoneNumberId}`);
+                    }
+                    console.log(`⚠️ [Service] Using fallback account: ${accountSnapshot.docs[0].id}`);
                 }
                 const channelId = accountSnapshot.docs[0].id;
                 console.log(`✅ [Service] Found connected account/channel: ${channelId}`);
