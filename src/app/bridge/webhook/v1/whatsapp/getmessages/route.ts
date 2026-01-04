@@ -35,7 +35,7 @@ export async function GET(request: Request) {
 
     if (mode === 'subscribe' && token) {
         // Hardcoded verification token for WhatsApp webhook
-        const verifyToken = 'neup_meta_webhook_verify_token_2024';
+        const verifyToken = process.env.WHATSAPP_VERIFY_TOKEN;
 
         if (token === verifyToken) {
             console.log('WhatsApp webhook verified successfully.');
