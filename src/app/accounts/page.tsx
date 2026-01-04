@@ -7,13 +7,26 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, Twitter, Facebook, Linkedin, Instagram, MoreHorizontal, Loader2, Search, RefreshCw } from 'lucide-react';
+import { PlusCircle, Twitter, Facebook, Linkedin, Instagram, MoreHorizontal, Loader2, Search, RefreshCw, Edit, Trash2 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+
 import { format, formatDistanceToNow } from 'date-fns';
 import { collection, query, where, getDocs, onSnapshot, orderBy, limit, startAfter, DocumentData, QueryDocumentSnapshot, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -21,6 +34,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { syncPostsAction as syncFacebookPostsAction } from '@/actions/facebook/sync-posts';
 import { syncLinkedInPostsAction } from '@/actions/linkedin/sync-posts';
+import { disconnectAccountAction } from '@/actions/accounts';
 
 type Account = {
   id: string;
@@ -34,12 +48,20 @@ type Account = {
   owner: string;
 };
 
+const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+      <path d="M.052 24l1.688-6.164a11.91 11.91 0 01-1.74-6.36C.002 5.075 5.373 0 12.002 0s11.998 5.074 11.998 11.474c0 6.4-5.372 11.475-11.998 11.475a11.859 11.859 0 01-5.94-1.542L.052 24zm6.65-3.666a9.888 9.888 0 0011.082-9.556c0-5.473-4.437-9.91-9.91-9.91-5.473 0-9.91 4.437-9.91 9.91a9.89 9.89 0 003.834 7.62l-1.12 4.09 4.2-1.074zM12.002 2.148c4.34 0 7.864 3.525 7.864 7.864s-3.524 7.864-7.864 7.864-7.864-3.525-7.864-7.864c0-2.12.842-4.045 2.215-5.48a7.765 7.765 0 015.65-2.384zm-3.097 2.922c-.15-.002-.325.042-.47.27-.144.228-.48.77-.582.92-.102.148-.204.168-.346.102-.143-.064-1.012-.468-1.928-1.19a6.685 6.685 0 01-1.39-1.623c-.144-.246-.072-.38.06-.504.12-.11.264-.288.396-.432.108-.12.144-.204.216-.348.072-.143.036-.264-.012-.348-.05-.084-.468-.996-.636-1.356-.156-.324-.312-.276-.432-.282-.11-.006-.24-.006-.372-.006-.131 0-.347.042-.522.282-.174.24-.66.636-.66 1.542 0 .906.672 1.782.768 1.902.096.12 1.32 2.016 3.204 2.82.42.18.768.288 1.032.372.432.144.828.12 1.14.072.36-.06.996-.528 1.14-1.032.143-.504.143-.924.108-1.008-.036-.084-.144-.132-.3-.216z"/>
+    </svg>
+);
+
+
 const PlatformIcon = ({ platform }: { platform: string }) => {
     switch(platform) {
         case 'Twitter': return <Twitter className="h-5 w-5 text-blue-400" />;
         case 'LinkedIn': return <Linkedin className="h-5 w-5 text-blue-700" />;
         case 'Facebook': return <Facebook className="h-5 w-5 text-blue-600" />;
         case 'Instagram': return <Instagram className="h-5 w-5 text-pink-500" />;
+        case 'WhatsApp': return <WhatsAppIcon className="h-5 w-5 text-green-500" />;
         default: return null;
     }
 }
@@ -54,7 +76,8 @@ export default function AccountsPage() {
   const [hasMore, setHasMore] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [syncingAccountId, setSyncingAccountId] = React.useState<string | null>(null);
-  
+  const [deletingAccountId, setDeletingAccountId] = React.useState<string | null>(null);
+
   const { toast } = useToast();
   const owner = 'neupkishor'; // This should be dynamic in a real app
   const router = useRouter();
@@ -178,6 +201,19 @@ export default function AccountsPage() {
     }
   };
 
+  const handleDisconnect = async (accountId: string) => {
+    setDeletingAccountId(accountId);
+    const result = await disconnectAccountAction(accountId);
+    if(result.success) {
+      setAccounts(prev => prev.filter(acc => acc.id !== accountId));
+      toast({ title: "Account disconnected" });
+    } else {
+      toast({ title: "Failed to disconnect", description: result.error, variant: 'destructive'});
+    }
+    setDeletingAccountId(null);
+  };
+
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -233,9 +269,9 @@ export default function AccountsPage() {
             </Card>
 
             {accounts.map((account) => (
-            <Card key={account.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleCardClick(account.id)}>
+            <Card key={account.id} className="hover:shadow-md transition-shadow cursor-pointer">
                 <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div className="flex items-center gap-4 flex-1">
+                    <div className="flex items-center gap-4 flex-1" onClick={() => handleCardClick(account.id)}>
                         <div className="bg-muted p-3 rounded-full">
                             {account.icon}
                         </div>
@@ -246,7 +282,7 @@ export default function AccountsPage() {
                     </div>
                     
                     <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto">
-                        <div className="text-xs text-muted-foreground text-left sm:text-right">
+                        <div className="text-xs text-muted-foreground text-left sm:text-right" onClick={() => handleCardClick(account.id)}>
                            <span>Last Synced: </span>
                             <span className="font-medium">{account.lastSyncedAt ? formatDistanceToNow(account.lastSyncedAt.toDate(), { addSuffix: true }) : 'Never'}</span>
                         </div>
@@ -256,13 +292,53 @@ export default function AccountsPage() {
                                     <MoreHorizontal className="h-4 w-4" />
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleSyncPosts(account); }} disabled={syncingAccountId === account.id}>
+                            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                                <DropdownMenuItem onClick={() => router.push(`/accounts/${account.id}`)}>View Details</DropdownMenuItem>
+                                
+                                {account.platform === 'WhatsApp' && (
+                                  <DropdownMenuItem onClick={() => router.push(`/accounts/${account.id}/edit`)}>
+                                    <Edit className="mr-2 h-4 w-4" />
+                                    Edit Configuration
+                                  </DropdownMenuItem>
+                                )}
+
+                                <DropdownMenuItem onClick={() => handleSyncPosts(account)} disabled={syncingAccountId === account.id}>
                                     {syncingAccountId === account.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <RefreshCw className="mr-2 h-4 w-4" />}
                                     Sync Posts
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); router.push(`/accounts/${account.id}`) }}>View Details</DropdownMenuItem>
-                                <DropdownMenuItem className="text-destructive">Disconnect</DropdownMenuItem>
+
+                                <DropdownMenuSeparator />
+                                
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <DropdownMenuItem
+                                            className="text-destructive"
+                                            onSelect={(e) => e.preventDefault()}
+                                        >
+                                            <Trash2 className="mr-2 h-4 w-4" />
+                                            Disconnect
+                                        </DropdownMenuItem>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This will disconnect the account <span className="font-bold">{account.name}</span> from Neup.Socials. You may lose access to its data. This action cannot be undone.
+                                        </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction
+                                            className="bg-destructive hover:bg-destructive/90"
+                                            onClick={() => handleDisconnect(account.id)}
+                                            disabled={deletingAccountId === account.id}
+                                        >
+                                            {deletingAccountId === account.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                            Disconnect
+                                        </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>
