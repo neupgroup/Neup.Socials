@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, Twitter, Facebook, Linkedin, Instagram, MoreHorizontal, Loader2, Search, RefreshCw, Switch } from 'lucide-react';
+import { PlusCircle, Twitter, Facebook, Linkedin, Instagram, MoreHorizontal, Loader2, Search, RefreshCw, ArrowRightLeft } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -182,7 +182,7 @@ export default function SwitchAccountPage() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2"><Switch className="h-8 w-8" /> Switch Account</h1>
+          <h1 className="text-3xl font-bold flex items-center gap-2"><ArrowRightLeft className="h-8 w-8" /> Switch Account</h1>
           <p className="text-muted-foreground">Select an account to view its details and content.</p>
         </div>
         <Button asChild>
