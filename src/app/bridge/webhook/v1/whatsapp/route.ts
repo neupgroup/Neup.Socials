@@ -6,7 +6,7 @@ import { processWhatsAppWebhook } from '@/services/inbox/whatsapp';
 import { logError } from '@/lib/error-logging';
 
 export async function POST(request: Request) {
-    console.log('📥 [Webhook] POST request received at /bridge/webhook/v1/whatsapp/getmessages');
+    console.log('📥 [Webhook] POST request received at /bridge/webhook/v1/whatsapp');
 
     try {
         const body = await request.json();
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
         await processWhatsAppWebhook(body);
         console.log('✅ [Webhook] Processing complete');
 
-        return NextResponse.json({ status: 'success', message: 'Message received and processed' });
+        return NextResponse.json({ status: 'success', message: 'Webhook received and processed' });
 
     } catch (error: any) {
         console.error('❌ [Webhook] Error processing request:', error);

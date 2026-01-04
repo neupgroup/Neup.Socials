@@ -1,24 +1,26 @@
 
 import { NextResponse } from 'next/server';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { processWhatsAppWebhook } from '@/services/inbox/whatsapp';
+import { processFacebookWebhook } from '@/services/inbox/facebook';
 import { logError } from '@/lib/error-logging';
 
 export async function POST(request: Request) {
+    console.log('📥 [Webhook] POST request received at /bridge/webhook/v1/facebook');
+
     try {
         const body = await request.json();
-        console.log('Received WhatsApp webhook payload:', JSON.stringify(body, null, 2));
+        console.log('📦 [Webhook] Payload:', JSON.stringify(body, null, 2));
 
         // Process the incoming message(s)
-        await processWhatsAppWebhook(body);
+        console.log('🔄 [Webhook] Processing payload...');
+        await processFacebookWebhook(body);
+        console.log('✅ [Webhook] Processing complete');
 
-        return NextResponse.json({ status: 'success', message: 'Message received and processed' });
+        return NextResponse.json({ status: 'success', message: 'Webhook received and processed' });
 
     } catch (error: any) {
-        console.error('Error processing WhatsApp webhook:', error);
+        console.error('❌ [Webhook] Error processing request:', error);
         await logError({
-            process: 'whatsapp-webhook-post',
+            process: 'facebook-webhook-post',
             location: 'Webhook Handler',
             errorMessage: error.message,
             context: { error: error.toString() }
@@ -34,18 +36,18 @@ export async function GET(request: Request) {
     const challenge = searchParams.get('hub.challenge');
 
     if (mode === 'subscribe' && token) {
-        // Hardcoded verification token for WhatsApp webhook
-        const verifyToken = 'neup_meta_webhook_verify_token_2024';
+        // Use validation token from env or default
+        const verifyToken = process.env.FACEBOOK_VERIFY_TOKEN || process.env.WHATSAPP_VERIFY_TOKEN; // Fallback for convenience if they share
 
         if (token === verifyToken) {
-            console.log('WhatsApp webhook verified successfully.');
+            console.log('Facebook webhook verified successfully.');
             return new NextResponse(challenge, { status: 200 });
         } else {
-            console.warn(`WhatsApp webhook verification failed: Token mismatch.`);
+            console.warn(`Facebook webhook verification failed: Token mismatch.`);
             return new NextResponse('Forbidden', { status: 403 });
         }
     } else {
-        console.warn('WhatsApp webhook verification failed: Missing mode or token.');
+        console.warn('Facebook webhook verification failed: Missing mode or token.');
         return new NextResponse('Forbidden', { status: 403 });
     }
 }
