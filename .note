@@ -1,0 +1,15 @@
+1. Facebook Authorization Callback URL
+https://neupgroup.com/socials/bridge/callback.v1/auth.facebook
+Implemented
+https://developers.facebook.com/apps/1460023928746399/business-login/settings/?business_id=571433372435331
+
+
+2. Facebook Deauthorization Callback URL
+https://neupgroup.com/socials/bridge/callback.v1/deauth.facebook
+Not Implemented
+https://developers.facebook.com/apps/1460023928746399/business-login/settings/?business_id=571433372435331
+
+
+=====>
+Facebook
+3. Manage everything on the page.

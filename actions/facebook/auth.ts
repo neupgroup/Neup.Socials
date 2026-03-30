@@ -24,7 +24,7 @@ export async function getFacebookAuthUrl(userId: string): Promise<string> {
 
     const params = new URLSearchParams({
       client_id: process.env.FB_APP_ID!,
-      redirect_uri: 'https://neupgroup.com/socials/bridge/api.v1/auth/callback/facebook',
+      redirect_uri: 'https://neupgroup.com/socials/bridge/callback.v1/auth.facebook',
       state: encodeURIComponent(state),
       // These scopes request permissions to manage pages and read engagement.
       scope: 'pages_manage_posts,pages_read_engagement,pages_show_list,business_management,read_insights',
