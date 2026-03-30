@@ -1,10 +1,10 @@
 
 import { NextResponse } from 'next/server';
-import { processWhatsAppWebhook } from '../../../../../services/inbox/whatsapp';
+import { processWhatsAppWebhook } from '../../../../services/inbox/whatsapp';
 import { logError } from '@/lib/error-logging';
 
 export async function POST(request: Request) {
-    console.log('📥 [Webhook] POST request received at /bridge/webhook/v1/whatsapp');
+    console.log('📥 [Webhook] POST request received at /bridge/webhook.v1/whatsapp');
 
     try {
         const body = await request.json();

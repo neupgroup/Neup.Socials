@@ -1,6 +1,5 @@
-
 import { NextRequest, NextResponse } from 'next/server';
-import { handleInstagramCallback } from '@/actions/instagram/callback';
+import { handleLinkedInCallback } from '@/actions/linkedin/callback';
 import { logError } from '@/lib/error-logging';
 
 export async function GET(request: NextRequest) {
@@ -12,31 +11,30 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     await logError({
-      process: 'Instagram OAuth Callback',
-      location: 'GET /api/auth/callback/instagram',
+      process: 'LinkedIn OAuth Callback',
+      location: 'GET /bridge/callback.v1/auth.linkedin',
       errorMessage: errorDescription || 'User denied the request or an error occurred.',
       context: { error, errorDescription },
     });
-    return NextResponse.redirect(new URL('/accounts/add?error=instagram-denied', request.url));
+    return NextResponse.redirect(new URL('/accounts/add?error=linkedin-denied', request.url));
   }
 
   if (!code || !state) {
     await logError({
-      process: 'Instagram OAuth Callback',
-      location: 'GET /api/auth/callback/instagram',
+      process: 'LinkedIn OAuth Callback',
+      location: 'GET /bridge/callback.v1/auth.linkedin',
       errorMessage: 'Missing code or state parameter in callback.',
     });
     return NextResponse.redirect(new URL('/accounts/add?error=invalid-callback', request.url));
   }
 
-  // Decode the state parameter before validation
   state = decodeURIComponent(state);
 
-  const result = await handleInstagramCallback(code, state);
+  const result = await handleLinkedInCallback(code, state);
 
   if (result.success) {
     return NextResponse.redirect(new URL('/accounts?status=success', request.url));
-  } else {
-    return NextResponse.redirect(new URL(`/accounts/add?error=${result.error}`, request.url));
   }
+
+  return NextResponse.redirect(new URL(`/accounts/add?error=${result.error}`, request.url));
 }

@@ -28,7 +28,7 @@ export async function getLinkedInAuthUrl(userId: string): Promise<string> {
     const params = new URLSearchParams({
       response_type: 'code',
       client_id: process.env.LINKEDIN_CLIENT_ID!,
-      redirect_uri: 'https://khanalcwani.com/bridge/api/v1/auth/callback/linkedin',
+      redirect_uri: 'https://khanalcwani.com/bridge/callback.v1/auth.linkedin',
       state: encodeURIComponent(state),
       scope,
     });

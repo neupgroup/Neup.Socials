@@ -24,7 +24,7 @@ export async function getInstagramAuthUrl(userId: string): Promise<string> {
 
     const params = new URLSearchParams({
       client_id: process.env.INSTAGRAM_APP_ID!,
-      redirect_uri: 'https://khanalcwani.com/bridge/api/v1/auth/callback/instagram',
+      redirect_uri: 'https://khanalcwani.com/bridge/callback.v1/auth.instagram',
       scope: 'user_profile,user_media',
       response_type: 'code',
       state: encodeURIComponent(state),

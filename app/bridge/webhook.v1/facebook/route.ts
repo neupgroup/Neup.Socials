@@ -1,10 +1,10 @@
 
 import { NextResponse } from 'next/server';
-import { processFacebookWebhook } from '../../../../../services/inbox/facebook';
+import { processFacebookWebhook } from '../../../../services/inbox/facebook';
 import { logError } from '@/lib/error-logging';
 
 export async function POST(request: Request) {
-    console.log('📥 [Webhook] POST request received at /bridge/webhook/v1/facebook');
+    console.log('📥 [Webhook] POST request received at /bridge/webhook.v1/facebook');
 
     try {
         const body = await request.json();

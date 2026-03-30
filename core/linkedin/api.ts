@@ -91,7 +91,7 @@ export async function exchangeCodeForToken(code: string): Promise<AccessTokenRes
         code,
         client_id: process.env.LINKEDIN_CLIENT_ID!,
         client_secret: process.env.LINKEDIN_CLIENT_SECRET!,
-        redirect_uri: 'https://khanalcwani.com/bridge/api/v1/auth/callback/linkedin',
+        redirect_uri: 'https://khanalcwani.com/bridge/callback.v1/auth.linkedin',
     });
 
     const res = await fetch(OAUTH_URL, {

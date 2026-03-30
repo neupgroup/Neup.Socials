@@ -53,7 +53,7 @@ export async function exchangeCodeForToken(code: string): Promise<AccessTokenRes
     client_id: process.env.INSTAGRAM_APP_ID!,
     client_secret: process.env.INSTAGRAM_APP_SECRET!,
     grant_type: 'authorization_code',
-    redirect_uri: 'https://khanalcwani.com/bridge/api/v1/auth/callback/instagram',
+    redirect_uri: 'https://khanalcwani.com/bridge/callback.v1/auth.instagram',
     code,
   });
 
