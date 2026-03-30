@@ -64,8 +64,8 @@ type PublishPostResponse = {
 }
 
 export type InsightValue = {
-  value: number;
-  end_time: string;
+  value: number | { [key: string]: number };
+  end_time?: string;
 };
 
 export type InsightMetric = {
@@ -92,15 +92,24 @@ export type PostInsightMetric = {
 
 export type PageInsightsResponse = {
   data: InsightMetric[];
-  paging: {
-    previous: string;
-    next: string;
+  paging?: {
+    previous?: string;
+    next?: string;
   };
 };
 
 export type PostInsightsResponse = {
   data: PostInsightMetric[];
 }
+
+export type PageInsightsQueryContext = {
+  since?: string;
+  until?: string;
+  period?: 'day' | 'week' | 'days_28' | 'month' | 'lifetime' | 'total_over_range';
+  breakdown?: string;
+  metricType?: string;
+  showDescription?: boolean;
+};
 
 type PagePost = {
   id: string;
@@ -240,19 +249,30 @@ export async function getPageInsights(
   pageId: string,
   pageToken: string,
   metrics: string[],
-  since?: string,
-  until?: string
+  context?: PageInsightsQueryContext
 ): Promise<PageInsightsResponse> {
   const params = new URLSearchParams({
     access_token: pageToken,
     metric: metrics.join(','),
   });
 
-  if (since) {
-    params.append('since', since);
+  if (context?.since) {
+    params.append('since', context.since);
   }
-  if (until) {
-    params.append('until', until);
+  if (context?.until) {
+    params.append('until', context.until);
+  }
+  if (context?.period) {
+    params.append('period', context.period);
+  }
+  if (context?.breakdown) {
+    params.append('breakdown', context.breakdown);
+  }
+  if (context?.metricType) {
+    params.append('metric_type', context.metricType);
+  }
+  if (typeof context?.showDescription === 'boolean') {
+    params.append('show_description_from_api_doc', String(context.showDescription));
   }
 
   const res = await fetch(`${GRAPH_API_BASE_URL}/${pageId}/insights?${params.toString()}`);
@@ -269,12 +289,23 @@ export async function getPageInsights(
 export async function getPagePostInsights(
   postId: string,
   pageToken: string,
-  metrics: string[]
+  metrics: string[],
+  context?: Pick<PageInsightsQueryContext, 'since' | 'until' | 'period'>
 ): Promise<PostInsightsResponse> {
   const params = new URLSearchParams({
     access_token: pageToken,
     metric: metrics.join(','),
   });
+
+  if (context?.since) {
+    params.append('since', context.since);
+  }
+  if (context?.until) {
+    params.append('until', context.until);
+  }
+  if (context?.period) {
+    params.append('period', context.period);
+  }
 
   const res = await fetch(`${GRAPH_API_BASE_URL}/${postId}/insights?${params.toString()}`);
   return handleApiResponse<PostInsightsResponse>(res);
