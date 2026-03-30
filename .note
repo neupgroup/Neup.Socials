@@ -1,0 +1,253 @@
+# Platform Feature Implementation Notes
+
+This file documents implemented features by platform, the files used for each feature, and support pages.
+
+## Facebook
+
+### 1) OAuth connect Facebook Pages
+- Feature:
+	- Builds OAuth URL with page-related scopes.
+	- Handles callback, exchanges code to long-lived token, fetches managed pages, stores encrypted page tokens.
+- Files used:
+	- actions/facebook/auth.ts
+	- actions/facebook/callback.ts
+	- core/facebook/api.ts
+	- app/api/auth/callback/facebook/route.ts
+	- app/bridge/callback.v1/auth.facebook/route.ts
+	- app/(manage)/accounts/add/page.tsx
+- Support pages:
+	- https://developers.facebook.com/docs/facebook-login/
+	- https://developers.facebook.com/docs/pages/access-tokens
+	- https://developers.facebook.com/docs/pages-api/getting-started
+
+### 2) Publish posts to Facebook Page (text/image/video/multi-image + CTA)
+- Feature:
+	- Publishes text posts.
+	- Publishes single image and single video.
+	- Publishes multi-image posts via unpublished photo upload + attached_media.
+	- Supports optional call_to_action payload.
+- Files used:
+	- core/facebook/api.ts
+	- services/publishing/index.ts
+	- actions/content/publish.ts
+- Support pages:
+	- https://developers.facebook.com/docs/pages-api/posts
+	- https://developers.facebook.com/docs/graph-api/reference/page/feed
+	- https://developers.facebook.com/docs/graph-api/reference/page/photos
+	- https://developers.facebook.com/docs/graph-api/reference/page/videos
+
+### 3) Sync Page posts into local store
+- Feature:
+	- Pulls /published_posts with intelligent date windowing.
+	- Deduplicates by platformPostId.
+	- Stores sync logs and updates lastSyncedAt.
+- Files used:
+	- actions/facebook/sync-posts.ts
+	- core/facebook/api.ts
+- Support pages:
+	- https://developers.facebook.com/docs/graph-api/reference/page/published_posts
+
+### 4) Page insights (context-aware)
+- Feature:
+	- Fetches page insights by metric list.
+	- Supports context options: since, until, period, breakdown, metric_type.
+	- Returns both summarized aggregates and raw insights payload.
+- Files used:
+	- actions/facebook/insights.ts
+	- core/facebook/api.ts
+	- app/(manage)/analytics/page.tsx
+	- app/(manage)/accounts/[id]/page.tsx
+- Support pages:
+	- https://developers.facebook.com/docs/platforminsights/page/
+	- https://developers.facebook.com/docs/graph-api/reference/insights
+
+### 5) Post-level insights
+- Feature:
+	- Fetches post_reactions_by_type_total and post_activity_by_action_type.
+	- Computes likes/comments/shares summary.
+- Files used:
+	- actions/facebook/post-insights.ts
+	- core/facebook/api.ts
+- Support pages:
+	- https://developers.facebook.com/docs/platforminsights/page/#get-metrics-of-a-page-post
+
+### 6) Manage Page capabilities
+- Feature:
+	- Get page roles/tasks.
+	- Get/update page details.
+	- Get/update page settings.
+	- Get page reviews/ratings.
+	- Block a user from page.
+	- Accept/reject page change proposal.
+- Files used:
+	- actions/facebook/manage-page.ts
+	- core/facebook/api.ts
+- Support pages:
+	- https://developers.facebook.com/docs/pages-api/manage-pages
+	- https://developers.facebook.com/docs/graph-api/reference/page/roles
+	- https://developers.facebook.com/docs/graph-api/reference/page/settings
+	- https://developers.facebook.com/docs/graph-api/reference/page/ratings
+	- https://developers.facebook.com/docs/graph-api/reference/page/blocked
+
+### 7) Webhooks (legacy + dot v1)
+- Feature:
+	- Legacy webhook endpoint verifies token and processes payload via service layer.
+	- Service currently captures proposal/upcoming-change alerts into system alerts.
+	- Dot-style endpoints provide token verification + POST acknowledgment for:
+		- facebook.page
+		- facebook.catalog
+		- facebook.user
+		- facebook.permissions
+		- facebook.application
+		- facebook.adaccount
+- Files used:
+	- app/bridge/webhook/v1/facebook/route.ts
+	- services/inbox/facebook.ts
+	- app/bridge/webhook.v1/_helpers.ts
+	- app/bridge/webhook.v1/facebook.page/route.ts
+	- app/bridge/webhook.v1/facebook.catalog/route.ts
+	- app/bridge/webhook.v1/facebook.user/route.ts
+	- app/bridge/webhook.v1/facebook.permissions/route.ts
+	- app/bridge/webhook.v1/facebook.application/route.ts
+	- app/bridge/webhook.v1/facebook.adaccount/route.ts
+- Support pages:
+	- https://developers.facebook.com/docs/graph-api/webhooks/
+	- https://developers.facebook.com/docs/pages-api/webhooks-for-pages
+
+## Instagram
+
+### 1) OAuth connect Instagram account
+- Feature:
+	- Builds Instagram OAuth URL.
+	- Exchanges code for short-lived token.
+	- Exchanges for long-lived token.
+	- Fetches profile and stores encrypted token/account mapping.
+- Files used:
+	- actions/instagram/auth.ts
+	- actions/instagram/callback.ts
+	- core/instagram/api.ts
+	- app/api/auth/callback/instagram/route.ts
+	- app/(manage)/accounts/add/page.tsx
+- Support pages:
+	- https://developers.facebook.com/docs/instagram-basic-display-api
+	- https://developers.facebook.com/docs/instagram-basic-display-api/getting-started
+	- https://developers.facebook.com/docs/instagram-basic-display-api/reference/user
+
+## LinkedIn
+
+### 1) OAuth connect LinkedIn account
+- Feature:
+	- Builds OAuth URL (openid/profile/w_member_social).
+	- Exchanges code for token.
+	- Fetches OIDC profile and stores encrypted token/account mapping.
+- Files used:
+	- actions/linkedin/auth.ts
+	- actions/linkedin/callback.ts
+	- core/linkedin/api.ts
+	- app/api/auth/callback/linkedin/route.ts
+	- app/(manage)/accounts/add/page.tsx
+- Support pages:
+	- https://learn.microsoft.com/linkedin/shared/authentication/authorization-code-flow
+	- https://learn.microsoft.com/linkedin/consumer/integrations/self-serve/sign-in-with-linkedin
+
+### 2) Publish LinkedIn post
+- Feature:
+	- Publishes text posts.
+	- Supports single-image flow via register upload + binary upload + UGC post.
+	- Has fallback to text-only if image upload fails.
+- Files used:
+	- core/linkedin/api.ts
+	- services/publishing/index.ts
+	- actions/content/publish.ts
+- Support pages:
+	- https://learn.microsoft.com/linkedin/consumer/integrations/self-serve/share-on-linkedin
+	- https://learn.microsoft.com/linkedin/marketing/community-management/shares/posts-api
+
+### 3) Sync LinkedIn posts into local store
+- Feature:
+	- Fetches posts by author URN.
+	- Deduplicates and stores new posts.
+	- Updates account sync timestamps.
+- Files used:
+	- actions/linkedin/sync-posts.ts
+	- core/linkedin/api.ts
+- Support pages:
+	- https://learn.microsoft.com/linkedin/marketing/community-management/shares/posts-api
+
+## WhatsApp
+
+### 1) Manual account connect (phone number id + access token)
+- Feature:
+	- Validates account name from WhatsApp API.
+	- Encrypts token and stores connected account.
+	- Supports token update from account edit page.
+- Files used:
+	- core/whatsapp/api.ts
+	- app/(manage)/accounts/add/page.tsx
+	- actions/accounts/index.ts
+	- app/(manage)/accounts/[id]/edit/page.tsx
+- Support pages:
+	- https://developers.facebook.com/docs/whatsapp/cloud-api
+	- https://developers.facebook.com/docs/whatsapp/cloud-api/reference/phone-numbers
+
+### 2) Inbound webhook processing (messages/calls/account events)
+- Feature:
+	- Verifies webhook challenge token.
+	- Processes message and call events.
+	- Creates/updates conversations and stores conversation messages.
+	- Stores account alerts/review/settings events in system alerts.
+- Files used:
+	- app/bridge/webhook/v1/whatsapp/route.ts
+	- services/inbox/whatsapp.ts
+- Support pages:
+	- https://developers.facebook.com/docs/whatsapp/cloud-api/webhooks
+	- https://developers.facebook.com/docs/whatsapp/cloud-api/reference/messages
+
+### 3) Outbound reply sending
+- Feature:
+	- Sends WhatsApp text replies through Cloud API using account credentials.
+- Files used:
+	- actions/inbox/sender.ts
+	- core/whatsapp/api.ts
+- Support pages:
+	- https://developers.facebook.com/docs/whatsapp/cloud-api/reference/messages
+
+## Twitter (current state)
+
+### 1) Manual placeholder connect only
+- Feature:
+	- UI allows entering username/password and stores account metadata.
+	- No official Twitter/X API integration for publish/sync/webhook in current code.
+- Files used:
+	- app/(manage)/accounts/add/page.tsx
+	- actions/db.ts
+- Support pages:
+	- https://developer.x.com/en/docs
+
+## Cross-platform shared features
+
+### 1) Unified multi-account publishing orchestrator
+- Feature:
+	- Publishes one post collection to selected Facebook and LinkedIn accounts.
+	- Stores per-platform post records and updates collection status.
+- Files used:
+	- services/publishing/index.ts
+	- actions/content/publish.ts
+	- core/facebook/api.ts
+	- core/linkedin/api.ts
+
+### 2) Account management
+- Feature:
+	- Disconnect account.
+	- Update WhatsApp token.
+- Files used:
+	- actions/accounts/index.ts
+	- app/(manage)/accounts/page.tsx
+	- app/(manage)/accounts/[id]/edit/page.tsx
+
+### 3) API bridge base endpoint
+- Feature:
+	- Health/info response for bridge root.
+- Files used:
+	- app/bridge/api/route.ts
+
