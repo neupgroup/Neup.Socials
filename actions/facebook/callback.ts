@@ -50,21 +50,26 @@ export async function handleFacebookCallback(code: string, state: string) {
 
     // 5. Store page details securely in Postgres for the user.
     for (const page of pagesResponse.data) {
-        const encryptedToken = await encrypt(page.access_token);
-        await dataStore.accounts.upsertByOwnerPlatformId({
-          owner: userId,
-          platform: 'Facebook',
-          platformId: page.id,
-          data: {
-            name: page.name,
-            username: page.name,
-            encryptedToken,
-            category: page.category,
-            status: 'Active',
-            updatedAt: new Date(),
-            lastSyncedAt: null,
+      const encryptedToken = await encrypt(page.access_token);
+      await dataStore.accounts.upsertByOwnerPlatformId({
+        owner: userId,
+        platform: 'Facebook',
+        platformId: page.id,
+        data: {
+          name: page.name,
+          username: page.name,
+          encryptedToken,
+          category: page.category,
+          status: 'Active',
+          updatedAt: new Date(),
+          lastSyncedAt: null,
+          metadata: {
+            tasks: page.tasks ?? [],
+            category: page.category ?? null,
+            categoryList: page.category_list ?? [],
           },
-        });
+        },
+      });
     }
 
     return { success: true, message: `${pagesResponse.data.length} Facebook page(s) connected successfully.` };

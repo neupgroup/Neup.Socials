@@ -1,6 +1,9 @@
 
 'use server';
 
+import { dataStore } from '@/lib/data-store';
+import { logError } from '@/lib/error-logging';
+
 /**
  * Processes the incoming webhook payload from Facebook.
  * @param payload The full webhook payload from Meta.
@@ -48,6 +51,39 @@ async function handleMessagingEvent(event: any) {
 }
 
 async function handleChangeEvent(change: any) {
-    console.log('📝 [Service] Processing change event:', change);
-    // TODO: Implement handling for feed changes, comments, etc.
+    try {
+        console.log('📝 [Service] Processing change event:', change);
+
+        const field = change?.field;
+
+        if (field === 'page_change_proposal' || field === 'page_upcoming_change') {
+            const value = change?.value ?? {};
+
+            await dataStore.systemAlerts.create({
+                type: field,
+                platform: 'Facebook',
+                payload: {
+                    field,
+                    pageId: value?.page_id ?? value?.page ?? null,
+                    proposalId: value?.proposal_id ?? value?.id ?? null,
+                    verb: value?.verb ?? null,
+                    actorId: value?.actor_id ?? null,
+                    effectiveTime: value?.effective_time ?? null,
+                    raw: value,
+                },
+                timestamp: new Date(),
+            });
+
+            return;
+        }
+
+        // Keep other change types as logs for now; this service can be extended incrementally.
+    } catch (error: any) {
+        await logError({
+            process: 'handleChangeEvent',
+            location: 'Facebook Webhook Service',
+            errorMessage: error.message,
+            context: { change },
+        });
+    }
 }

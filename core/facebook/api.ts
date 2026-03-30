@@ -28,6 +28,7 @@ type UserPage = {
   name: string;
   access_token: string;
   category: string;
+  category_list?: Array<{ id: string; name: string }>;
   tasks: string[];
 }
 
@@ -116,6 +117,45 @@ export type PageFeedResponse = {
     next: string;
   }
 }
+
+export type PageRole = {
+  id: string;
+  name: string;
+  tasks: string[];
+};
+
+export type PageRolesResponse = {
+  data: PageRole[];
+};
+
+export type PageSettingsResponse = {
+  data: Array<{
+    setting: string;
+    value: boolean | string | number;
+  }>;
+};
+
+export type PageReview = {
+  created_time: string;
+  recommendation_type?: 'positive' | 'negative' | string;
+  review_text?: string;
+  reviewer?: {
+    name: string;
+    id: string;
+  };
+};
+
+export type PageRatingsResponse = {
+  data: PageReview[];
+  paging?: {
+    cursors?: {
+      before?: string;
+      after?: string;
+    };
+    next?: string;
+    previous?: string;
+  };
+};
 
 
 async function handleApiResponse<T>(res: Response): Promise<T> {
@@ -270,6 +310,152 @@ export async function getPosts(
 
   const res = await fetch(`${GRAPH_API_BASE_URL}/${pageId}/published_posts?${params.toString()}`);
   return handleApiResponse<PageFeedResponse>(res);
+}
+
+/**
+ * Gets people who can perform tasks on the page and their task assignments.
+ */
+export async function getPageRoles(pageId: string, pageToken: string): Promise<PageRolesResponse> {
+  const params = new URLSearchParams({
+    access_token: pageToken,
+  });
+
+  const res = await fetch(`${GRAPH_API_BASE_URL}/${pageId}/roles?${params.toString()}`);
+  return handleApiResponse<PageRolesResponse>(res);
+}
+
+/**
+ * Gets details for a page using requested fields.
+ */
+export async function getPageDetails<T extends Record<string, unknown>>(
+  pageId: string,
+  pageToken: string,
+  fields: string[]
+): Promise<T> {
+  const params = new URLSearchParams({
+    access_token: pageToken,
+    fields: fields.join(','),
+  });
+
+  const res = await fetch(`${GRAPH_API_BASE_URL}/${pageId}?${params.toString()}`);
+  return handleApiResponse<T>(res);
+}
+
+/**
+ * Updates page details such as about, bio, emails, website, etc.
+ */
+export async function updatePageDetails(
+  pageId: string,
+  pageToken: string,
+  updates: Record<string, string | number | boolean>
+): Promise<{ success: boolean }> {
+  const params = new URLSearchParams({
+    access_token: pageToken,
+  });
+
+  Object.entries(updates).forEach(([key, value]) => {
+    params.append(key, String(value));
+  });
+
+  const res = await fetch(`${GRAPH_API_BASE_URL}/${pageId}`, {
+    method: 'POST',
+    body: params,
+  });
+
+  return handleApiResponse<{ success: boolean }>(res);
+}
+
+/**
+ * Gets page settings.
+ */
+export async function getPageSettings(pageId: string, pageToken: string): Promise<PageSettingsResponse> {
+  const params = new URLSearchParams({
+    access_token: pageToken,
+  });
+
+  const res = await fetch(`${GRAPH_API_BASE_URL}/${pageId}/settings?${params.toString()}`);
+  return handleApiResponse<PageSettingsResponse>(res);
+}
+
+/**
+ * Updates page settings via option payload.
+ */
+export async function updatePageSetting(
+  pageId: string,
+  pageToken: string,
+  setting: string,
+  value: boolean | string | number
+): Promise<{ success: boolean }> {
+  const params = new URLSearchParams({
+    access_token: pageToken,
+    option: JSON.stringify({ [setting]: value }),
+  });
+
+  const res = await fetch(`${GRAPH_API_BASE_URL}/${pageId}/settings`, {
+    method: 'POST',
+    body: params,
+  });
+
+  return handleApiResponse<{ success: boolean }>(res);
+}
+
+/**
+ * Gets page reviews/ratings.
+ */
+export async function getPageRatings(
+  pageId: string,
+  pageToken: string,
+  limit = 25
+): Promise<PageRatingsResponse> {
+  const params = new URLSearchParams({
+    access_token: pageToken,
+    limit: String(limit),
+  });
+
+  const res = await fetch(`${GRAPH_API_BASE_URL}/${pageId}/ratings?${params.toString()}`);
+  return handleApiResponse<PageRatingsResponse>(res);
+}
+
+/**
+ * Blocks a person on the page by page-scoped ID.
+ */
+export async function blockPageUser(
+  pageId: string,
+  pageToken: string,
+  userPsid: string
+): Promise<Record<string, boolean>> {
+  const params = new URLSearchParams({
+    access_token: pageToken,
+    user: userPsid,
+  });
+
+  const res = await fetch(`${GRAPH_API_BASE_URL}/${pageId}/blocked`, {
+    method: 'POST',
+    body: params,
+  });
+
+  return handleApiResponse<Record<string, boolean>>(res);
+}
+
+/**
+ * Accepts or rejects a Meta-proposed page change.
+ */
+export async function respondToPageChangeProposal(
+  proposalId: string,
+  pageToken: string,
+  accept: boolean
+): Promise<{ success: boolean }> {
+  const params = new URLSearchParams({
+    access_token: pageToken,
+    accept: accept ? 'true' : 'false',
+  });
+
+  const res = await fetch(`${GRAPH_API_BASE_URL}/${proposalId}`, {
+    method: 'POST',
+    body: params,
+  });
+
+  return handleApiResponse<{ success: boolean }>(res);
 }
 
 
