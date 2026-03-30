@@ -9,14 +9,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Textarea } from '@/components/ui/textarea';
 import { UploadCloud, ArrowLeft, Loader2, Image as ImageIcon, Search, CheckCircle, Facebook } from 'lucide-react';
 import { Label } from '@/components/ui/label';
-import { doc, getDoc, updateDoc, collection, query, orderBy, onSnapshot } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { recordUpload, UploadRecord } from '@/actions/uploads/recordUpload';
 import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { getPostCollectionAction, listAllUploadsAction, updatePostCollectionAction } from '@/actions/db';
 
 const UPLOAD_ENDPOINT = 'https://neupgroup.com/usercontent/bridge/api/upload.php';
 
@@ -48,11 +47,9 @@ export default function EditPostPage() {
 
     const fetchPostCollection = async () => {
       setIsLoading(true);
-      const docRef = doc(db, 'postCollections', id);
-      const docSnap = await getDoc(docRef);
+      const data = await getPostCollectionAction(id);
 
-      if (docSnap.exists()) {
-        const data = docSnap.data();
+      if (data) {
         setContent(data.content);
         setSelectedMediaUrls(data.mediaUrls || []);
         setCtaType(data.ctaType || 'NONE');
@@ -67,18 +64,16 @@ export default function EditPostPage() {
     fetchPostCollection();
 
     setLoadingUploads(true);
-    const q = query(collection(db, 'uploads'), orderBy('uploadedOn', 'desc'));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const fetchedUploads = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Upload));
-      setUploads(fetchedUploads);
-      setLoadingUploads(false);
-    }, (error) => {
-      console.error("Error fetching uploads: ", error);
-      toast({ title: 'Could not load media library', variant: 'destructive'});
-      setLoadingUploads(false);
-    });
-
-    return () => unsubscribe();
+    listAllUploadsAction()
+      .then((fetchedUploads) => {
+        setUploads(fetchedUploads as Upload[]);
+        setLoadingUploads(false);
+      })
+      .catch((error) => {
+        console.error("Error fetching uploads: ", error);
+        toast({ title: 'Could not load media library', variant: 'destructive'});
+        setLoadingUploads(false);
+      });
   }, [id, router, toast]);
 
   const uploadFile = (file: File, postCollectionId: string): Promise<string> => {
@@ -142,7 +137,7 @@ export default function EditPostPage() {
   const handleNext = async () => {
     setIsSaving(true);
     try {
-      await updateDoc(doc(db, 'postCollections', id), {
+      await updatePostCollectionAction(id, {
         content,
         mediaUrls: selectedMediaUrls,
         ctaType: ctaType === 'NONE' ? null : ctaType,

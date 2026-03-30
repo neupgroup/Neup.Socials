@@ -1,54 +1,42 @@
 
 'use server';
 
-import { doc, getDoc, updateDoc, serverTimestamp, collection, addDoc, arrayUnion } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { dataStore } from '@/lib/data-store';
 import { decrypt } from '@/lib/crypto';
 import { logError } from '../error-logging';
 import { publishToPage as publishToFacebookPage } from '@/core/facebook/api';
 import { publishToLinkedIn } from '@/core/linkedin/api';
-
-type PublicationResult = {
-    accountId: string;
-    platform: string;
-    platformPostId: string;
-    postLink: string;
-    createdOn: any;
-    logs: any[];
-};
 
 /**
  * Publishes a post collection to all its selected social media accounts.
  * @param postCollectionId The ID of the postCollection document in Firestore.
  */
 export async function publishContent(postCollectionId: string) {
-  const pcDocRef = doc(db, 'postCollections', postCollectionId);
-  let postCollectionData;
+  let postCollectionData: Awaited<ReturnType<typeof dataStore.postCollections.getById>> | null = null;
 
   try {
-    const pcSnap = await getDoc(pcDocRef);
-    if (!pcSnap.exists()) {
+    const postCollection = await dataStore.postCollections.getById(postCollectionId);
+    if (!postCollection) {
       throw new Error(`Post Collection with ID ${postCollectionId} not found.`);
     }
-    postCollectionData = pcSnap.data();
+    const collectionData = postCollection;
+    postCollectionData = collectionData;
 
-    if (!postCollectionData.accountIds || postCollectionData.accountIds.length === 0) {
+    if (!collectionData.accountIds || collectionData.accountIds.length === 0) {
       throw new Error(`Post Collection ${postCollectionId} has no accounts selected for publishing.`);
     }
 
-    const accountsCollection = collection(db, 'connected_accounts');
-    const publicationPromises = postCollectionData.accountIds.map(async (accountId: string) => {
-      const accountDocRef = doc(accountsCollection, accountId);
-      const accountSnap = await getDoc(accountDocRef);
+    const publicationPromises = collectionData.accountIds.map(async (accountId: string) => {
+      const account = await dataStore.accounts.getById(accountId);
 
-      if (!accountSnap.exists()) {
+      if (!account) {
         throw new Error(`Account with ID ${accountId} not found.`);
       }
-      const account = accountSnap.data();
       const pageId = account.platformId;
       const encryptedToken = account.encryptedToken;
-      
-      let individualPostRef = null;
+      if (!pageId || !encryptedToken) {
+        throw new Error(`Account ${accountId} is missing publish credentials.`);
+      }
 
       try {
         const token = await decrypt(encryptedToken);
@@ -58,13 +46,20 @@ export async function publishContent(postCollectionId: string) {
         let platformPostId = '';
 
         if (account.platform === 'Facebook') {
-          response = await publishToFacebookPage(pageId, token, postCollectionData.content, postCollectionData.mediaUrls, postCollectionData.ctaType, postCollectionData.ctaLink);
+          response = await publishToFacebookPage(
+            pageId,
+            token,
+            collectionData.content,
+            collectionData.mediaUrls,
+            collectionData.ctaType ?? undefined,
+            collectionData.ctaLink ?? undefined
+          );
           platformPostId = response.post_id || response.id;
           postLink = `https://www.facebook.com/${platformPostId}`;
           console.log(`Successfully published to Facebook page: ${account.name} (${pageId}). Post ID: ${platformPostId}`);
         } else if (account.platform === 'LinkedIn') {
             const authorUrn = `urn:li:person:${pageId}`;
-            response = await publishToLinkedIn(token, authorUrn, postCollectionData.content, postCollectionData.mediaUrls);
+            response = await publishToLinkedIn(token, authorUrn, collectionData.content, collectionData.mediaUrls);
             platformPostId = response.id; // The URN of the post, e.g., urn:li:share:123
             // The post link for UGC posts is different
             postLink = `https://www.linkedin.com/feed/update/${platformPostId}/`;
@@ -80,24 +75,23 @@ export async function publishContent(postCollectionId: string) {
             accountId: accountId,
             platform: account.platform,
             platformPostId: platformPostId,
-            message: postCollectionData.content,
+            message: collectionData.content,
             postLink: postLink,
-            createdBy: postCollectionData.author,
-            createdOn: serverTimestamp(),
+            createdBy: collectionData.author,
+            createdOn: new Date(),
             analytics: [],
             logs: ['Published successfully'],
+            mediaUrls: collectionData.mediaUrls,
         };
-        individualPostRef = await addDoc(collection(db, 'posts'), postData);
-        
-        // Return the ID of the new post document
-        return individualPostRef.id;
+        const individualPost = await dataStore.posts.create(postData);
+        return individualPost.id;
 
       } catch (error: any) {
         await logError({
           source: 'publishContent - Account Publishing',
           message: `Failed to publish to ${account.platform} account: ${account.name}`,
           context: { postCollectionId, accountId, pageId, errorMessage: error.message },
-          userId: account.owner,
+          userId: account.owner ?? undefined,
         });
         // We throw here to make the Promise.allSettled report it as rejected
         throw new Error(`Failed to publish to ${account.name}: ${error.message}`);
@@ -109,13 +103,12 @@ export async function publishContent(postCollectionId: string) {
         .filter(r => r.status === 'fulfilled' && r.value)
         .map(r => (r as PromiseFulfilledResult<string>).value);
 
-    // Update the post collection status and link the new post documents
-    await updateDoc(pcDocRef, {
+    await dataStore.postCollections.update(postCollectionId, {
       status: 'Published',
-      publishedAt: serverTimestamp(),
+      publishedAt: new Date(),
       scheduledAt: null,
-      postsId: arrayUnion(...successfulPostIds),
     });
+    await dataStore.postCollections.appendPosts(postCollectionId, successfulPostIds);
 
   } catch (error: any) {
     await logError({

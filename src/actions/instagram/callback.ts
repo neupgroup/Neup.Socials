@@ -10,8 +10,7 @@ import {
   getUserProfile,
 } from '@/core/instagram/api';
 import { validateState, encrypt } from '@/lib/crypto';
-import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp, query, where, getDocs, updateDoc } from 'firebase/firestore';
+import { dataStore } from '@/lib/data-store';
 import { logError } from '@/lib/error-logging';
 
 /**
@@ -45,39 +44,22 @@ export async function handleInstagramCallback(code: string, state: string) {
     // 4. Fetch the user's profile using the long-lived token.
     const userProfile = await getUserProfile(longLivedToken);
 
-    // 5. Encrypt the token and store account details in Firestore.
+    // 5. Encrypt the token and store account details in Postgres.
     const encryptedToken = await encrypt(longLivedToken);
-    
-    const accountsCollection = collection(db, 'connected_accounts');
-    const q = query(accountsCollection, where('platformId', '==', userProfile.id), where('owner', '==', userId));
-    const existingDocs = await getDocs(q);
 
-    const accountData = {
-        platform: 'Instagram',
-        platformId: userProfile.id,
+    await dataStore.accounts.upsertByOwnerPlatformId({
+      owner: userId,
+      platform: 'Instagram',
+      platformId: userProfile.id,
+      data: {
         name: userProfile.username,
         username: userProfile.username,
-        encryptedToken: encryptedToken,
+        encryptedToken,
         status: 'Active',
-        owner: userId,
-        updatedAt: serverTimestamp(),
+        updatedAt: new Date(),
         lastSyncedAt: null,
-    };
-    
-    if (existingDocs.empty) {
-        // Add new document
-        await addDoc(accountsCollection, {
-            ...accountData,
-            connectedOn: serverTimestamp(),
-        });
-    } else {
-        // Update existing document
-        const docRef = existingDocs.docs[0].ref;
-        await updateDoc(docRef, {
-            ...accountData,
-            connectedOn: existingDocs.docs[0].data().connectedOn,
-        });
-    }
+      },
+    });
 
     return { success: true, message: `Instagram account @${userProfile.username} connected successfully.` };
   } catch (error: any) {

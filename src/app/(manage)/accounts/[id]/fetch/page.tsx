@@ -4,8 +4,6 @@
 import * as React from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { collection, query, where, orderBy, onSnapshot, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { format, subDays } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -14,17 +12,18 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@
 import { Loader2, ArrowLeft, History, CheckCircle, XCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { syncPostsAction } from '@/actions/facebook/sync-posts';
+import { listSyncLogsAction } from '@/actions/db';
 
 type SyncLog = {
     id: string;
-    syncedAt: Timestamp;
+    syncedAt: string | null;
     status: 'Success' | 'Failed';
     postsSynced?: number;
     errorMessage?: string;
     range?: {
-        since: Timestamp;
-        until: Timestamp;
-    }
+        since: string;
+        until: string;
+    };
 };
 
 export default function FetchHistoryPage() {
@@ -41,26 +40,28 @@ export default function FetchHistoryPage() {
         if (!id) return;
 
         setLoading(true);
-        const logsQuery = query(
-            collection(db, 'sync_logs'),
-            where('accountId', '==', id),
-            orderBy('syncedAt', 'desc')
-        );
-
-        const unsubscribe = onSnapshot(logsQuery, (snapshot) => {
-            const fetchedLogs = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            } as SyncLog));
-            setLogs(fetchedLogs);
-            setLoading(false);
-        }, (error) => {
-            console.error("Error fetching sync logs:", error);
-            toast({ title: 'Failed to load sync history', variant: 'destructive' });
-            setLoading(false);
-        });
-
-        return () => unsubscribe();
+        listSyncLogsAction(id)
+            .then((fetchedLogs) => {
+                setLogs(
+                    fetchedLogs.map((log) => ({
+                        id: log.id,
+                        syncedAt: log.syncedAt,
+                        status: log.status as 'Success' | 'Failed',
+                        postsSynced: log.postsSynced ?? undefined,
+                        errorMessage: log.errorMessage ?? undefined,
+                        range:
+                            log.range && typeof log.range === 'object' && !Array.isArray(log.range)
+                                ? (log.range as { since: string; until: string })
+                                : undefined,
+                    }))
+                );
+                setLoading(false);
+            })
+            .catch((error) => {
+                console.error("Error fetching sync logs:", error);
+                toast({ title: 'Failed to load sync history', variant: 'destructive' });
+                setLoading(false);
+            });
     }, [id, toast]);
     
     const handleSync = async (type: 'older' | 'newer') => {
@@ -70,10 +71,9 @@ export default function FetchHistoryPage() {
         let options: { since?: number, until?: number } | undefined = undefined;
 
         if (type === 'older' && logs.length > 0) {
-            // Find the earliest 'since' date from all logs
             const oldestSinceDate = logs.reduce((oldest, log) => {
-                if (log.range?.since && log.range.since.toDate() < oldest) {
-                    return log.range.since.toDate();
+                if (log.range?.since && new Date(log.range.since) < oldest) {
+                    return new Date(log.range.since);
                 }
                 return oldest;
             }, new Date());
@@ -167,7 +167,7 @@ export default function FetchHistoryPage() {
                                     logs.map((log) => (
                                         <TableRow key={log.id}>
                                             <TableCell className="font-mono text-xs whitespace-nowrap">
-                                                {format(log.syncedAt.toDate(), 'PPpp')}
+                                                {log.syncedAt ? format(new Date(log.syncedAt), 'PPpp') : 'N/A'}
                                             </TableCell>
                                             <TableCell>
                                                 <Badge variant={log.status === 'Success' ? 'default' : 'destructive'}>
@@ -186,7 +186,7 @@ export default function FetchHistoryPage() {
                                                 }
                                                 {log.range && (
                                                     <p className="text-xs text-muted-foreground font-mono whitespace-nowrap">
-                                                        Range: {format(log.range.since.toDate(), 'P')} - {format(log.range.until.toDate(), 'P')}
+                                                        Range: {format(new Date(log.range.since), 'P')} - {format(new Date(log.range.until), 'P')}
                                                     </p>
                                                 )}
                                             </TableCell>

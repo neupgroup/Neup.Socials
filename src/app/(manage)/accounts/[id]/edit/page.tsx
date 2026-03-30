@@ -4,8 +4,6 @@ import * as React from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -13,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { updateWhatsAppTokenAction } from '@/actions/accounts';
+import { getAccountAction } from '@/actions/db';
 
 type FormData = {
   accessToken: string;
@@ -35,17 +34,15 @@ export default function EditAccountPage() {
     if (!id) return;
 
     const fetchAccount = async () => {
-      const docRef = doc(db, 'connected_accounts', id);
-      const docSnap = await getDoc(docRef);
+      const data = await getAccountAction(id);
 
-      if (docSnap.exists()) {
-        const data = docSnap.data();
+      if (data) {
         if (data.platform !== 'WhatsApp') {
             toast({ title: 'Error', description: 'This page is only for editing WhatsApp accounts.', variant: 'destructive'});
             router.push('/accounts');
             return;
         }
-        setAccount({ platform: data.platform, name: data.name });
+        setAccount({ platform: data.platform, name: data.name ?? 'WhatsApp Account' });
       } else {
         toast({ title: 'Account not found', variant: 'destructive' });
         router.push('/accounts');

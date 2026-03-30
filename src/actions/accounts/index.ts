@@ -1,7 +1,6 @@
 'use server';
 
-import { doc, deleteDoc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { dataStore } from '@/lib/data-store';
 import { logError } from '@/lib/error-logging';
 import { encrypt } from '@/lib/crypto';
 import { revalidatePath } from 'next/cache';
@@ -15,7 +14,7 @@ export async function disconnectAccountAction(id: string): Promise<{ success: bo
         return { success: false, error: 'No account ID provided.' };
     }
     try {
-        await deleteDoc(doc(db, 'connected_accounts', id));
+        await dataStore.accounts.delete(id);
         revalidatePath('/accounts');
         return { success: true };
     } catch (error: any) {
@@ -40,9 +39,9 @@ export async function updateWhatsAppTokenAction(id: string, newAccessToken: stri
     }
     try {
         const encryptedToken = await encrypt(newAccessToken);
-        const docRef = doc(db, 'connected_accounts', id);
-        await updateDoc(docRef, {
+        await dataStore.accounts.update(id, {
             encryptedToken: encryptedToken,
+            updatedAt: new Date(),
         });
         revalidatePath(`/accounts/${id}`);
         return { success: true };

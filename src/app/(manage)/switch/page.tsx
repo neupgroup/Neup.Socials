@@ -15,12 +15,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { format, formatDistanceToNow } from 'date-fns';
-import { collection, query, where, getDocs, onSnapshot, orderBy, limit, startAfter, DocumentData, QueryDocumentSnapshot, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { syncPostsAction as syncFacebookPostsAction } from '@/actions/facebook/sync-posts';
 import { syncLinkedInPostsAction } from '@/actions/linkedin/sync-posts';
+import { listAccountsAction } from '@/actions/db';
 
 type Account = {
   id: string;
@@ -28,7 +27,7 @@ type Account = {
   username: string;
   name?: string;
   connectedOn: string;
-  lastSyncedAt?: Timestamp;
+  lastSyncedAt?: string | null;
   status: string;
   icon: React.ReactNode;
   owner: string;
@@ -50,7 +49,6 @@ export default function SwitchAccountPage() {
   const [accounts, setAccounts] = React.useState<Account[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [loadingMore, setLoadingMore] = React.useState(false);
-  const [lastVisible, setLastVisible] = React.useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [hasMore, setHasMore] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [syncingAccountId, setSyncingAccountId] = React.useState<string | null>(null);
@@ -64,41 +62,15 @@ export default function SwitchAccountPage() {
     else setLoadingMore(true);
 
     try {
-      let q = query(
-        collection(db, 'connected_accounts'),
-        where('owner', '==', owner),
-        orderBy('connectedOn', 'desc'),
-        limit(PAGE_SIZE)
-      );
-
-      if (search) {
-        q = query(
-          collection(db, 'connected_accounts'),
-          where('owner', '==', owner),
-          where('name', '>=', search),
-          where('name', '<=', search + '\uf8ff'),
-          orderBy('name'),
-          limit(PAGE_SIZE)
-        );
-      }
-      
-      if (loadMore && lastVisible) {
-        const baseQuery = search 
-            ? query(collection(db, 'connected_accounts'), where('owner', '==', owner), where('name', '>=', search), where('name', '<=', search + '\uf8ff'), orderBy('name'))
-            : query(collection(db, 'connected_accounts'), where('owner', '==', owner), orderBy('connectedOn', 'desc'));
-
-        q = query(baseQuery, startAfter(lastVisible), limit(PAGE_SIZE));
-      }
-
-      const documentSnapshots = await getDocs(q);
-      const newAccounts = documentSnapshots.docs.map(doc => {
-          const data = doc.data();
+      const skip = loadMore ? accounts.length : 0;
+      const result = await listAccountsAction({ owner, search, skip });
+      const newAccounts = result.items.map((data) => {
           return {
-            id: doc.id,
+            id: data.id,
             platform: data.platform,
             username: data.username,
             name: data.name,
-            connectedOn: data.connectedOn ? format(data.connectedOn.toDate(), 'yyyy-MM-dd') : '-',
+            connectedOn: data.connectedOn ? format(new Date(data.connectedOn), 'yyyy-MM-dd') : '-',
             lastSyncedAt: data.lastSyncedAt,
             status: data.status,
             owner: data.owner,
@@ -106,8 +78,7 @@ export default function SwitchAccountPage() {
           } as Account;
         });
 
-      setLastVisible(documentSnapshots.docs[documentSnapshots.docs.length - 1]);
-      setHasMore(newAccounts.length === PAGE_SIZE);
+      setHasMore(result.hasMore);
       setAccounts(prev => loadMore ? [...prev, ...newAccounts] : newAccounts);
       setLoading(false);
       setLoadingMore(false);
@@ -117,11 +88,10 @@ export default function SwitchAccountPage() {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [owner, toast, lastVisible]);
+  }, [accounts.length, owner, toast]);
   
   React.useEffect(() => {
     const debouncedSearch = setTimeout(() => {
-      setLastVisible(null); // Reset pagination on new search
       fetchAccounts(false, searchTerm);
     }, 500);
 
@@ -160,9 +130,8 @@ export default function SwitchAccountPage() {
                 title: 'Sync Complete',
                 description: `${result.postsSynced} new posts were synced for this account.`,
             });
-            // Manually update the lastSyncedAt time on the client to give immediate feedback
             setAccounts(prevAccounts => prevAccounts.map(acc => 
-                acc.id === account.id ? { ...acc, lastSyncedAt: new Timestamp(Date.now() / 1000, 0) } : acc
+                acc.id === account.id ? { ...acc, lastSyncedAt: new Date().toISOString() } : acc
             ));
         } else {
             throw new Error(result.error || 'Unknown error during sync.');
@@ -238,7 +207,7 @@ export default function SwitchAccountPage() {
                     <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto">
                         <div className="text-xs text-muted-foreground text-left sm:text-right">
                            <span>Last Synced: </span>
-                            <span className="font-medium">{account.lastSyncedAt ? formatDistanceToNow(account.lastSyncedAt.toDate(), { addSuffix: true }) : 'Never'}</span>
+                            <span className="font-medium">{account.lastSyncedAt ? formatDistanceToNow(new Date(account.lastSyncedAt), { addSuffix: true }) : 'Never'}</span>
                         </div>
                          <DropdownMenu>
                             <DropdownMenuTrigger asChild>

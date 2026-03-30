@@ -1,15 +1,9 @@
 
 'use server';
 
-import { collection, query, where, getDocs, addDoc, updateDoc, serverTimestamp, Timestamp, collectionGroup, limit } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { dataStore } from '@/lib/data-store';
 import { logError } from '@/lib/error-logging';
 
-/**
- * Processes the incoming webhook payload from WhatsApp.
- * It finds or creates a conversation and adds the message to it.
- * @param payload The full webhook payload from Meta.
- */
 /**
  * Processes the incoming webhook payload from WhatsApp.
  * It finds or creates a conversation and adds the message to it.
@@ -133,48 +127,32 @@ async function saveMessageToConversation(context: any) {
 
     console.log(`📨 [Service] Processing ${type} from ${fromPhoneNumber}`);
 
-    // Global duplicate check
-    const globalMsgQuery = query(collectionGroup(db, 'messages'), where('platformMessageId', '==', platformMessageId));
-    const globalMsgSnap = await getDocs(globalMsgQuery);
+    const existingMessage = await dataStore.messages.findByPlatformMessageId(platformMessageId);
 
-    if (!globalMsgSnap.empty) {
+    if (existingMessage) {
         console.log(`⚠️ [Service] Message ${platformMessageId} ALREADY PROCESSED (Global Check), skipping.`);
         return;
     }
 
-    // 1. Find connected account
-    const accountsRef = collection(db, 'connected_accounts');
-    let accountQuery = query(accountsRef, where('platform', '==', 'WhatsApp'), where('platformId', '==', businessPhoneNumberId));
-    let accountSnapshot = await getDocs(accountQuery);
-
-    if (accountSnapshot.empty) {
-        console.log(`⚠️ [Service] Account ID ${businessPhoneNumberId} not found. Checking for default/any WhatsApp account...`);
-        accountQuery = query(accountsRef, where('platform', '==', 'WhatsApp'), limit(1));
-        accountSnapshot = await getDocs(accountQuery);
-        if (accountSnapshot.empty) {
-            throw new Error(`No connected WhatsApp account found for phone number ID: ${businessPhoneNumberId}`);
-        }
+    const account = await dataStore.accounts.findWhatsAppAccount(businessPhoneNumberId);
+    if (!account) {
+        throw new Error(`No connected WhatsApp account found for phone number ID: ${businessPhoneNumberId}`);
     }
-    const channelId = accountSnapshot.docs[0].id;
+    const channelId = account.id;
 
-    // 2. Find or create conversation
-    const convosRef = collection(db, 'conversations');
-    let convoQuery = query(convosRef, where('contactId', '==', fromPhoneNumber), where('channelId', '==', channelId));
-    let convoSnapshot = await getDocs(convoQuery);
+    let conversation =
+        (await dataStore.conversations.findByContactAndChannel(fromPhoneNumber, channelId)) ??
+        (await dataStore.conversations.findByContactAndChannel(
+            fromPhoneNumber.startsWith('+') ? fromPhoneNumber.slice(1) : `+${fromPhoneNumber}`,
+            channelId
+        ));
 
-    if (convoSnapshot.empty) {
-        const altPhoneNumber = fromPhoneNumber.startsWith('+') ? fromPhoneNumber.slice(1) : `+${fromPhoneNumber}`;
-        convoQuery = query(convosRef, where('contactId', '==', altPhoneNumber), where('channelId', '==', channelId));
-        convoSnapshot = await getDocs(convoQuery);
-    }
+    const msgTimestamp = new Date(parseInt(timestamp, 10) * 1000);
 
-    let convoId: string;
-    const msgTimestamp = Timestamp.fromMillis(parseInt(timestamp, 10) * 1000);
-
-    if (convoSnapshot.empty) {
+    if (!conversation) {
         const finalContactId = fromPhoneNumber.startsWith('+') ? fromPhoneNumber : `+${fromPhoneNumber}`;
         console.log(`🆕 [Service] Creating NEW conversation for ${finalContactId}`);
-        const newConvoData = {
+        conversation = await dataStore.conversations.create({
             contactId: finalContactId,
             contactName: userProfileName,
             platform: 'WhatsApp',
@@ -183,60 +161,54 @@ async function saveMessageToConversation(context: any) {
             lastMessageAt: msgTimestamp,
             unread: true,
             avatar: '',
-        };
-        const newConvoRef = await addDoc(convosRef, newConvoData);
-        convoId = newConvoRef.id;
+        });
     } else {
-        convoId = convoSnapshot.docs[0].id;
-        await updateDoc(convoSnapshot.docs[0].ref, {
+        conversation = await dataStore.conversations.update(conversation.id, {
             lastMessage: type === 'call' ? `Call: ${callEvent}` : text,
             lastMessageAt: msgTimestamp,
             unread: true,
         });
     }
 
-    // 3. Add message
-    const messagesRef = collection(db, 'conversations', convoId, 'messages');
-    await addDoc(messagesRef, {
+    await dataStore.messages.create({
+        conversationId: conversation.id,
         platformMessageId: platformMessageId,
         text: text,
         sender: 'user',
         timestamp: msgTimestamp,
-        type: type, // 'text' usually, but now can be 'call'
-        ...(callEvent ? { callEvent } : {})
+        type: type,
+        callEvent: callEvent ?? null,
     });
     console.log(`✅ [Service] Successfully processed ${type}`);
 }
 
 
 async function handleAccountAlerts(value: any) {
-    // value has entity_id, alert_type, alert_description, etc.
     console.log('🔔 [Service] Processing Account Alert:', value);
-    await addDoc(collection(db, 'system_alerts'), {
+    await dataStore.systemAlerts.create({
         type: 'account_alert',
         platform: 'WhatsApp',
-        ...value,
-        timestamp: serverTimestamp()
+        payload: value,
+        timestamp: new Date(),
     });
 }
 
 async function handleAccountReviewUpdate(value: any) {
     console.log('⚖️ [Service] Processing Account Review Update:', value);
-    // value has decision (e.g., APPROVED)
-    await addDoc(collection(db, 'system_alerts'), {
+    await dataStore.systemAlerts.create({
         type: 'review_update',
         platform: 'WhatsApp',
-        ...value,
-        timestamp: serverTimestamp()
+        payload: value,
+        timestamp: new Date(),
     });
 }
 
 async function handleAccountSettingsUpdate(value: any) {
     console.log('⚙️ [Service] Processing Account Settings Update:', value);
-    await addDoc(collection(db, 'system_alerts'), {
+    await dataStore.systemAlerts.create({
         type: 'settings_update',
         platform: 'WhatsApp',
-        ...value,
-        timestamp: serverTimestamp()
+        payload: value,
+        timestamp: new Date(),
     });
 }

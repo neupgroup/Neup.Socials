@@ -1,7 +1,5 @@
 
 import { NextResponse } from 'next/server';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { processWhatsAppWebhook } from '@/services/inbox/whatsapp';
 import { logError } from '@/lib/error-logging';
 

@@ -18,8 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { sendReplyAction } from '@/actions/inbox/sender';
-import { collection, query, where, getDocs, addDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { getWhatsAppAccountsAction, recordOutgoingMessageAction } from '@/actions/db';
 
 type Conversation = {
   id: string;
@@ -28,7 +27,7 @@ type Conversation = {
   platform: string;
   channelId: string;
   lastMessage: string;
-  lastMessageAt: any;
+  lastMessageAt: string | null;
   avatar: string;
   unread: boolean;
 };
@@ -58,13 +57,12 @@ export function NewMessageDialog({ children, onNewConversation }: NewMessageDial
         const fetchWhatsAppAccounts = async () => {
             setIsLoadingAccounts(true);
             try {
-                const accountsQuery = query(collection(db, 'connected_accounts'), where('platform', '==', 'WhatsApp'));
-                const querySnapshot = await getDocs(accountsQuery);
-                const accounts = querySnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    name: doc.data().name,
+                const accounts = await getWhatsAppAccountsAction();
+                const mappedAccounts = accounts.map((account) => ({
+                    id: account.id,
+                    name: account.name ?? account.username ?? account.id,
                 }));
-                setWhatsAppAccounts(accounts);
+                setWhatsAppAccounts(mappedAccounts);
                 if (accounts.length > 0) {
                     setSelectedChannelId(accounts[0].id);
                 }
@@ -95,46 +93,17 @@ export function NewMessageDialog({ children, onNewConversation }: NewMessageDial
         const result = await sendReplyAction('WhatsApp', selectedChannelId, recipient, message);
 
         if (result.success) {
-            // Check if conversation already exists for this channel and recipient
-            const convosRef = collection(db, 'conversations');
-            const q = query(convosRef, where('contactId', '==', recipient), where('channelId', '==', selectedChannelId));
-            const existingConvos = await getDocs(q);
-
-            let convoId: string;
-            if (existingConvos.empty) {
-                // Create a new conversation document
-                const newConvoRef = await addDoc(convosRef, {
-                    contactId: recipient,
-                    contactName: recipient, // Use phone number as name for now
-                    platform: 'WhatsApp',
-                    channelId: selectedChannelId,
-                    lastMessage: message,
-                    lastMessageAt: serverTimestamp(),
-                    unread: false, // It's not unread for the agent
-                    avatar: recipient.slice(-2) // Use last 2 digits for avatar placeholder
-                });
-                convoId = newConvoRef.id;
-            } else {
-                convoId = existingConvos.docs[0].id;
-            }
-            
-            // Add the new message to the messages subcollection
-            const messagesCol = collection(db, 'conversations', convoId, 'messages');
-            await addDoc(messagesCol, { text: message, sender: 'agent', timestamp: serverTimestamp() });
-
-            // Notify parent component to update the UI
-            const newConversationData: Conversation = {
-                id: convoId,
+            const saved = await recordOutgoingMessageAction({
+                channelId: selectedChannelId,
                 contactId: recipient,
                 contactName: recipient,
                 platform: 'WhatsApp',
-                channelId: selectedChannelId,
-                lastMessage: message,
-                lastMessageAt: Timestamp.now(),
-                unread: false,
+                text: message,
                 avatar: recipient.slice(-2),
-            };
-            onNewConversation(newConversationData);
+            });
+            if (saved.conversation) {
+                onNewConversation(saved.conversation as Conversation);
+            }
 
             toast({ title: 'Message sent successfully!' });
             setOpen(false);

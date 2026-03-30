@@ -1,7 +1,6 @@
 'use server';
 
-import { collection, deleteDoc, doc, getDocs, writeBatch } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { dataStore } from '@/lib/data-store';
 import { revalidatePath } from 'next/cache';
 
 /**
@@ -9,19 +8,7 @@ import { revalidatePath } from 'next/cache';
  */
 export async function clearAllErrorsAction(): Promise<{ success: boolean; error?: string }> {
   try {
-    const errorsCollection = collection(db, 'errors');
-    const errorsSnapshot = await getDocs(errorsCollection);
-    
-    if (errorsSnapshot.empty) {
-      return { success: true };
-    }
-
-    const batch = writeBatch(db);
-    errorsSnapshot.docs.forEach(doc => {
-      batch.delete(doc.ref);
-    });
-
-    await batch.commit();
+    await dataStore.errors.clear();
     revalidatePath('/root/errors'); // Revalidate the page to show it's empty
     return { success: true };
   } catch (error: any) {
@@ -40,7 +27,7 @@ export async function deleteErrorAction(id: string): Promise<{ success: boolean;
         return { success: false, error: 'No ID provided.' };
     }
     try {
-        await deleteDoc(doc(db, 'errors', id));
+        await dataStore.errors.delete(id);
         // Path revalidation will happen on the client via router.push
         return { success: true };
     } catch (error: any) {

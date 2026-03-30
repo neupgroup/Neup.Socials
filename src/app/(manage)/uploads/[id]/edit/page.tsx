@@ -4,14 +4,13 @@ import * as React from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { getUploadAction, updateUploadAction } from '@/actions/db';
 
 type FormData = {
   contentName: string;
@@ -28,11 +27,9 @@ export default function EditUploadPage() {
     if (!id) return;
 
     const fetchUpload = async () => {
-      const docRef = doc(db, 'uploads', id);
-      const docSnap = await getDoc(docRef);
+      const data = await getUploadAction(id);
 
-      if (docSnap.exists()) {
-        const data = docSnap.data();
+      if (data) {
         setValue('contentName', data.contentName || '');
       } else {
         toast({ title: 'Upload not found', variant: 'destructive' });
@@ -45,10 +42,7 @@ export default function EditUploadPage() {
 
   const onSubmit = async (data: FormData) => {
     try {
-      const docRef = doc(db, 'uploads', id);
-      await updateDoc(docRef, {
-        contentName: data.contentName,
-      });
+      await updateUploadAction(id, { contentName: data.contentName });
       toast({ title: 'Upload updated successfully!' });
       router.push(`/uploads/${id}`);
     } catch (error) {

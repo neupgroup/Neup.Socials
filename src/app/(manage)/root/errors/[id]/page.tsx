@@ -4,16 +4,14 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { doc, getDoc, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Loader2, ArrowLeft, Trash2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ErrorLog } from '@/lib/error-logging';
 import { deleteErrorAction } from '@/actions/error-log-actions';
 import { format } from 'date-fns';
+import { getErrorAction } from '@/actions/db';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,9 +24,13 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
-type FetchedErrorLog = Omit<ErrorLog, 'timestamp'> & {
+type FetchedErrorLog = {
   id: string;
-  timestamp: Timestamp;
+  timestamp: string | null;
+  errorMessage?: string | null;
+  source?: string | null;
+  context?: any;
+  userId?: string | null;
 };
 
 const DetailItem = ({ label, value }: { label: string, value?: string | React.ReactNode }) => {
@@ -72,11 +74,10 @@ export default function ErrorDetailPage() {
     }
     const fetchError = async () => {
       setLoading(true);
-      const docRef = doc(db, 'errors', id);
-      const docSnap = await getDoc(docRef);
+      const errorLog = await getErrorAction(id);
 
-      if (docSnap.exists()) {
-        setErrorLog({ id: docSnap.id, ...docSnap.data() } as FetchedErrorLog);
+      if (errorLog) {
+        setErrorLog(errorLog as FetchedErrorLog);
       } else {
         toast({ title: 'Error not found', variant: 'destructive' });
         router.push('/root/errors');
@@ -108,7 +109,7 @@ export default function ErrorDetailPage() {
   }
   
   const { id: errorId, timestamp, errorMessage, source, context, userId } = errorLog;
-  const rawJson = { ...errorLog, timestamp: timestamp?.toDate().toISOString() };
+  const rawJson = { ...errorLog, timestamp };
   // The 'request' and 'stack' might not exist on all error logs, so handle that gracefully.
   const request = context?.request;
   const stack = context?.stack;
@@ -160,8 +161,8 @@ export default function ErrorDetailPage() {
         </CardHeader>
         <CardContent>
             <dl>
-                <DetailItem label="Timestamp" value={timestamp ? format(timestamp.toDate(), 'PPpp') : 'N/A'} />
-                <DetailItem label="User ID" value={userId} />
+                <DetailItem label="Timestamp" value={timestamp ? format(new Date(timestamp), 'PPpp') : 'N/A'} />
+                <DetailItem label="User ID" value={userId ?? undefined} />
                 <DetailItem label="Source" value={source} />
             </dl>
 

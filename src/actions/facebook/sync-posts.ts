@@ -1,12 +1,11 @@
 
 'use server';
 
-import { doc, getDoc, updateDoc, collection, query, where, getDocs, writeBatch, serverTimestamp, Timestamp, addDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { dataStore } from '@/lib/data-store';
 import { decrypt } from '@/lib/crypto';
 import { getPosts } from '@/core/facebook/api';
 import { logError } from '@/lib/error-logging';
-import { subDays, addDays, differenceInDays } from 'date-fns';
+import { subDays } from 'date-fns';
 
 type SyncResult = {
   success: boolean;
@@ -22,14 +21,16 @@ type SyncResult = {
  */
 async function createSyncLog(accountId: string, status: 'Success' | 'Failed', details: object) {
     try {
-        await addDoc(collection(db, 'sync_logs'), {
+        await dataStore.syncLogs.create({
             accountId,
             status,
-            syncedAt: serverTimestamp(),
-            ...details,
+            syncedAt: new Date(),
+            postsSynced: (details as { postsSynced?: number }).postsSynced,
+            errorMessage: (details as { errorMessage?: string }).errorMessage,
+            range: (details as { range?: unknown }).range,
+            details,
         });
     } catch(error: any) {
-        // If logging fails, log the logging error itself to the main error log
         console.error("Failed to create sync log:", error);
         await logError({
             process: 'createSyncLog',
@@ -50,18 +51,18 @@ async function createSyncLog(accountId: string, status: 'Success' | 'Failed', de
  * @returns An object indicating success and the number of new posts synced.
  */
 export async function syncPostsAction(accountId: string, options?: { since?: number, until?: number }): Promise<SyncResult> {
-  const accountDocRef = doc(db, 'connected_accounts', accountId);
-
   try {
-    const accountSnap = await getDoc(accountDocRef);
+    const account = await dataStore.accounts.getById(accountId);
 
-    if (!accountSnap.exists()) {
+    if (!account) {
       throw new Error('Account not found.');
     }
-    const account = accountSnap.data();
 
     if (account.platform !== 'Facebook') {
       return { success: true, postsSynced: 0 }; // Not a FB page, nothing to sync.
+    }
+    if (!account.encryptedToken || !account.platformId) {
+      throw new Error('Facebook account is missing required credentials.');
     }
 
     const pageToken = await decrypt(account.encryptedToken);
@@ -77,7 +78,7 @@ export async function syncPostsAction(accountId: string, options?: { since?: num
     } else {
         // Default "intelligent sync" logic
         const now = new Date();
-        const lastSynced = account.lastSyncedAt ? account.lastSyncedAt.toDate() : null;
+        const lastSynced = account.lastSyncedAt ?? null;
         if (lastSynced) {
             // Subsequent sync: fetch from a few days before the last sync to catch any missed posts.
             since = Math.floor(subDays(lastSynced, 5).getTime() / 1000);
@@ -92,61 +93,55 @@ export async function syncPostsAction(accountId: string, options?: { since?: num
     const fetchedPosts = feedResponse.data;
 
     if (!fetchedPosts || fetchedPosts.length === 0) {
-      await updateDoc(accountDocRef, { lastSyncedAt: serverTimestamp() });
-      await createSyncLog(accountId, 'Success', { postsSynced: 0, range: { since: new Date(since * 1000), until: new Date(until * 1000) } });
+      await dataStore.accounts.update(accountId, {
+        lastSyncedAt: new Date(),
+        updatedAt: new Date(),
+      });
+      await createSyncLog(accountId, 'Success', {
+        postsSynced: 0,
+        range: {
+          since: new Date(since * 1000).toISOString(),
+          until: new Date(until * 1000).toISOString(),
+        },
+      });
       return { success: true, postsSynced: 0 };
     }
 
-    const postsCollectionRef = collection(db, 'posts');
     const platformPostIds = fetchedPosts.map(p => p.id);
-
-    // Chunk the platformPostIds array to respect Firestore's 30-item limit for 'in' queries
-    const chunks = [];
-    for (let i = 0; i < platformPostIds.length; i += 30) {
-        chunks.push(platformPostIds.slice(i, i + 30));
-    }
-    
-    const existingPostIds = new Set<string>();
-
-    for (const chunk of chunks) {
-        if (chunk.length === 0) continue;
-        const existingPostsQuery = query(
-            postsCollectionRef,
-            where('accountId', '==', accountId),
-            where('platformPostId', 'in', chunk)
-        );
-        const existingPostsSnap = await getDocs(existingPostsQuery);
-        existingPostsSnap.docs.forEach(doc => existingPostIds.add(doc.data().platformPostId));
-    }
+    const existingPosts = await dataStore.posts.findExistingPlatformPostIds(accountId, platformPostIds);
+    const existingPostIds = new Set(existingPosts.map((post) => post.platformPostId).filter(Boolean) as string[]);
 
     const newPosts = fetchedPosts.filter(p => !existingPostIds.has(p.id));
 
     if (newPosts.length > 0) {
-      const batch = writeBatch(db);
-      newPosts.forEach(post => {
-        const newPostRef = doc(collection(db, 'posts'));
-        batch.set(newPostRef, {
+      await dataStore.posts.createMany(
+        newPosts.map((post) => ({
           accountId: accountId,
           platform: 'Facebook',
           platformPostId: post.id,
           message: post.message || post.story || '',
           postLink: post.permalink_url,
           createdOn: new Date(post.created_time),
-          createdBy: account.owner, // Assume the account owner is the creator
+          createdBy: account.owner,
           logs: ['Synced from Facebook'],
-        });
-      });
-      await batch.commit();
+        }))
+      );
     }
     
-    // Update the last synced timestamp only on default syncs
     if (!options) {
-      await updateDoc(accountDocRef, {
-        lastSyncedAt: serverTimestamp(),
+      await dataStore.accounts.update(accountId, {
+        lastSyncedAt: new Date(),
+        updatedAt: new Date(),
       });
     }
     
-    await createSyncLog(accountId, 'Success', { postsSynced: newPosts.length, range: { since: new Date(since * 1000), until: new Date(until * 1000) } });
+    await createSyncLog(accountId, 'Success', {
+      postsSynced: newPosts.length,
+      range: {
+        since: new Date(since * 1000).toISOString(),
+        until: new Date(until * 1000).toISOString(),
+      },
+    });
 
     return { success: true, postsSynced: newPosts.length };
   } catch (error: any) {

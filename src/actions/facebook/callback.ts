@@ -10,8 +10,7 @@ import {
   getUserPages,
 } from '@/core/facebook/api';
 import { validateState, encrypt } from '@/lib/crypto';
-import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp, query, where, getDocs, updateDoc } from 'firebase/firestore';
+import { dataStore } from '@/lib/data-store';
 import { logError } from '@/lib/error-logging';
 
 /**
@@ -49,43 +48,23 @@ export async function handleFacebookCallback(code: string, state: string) {
       return { success: false, error: 'No Facebook pages found for this user.' };
     }
 
-    // 5. Store page details securely in Firestore for the user.
-    const accountsCollection = collection(db, 'connected_accounts');
+    // 5. Store page details securely in Postgres for the user.
     for (const page of pagesResponse.data) {
-        // Encrypt the long-lived page access token before storing.
         const encryptedToken = await encrypt(page.access_token);
-
-        // Check if this page is already connected for this user
-        const q = query(accountsCollection, where('platformId', '==', page.id), where('owner', '==', userId));
-        const existingDocs = await getDocs(q);
-        
-        const accountData = {
-            platform: 'Facebook',
-            platformId: page.id,
+        await dataStore.accounts.upsertByOwnerPlatformId({
+          owner: userId,
+          platform: 'Facebook',
+          platformId: page.id,
+          data: {
             name: page.name,
-            username: page.name, // Facebook pages don't have a user-facing @username like other platforms
-            encryptedToken: encryptedToken,
+            username: page.name,
+            encryptedToken,
             category: page.category,
             status: 'Active',
-            owner: userId,
-            updatedAt: serverTimestamp(),
-            lastSyncedAt: null, // New field
-        }
-
-        if (existingDocs.empty) {
-            // Add new document
-            await addDoc(accountsCollection, {
-                ...accountData,
-                connectedOn: serverTimestamp(),
-            });
-        } else {
-            // Update existing document
-            const docRef = existingDocs.docs[0].ref;
-            await updateDoc(docRef, {
-                ...accountData,
-                connectedOn: existingDocs.docs[0].data().connectedOn, // Preserve original connection date
-            });
-        }
+            updatedAt: new Date(),
+            lastSyncedAt: null,
+          },
+        });
     }
 
     return { success: true, message: `${pagesResponse.data.length} Facebook page(s) connected successfully.` };

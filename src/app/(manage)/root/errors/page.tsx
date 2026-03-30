@@ -2,18 +2,16 @@
 'use client';
 
 import * as React from 'react';
-import { collection, query, orderBy, onSnapshot, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Loader2, AlertTriangle, Trash2 } from 'lucide-react';
-import { logError } from '@/services/error-logging';
 import { useRouter } from 'next/navigation';
 import { clearAllErrorsAction } from '@/actions/error-log-actions';
 import { useToast } from '@/hooks/use-toast';
+import { listErrorsAction } from '@/actions/db';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,9 +24,12 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
-type FetchedErrorLog = Omit<ErrorLog, 'timestamp'> & {
+type FetchedErrorLog = {
   id: string;
-  timestamp: Timestamp;
+  timestamp: string | null;
+  errorMessage?: string | null;
+  source?: string | null;
+  userId?: string | null;
 };
 
 export default function ErrorLogsPage() {
@@ -41,21 +42,15 @@ export default function ErrorLogsPage() {
 
   React.useEffect(() => {
     setLoading(true);
-    const q = query(collection(db, 'errors'), orderBy('timestamp', 'desc'));
-    
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const fetchedErrors = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      } as FetchedErrorLog));
-      setErrors(fetchedErrors);
-      setLoading(false);
-    }, (error) => {
-      console.error("Error fetching error logs: ", error);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
+    listErrorsAction()
+      .then((fetchedErrors) => {
+        setErrors(fetchedErrors as FetchedErrorLog[]);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error fetching error logs: ", error);
+        setLoading(false);
+      });
   }, []);
 
   const handleRowClick = (id: string) => {
@@ -150,11 +145,11 @@ export default function ErrorLogsPage() {
                             className="cursor-pointer"
                         >
                             <TableCell className="font-mono text-xs whitespace-nowrap">
-                            {error.timestamp ? format(error.timestamp.toDate(), 'yyyy-MM-dd HH:mm:ss') : 'N/A'}
+                            {error.timestamp ? format(new Date(error.timestamp), 'yyyy-MM-dd HH:mm:ss') : 'N/A'}
                             </TableCell>
                             <TableCell className="font-medium max-w-sm truncate">{error.errorMessage}</TableCell>
                             <TableCell>
-                            <Badge variant={getBadgeVariant(error.source)}>{error.source || 'Unknown'}</Badge>
+                            <Badge variant={getBadgeVariant(error.source ?? undefined)}>{error.source || 'Unknown'}</Badge>
                             </TableCell>
                             <TableCell className="font-mono text-xs">{error.userId || 'N/A'}</TableCell>
                         </TableRow>

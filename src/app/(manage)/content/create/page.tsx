@@ -9,13 +9,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { UploadCloud, Loader2, Image as ImageIcon, Search, CheckCircle, Facebook } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { addDoc, collection, serverTimestamp, doc, updateDoc, query, orderBy, onSnapshot } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { recordUpload, UploadRecord } from '@/actions/uploads/recordUpload';
 import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { createPostCollectionDraftAction, listAllUploadsAction } from '@/actions/db';
 
 const UPLOAD_ENDPOINT = 'https://neupgroup.com/usercontent/bridge/api/upload.php';
 
@@ -39,22 +38,16 @@ export default function CreatePostPage() {
 
   React.useEffect(() => {
     setLoadingUploads(true);
-    const q = query(collection(db, 'uploads'), orderBy('uploadedOn', 'desc'));
-    
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const fetchedUploads = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      } as Upload));
-      setUploads(fetchedUploads);
-      setLoadingUploads(false);
-    }, (error) => {
-      console.error("Error fetching uploads: ", error);
-      toast({ title: 'Could not load media library', variant: 'destructive'});
-      setLoadingUploads(false);
-    });
-
-    return () => unsubscribe();
+    listAllUploadsAction()
+      .then((fetchedUploads) => {
+        setUploads(fetchedUploads as Upload[]);
+        setLoadingUploads(false);
+      })
+      .catch((error) => {
+        console.error("Error fetching uploads: ", error);
+        toast({ title: 'Could not load media library', variant: 'destructive'});
+        setLoadingUploads(false);
+      });
   }, [toast]);
   
   const uploadFile = (file: File, postCollectionId: string): Promise<string> => {
@@ -130,12 +123,11 @@ export default function CreatePostPage() {
     setIsLoading(true);
 
     try {
-      const docRef = await addDoc(collection(db, "postCollections"), {
+      const docRef = await createPostCollectionDraftAction({
         content,
         mediaUrls: selectedMediaUrls,
         status: 'Draft',
         author: userId,
-        createdAt: serverTimestamp(),
         postsId: [],
         accountIds: [],
         platforms: [],
@@ -144,7 +136,7 @@ export default function CreatePostPage() {
       });
       
       toast({ title: 'Draft Saved!', description: 'Your post collection has been saved as a draft.' });
-      router.push(`/content/edit/${docRef.id}/platforms`);
+      router.push(`/content/edit/${docRef?.id}/platforms`);
 
     } catch (error: any) {
       console.error("Error creating post collection draft: ", error);

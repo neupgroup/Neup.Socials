@@ -1,8 +1,7 @@
 
 'use server';
 
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from './firebase';
+import { dataStore } from '@/lib/data-store';
 
 export interface ErrorLog {
   process: string;
@@ -19,14 +18,10 @@ export interface ErrorLog {
  */
 export async function logError(details: ErrorLog) {
   try {
-    const errorsCollection = collection(db, 'errors');
-    
-    // Directly add the new error document without checking for duplicates.
-    // This is more resilient and ensures all error occurrences are captured.
-    await addDoc(errorsCollection, {
+    await dataStore.errors.create({
       ...details,
-      timestamp: serverTimestamp(),
-      count: 1, // Each log is now a unique occurrence.
+      timestamp: new Date(),
+      count: 1,
     });
 
   } catch (error) {

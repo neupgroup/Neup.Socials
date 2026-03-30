@@ -9,34 +9,38 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Trash, ArrowLeft, Loader2, Repeat, Link2 } from 'lucide-react';
-import { doc, getDoc, deleteDoc, updateDoc, collection, getDocs, where, query } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { repostAction } from '@/actions/content/repost';
 import { PublicationStatus } from '@/components/publication-status';
+import {
+  cancelScheduledPostCollectionAction,
+  deletePostCollectionAction,
+  getPostCollectionAction,
+  getPostCollectionPostsAction,
+} from '@/actions/db';
 
 type PostCollection = {
   id: string;
   content: string;
-  status: 'Published' | 'Scheduled' | 'Draft';
+  status: string;
   platforms: string[];
   accountIds: string[];
   scheduledAt: string;
   publishedAt: string;
-  author: string;
+  author: string | null;
   mediaUrls: string[];
   postsId: string[];
 };
 
 type Post = {
     id: string;
-    platformPostId: string;
-    accountId: string;
-    platform: string;
-    postLink: string;
-    createdOn: any;
-}
+    platformPostId: string | null;
+    accountId: string | null;
+    platform: string | null;
+    postLink: string | null;
+    createdOn: string | null;
+};
 
 
 export default function ViewContentCollectionPage() {
@@ -53,25 +57,19 @@ export default function ViewContentCollectionPage() {
     if (!id) return;
     const fetchPostCollection = async () => {
       setIsLoading(true);
-      const docRef = doc(db, 'postCollections', id);
-      const docSnap = await getDoc(docRef);
+      const data = await getPostCollectionAction(id);
 
-      if (docSnap.exists()) {
-        const data = docSnap.data() as Omit<PostCollection, 'id'>;
+      if (data) {
         const pc = {
-          id: docSnap.id,
           ...data,
-          scheduledAt: data.scheduledAt ? format(data.scheduledAt.toDate(), 'PPpp') : '-',
-          publishedAt: data.publishedAt ? format(data.publishedAt.toDate(), 'PPpp') : '-',
+          scheduledAt: data.scheduledAt ? format(new Date(data.scheduledAt), 'PPpp') : '-',
+          publishedAt: data.publishedAt ? format(new Date(data.publishedAt), 'PPpp') : '-',
         };
         setPostCollection(pc);
         
-        // Fetch related posts
         if (pc.postsId && pc.postsId.length > 0) {
-            const postsQuery = query(collection(db, 'posts'), where('__name__', 'in', pc.postsId));
-            const postsSnapshot = await getDocs(postsQuery);
-            const fetchedPosts = postsSnapshot.docs.map(doc => ({id: doc.id, ...doc.data()}) as Post);
-            setPosts(fetchedPosts);
+            const fetchedPosts = await getPostCollectionPostsAction(pc.postsId);
+            setPosts(fetchedPosts as Post[]);
         }
 
       } else {
@@ -86,11 +84,10 @@ export default function ViewContentCollectionPage() {
 
   const handleDelete = async () => {
     if (!postCollection) return;
-    // This is a destructive action, might need more complex logic for deleting associated posts
     if (window.confirm('Are you sure you want to delete this post collection and all its scheduled/published instances?')) {
       setIsProcessing(true);
       try {
-        await deleteDoc(doc(db, 'postCollections', postCollection.id));
+        await deletePostCollectionAction(postCollection.id);
         toast({ title: 'Post collection deleted successfully' });
         router.push('/content');
       } catch (error) {
@@ -102,16 +99,11 @@ export default function ViewContentCollectionPage() {
   
   const handleCancelSchedule = async () => {
       if (!postCollection || postCollection.status !== 'Scheduled') return;
-       if (window.confirm('Are you sure you want to cancel the schedule and move this post to drafts?')) {
+      if (window.confirm('Are you sure you want to cancel the schedule and move this post to drafts?')) {
            setIsProcessing(true);
            try {
-                const docRef = doc(db, 'postCollections', id);
-                await updateDoc(docRef, {
-                    status: 'Draft',
-                    scheduledAt: null,
-                });
+                await cancelScheduledPostCollectionAction(id);
                 toast({ title: 'Schedule cancelled' });
-                // Re-fetch post data to update UI
                  setPostCollection(prev => prev ? { ...prev, status: 'Draft', scheduledAt: '-' } : null);
            } catch (error) {
                toast({ title: 'Failed to cancel schedule', variant: 'destructive' });

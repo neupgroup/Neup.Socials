@@ -1,7 +1,6 @@
 'use server';
 
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { dataStore } from '@/lib/data-store';
 import { logError } from '@/lib/error-logging';
 
 export type UploadRecord = {
@@ -16,11 +15,11 @@ export type UploadRecord = {
 
 export async function recordUpload(data: UploadRecord) {
   try {
-    const docRef = await addDoc(collection(db, 'uploads'), {
+    const upload = await dataStore.uploads.create({
       ...data,
-      uploadedOn: serverTimestamp(),
+      uploadedOn: new Date(),
     });
-    return { success: true, id: docRef.id };
+    return { success: true, id: upload.id };
   } catch (error: any) {
     console.error('Error recording upload to Firestore:', error);
     await logError({

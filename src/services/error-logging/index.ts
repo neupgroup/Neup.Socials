@@ -4,8 +4,7 @@
  * @fileoverview A centralized service for logging application errors to Firestore.
  */
 
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { dataStore } from '@/lib/data-store';
 
 export type ErrorLog = {
   timestamp: any;
@@ -28,12 +27,18 @@ export type ErrorLog = {
  */
 export async function logError(errorLog: Omit<ErrorLog, 'timestamp'>): Promise<string> {
   try {
-    const docRef = await addDoc(collection(db, 'errors'), {
-      ...errorLog,
-      timestamp: serverTimestamp(),
+    const created = await dataStore.errors.create({
+      source: errorLog.source,
+      message: errorLog.message,
+      errorMessage: errorLog.message,
+      stack: errorLog.stack,
+      userId: errorLog.userId,
+      request: errorLog.request,
+      context: errorLog.context,
+      timestamp: new Date(),
     });
-    console.log('Error logged with ID: ', docRef.id);
-    return docRef.id;
+    console.log('Error logged with ID: ', created.id);
+    return created.id;
   } catch (loggingError: any) {
     // If logging to Firestore fails, log to console as a fallback.
     console.error('FATAL: Failed to log error to Firestore.', loggingError);

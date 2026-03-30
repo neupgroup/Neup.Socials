@@ -7,10 +7,9 @@ import useSWR from 'swr';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Twitter, Linkedin, Facebook, Instagram, Youtube, Loader2, ExternalLink, Edit, Trash2, ThumbsUp, MessageSquare, Share2 } from 'lucide-react';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { Badge } from './ui/badge';
 import { getPostAnalyticsAction } from '@/actions/facebook/post-insights';
+import { getAccountsByIdsAction } from '@/actions/db';
 
 type ConnectedAccount = {
   id: string;
@@ -21,17 +20,17 @@ type ConnectedAccount = {
 
 type Post = {
     id: string;
-    platformPostId: string;
-    accountId: string;
-    platform: string;
-    postLink: string;
-    createdOn: any;
+    platformPostId: string | null;
+    accountId: string | null;
+    platform: string | null;
+    postLink: string | null;
+    createdOn: string | null;
 }
 
 type PublicationStatusProps = {
   accountIds: string[];
   posts: Post[];
-  postStatus: 'Published' | 'Scheduled' | 'Draft';
+  postStatus: string;
   publishedAt: string;
   scheduledAt: string;
   postCollectionId: string;
@@ -90,15 +89,8 @@ export const PublicationStatus: React.FC<PublicationStatusProps> = ({ accountIds
   React.useEffect(() => {
     const fetchAccounts = async () => {
       setLoading(true);
-      const fetchedAccounts: ConnectedAccount[] = [];
-      for (const id of accountIds) {
-        const docRef = doc(db, 'connected_accounts', id);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          fetchedAccounts.push({ id: docSnap.id, ...docSnap.data() } as ConnectedAccount);
-        }
-      }
-      setAccounts(fetchedAccounts);
+      const fetchedAccounts = await getAccountsByIdsAction(accountIds);
+      setAccounts(fetchedAccounts as ConnectedAccount[]);
       setLoading(false);
     };
 

@@ -9,9 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Facebook, Instagram, Twitter, Linkedin, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { getPostCollectionAction, listAccountsAction, updatePostCollectionAction } from '@/actions/db';
 
 type ConnectedAccount = {
   id: string;
@@ -46,20 +45,11 @@ export default function EditPlatformsPage() {
     const fetchInitialData = async () => {
       setIsLoading(true);
       try {
-        // Fetch connected accounts
-        const accountsQuery = query(collection(db, 'connected_accounts'), where('owner', '==', owner));
-        const accountsSnapshot = await getDocs(accountsQuery);
-        const accounts = accountsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        } as ConnectedAccount));
-        setConnectedAccounts(accounts);
+        const accountsResult = await listAccountsAction({ owner, skip: 0 });
+        setConnectedAccounts(accountsResult.items as ConnectedAccount[]);
 
-        // Fetch existing selections from the post collection
-        const pcDocRef = doc(db, 'postCollections', id);
-        const pcDocSnap = await getDoc(pcDocRef);
-        if (pcDocSnap.exists()) {
-          const data = pcDocSnap.data();
+        const data = await getPostCollectionAction(id);
+        if (data) {
           setSelectedAccountIds(data.accountIds || []);
         } else {
           toast({ title: 'Post Collection not found', variant: 'destructive' });
@@ -90,14 +80,13 @@ export default function EditPlatformsPage() {
     }
     setIsSaving(true);
     try {
-      const docRef = doc(db, 'postCollections', id);
       const selectedPlatforms = connectedAccounts
         .filter(acc => selectedAccountIds.includes(acc.id))
         .map(acc => acc.platform);
 
-      await updateDoc(docRef, { 
+      await updatePostCollectionAction(id, { 
           accountIds: selectedAccountIds,
-          platforms: Array.from(new Set(selectedPlatforms)) // Still useful for quick filtering/display
+          platforms: Array.from(new Set(selectedPlatforms))
       });
       router.push(`/content/edit/${id}/schedule`);
     } catch (error) {

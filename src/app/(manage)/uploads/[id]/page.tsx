@@ -4,14 +4,13 @@ import * as React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
-import { doc, getDoc, collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader2, ArrowLeft, Edit, File, Video, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { getPostCollectionsByMediaUrlAction, getUploadAction } from '@/actions/db';
 
 type UploadRecord = {
   id: string;
@@ -20,7 +19,7 @@ type UploadRecord = {
   fileSize: number;
   fileType: string;
   uploadedBy: string;
-  uploadedOn: Timestamp;
+  uploadedOn: string | null;
   filePath: string;
 };
 
@@ -28,7 +27,7 @@ type PostRecord = {
     id: string;
     content: string;
     status: string;
-}
+};
 
 const formatBytes = (bytes: number, decimals = 2) => {
   if (!bytes) return '0 Bytes';
@@ -75,26 +74,17 @@ export default function ViewUploadPage() {
     const fetchUploadDetails = async () => {
       setLoading(true);
       try {
-        const uploadDocRef = doc(db, 'uploads', id);
-        const uploadDocSnap = await getDoc(uploadDocRef);
+        const uploadData = await getUploadAction(id);
 
-        if (!uploadDocSnap.exists()) {
+        if (!uploadData) {
           toast({ title: 'Upload not found', variant: 'destructive' });
           router.push('/uploads');
           return;
         }
 
-        const uploadData = { id: uploadDocSnap.id, ...uploadDocSnap.data() } as UploadRecord;
-        setUpload(uploadData);
+        setUpload(uploadData as UploadRecord);
 
-        // Fetch posts that use this media
-        const postsQuery = query(collection(db, 'content'), where('mediaUrls', 'array-contains', uploadData.filePath));
-        const postsSnapshot = await getDocs(postsQuery);
-        const relatedPosts = postsSnapshot.docs.map(doc => ({
-            id: doc.id,
-            content: doc.data().content,
-            status: doc.data().status
-        } as PostRecord));
+        const relatedPosts = await getPostCollectionsByMediaUrlAction(uploadData.filePath);
         setPosts(relatedPosts);
 
       } catch (error) {
@@ -148,7 +138,7 @@ export default function ViewUploadPage() {
                     <div className="flex justify-between items-center"><span className="text-muted-foreground">File Type</span><span>{upload.fileType}</span></div>
                     <div className="flex justify-between items-center"><span className="text-muted-foreground">File Size</span><span>{formatBytes(upload.fileSize)}</span></div>
                     <div className="flex justify-between items-center"><span className="text-muted-foreground">Uploaded By</span><span>{upload.uploadedBy}</span></div>
-                    <div className="flex justify-between items-center"><span className="text-muted-foreground">Uploaded On</span><span>{upload.uploadedOn ? format(upload.uploadedOn.toDate(), 'PPpp') : 'N/A'}</span></div>
+                    <div className="flex justify-between items-center"><span className="text-muted-foreground">Uploaded On</span><span>{upload.uploadedOn ? format(new Date(upload.uploadedOn), 'PPpp') : 'N/A'}</span></div>
                     <div className="flex justify-between items-center"><span className="text-muted-foreground">File Path</span><a href={getFullMediaUrl(upload.filePath)} target="_blank" rel="noopener noreferrer" className="font-mono text-sm text-primary hover:underline truncate">{upload.filePath}</a></div>
                 </CardContent>
             </Card>
@@ -177,7 +167,7 @@ export default function ViewUploadPage() {
                                     <TableCell>{post.status}</TableCell>
                                     <TableCell className="text-right">
                                         <Button asChild variant="ghost" size="sm">
-                                            <Link href={`/content/view/${post.id}`}>View Post</Link>
+                                            <Link href={`/content/collection/${post.id}`}>View Post</Link>
                                         </Button>
                                     </TableCell>
                                 </TableRow>

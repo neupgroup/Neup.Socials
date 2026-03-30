@@ -2,9 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { collection, query, orderBy, onSnapshot, Timestamp, limit, startAfter, where, getDocs, QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { format, formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, Upload, Search, FileText, MoreHorizontal } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -17,13 +15,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
+import { listUploadsAction } from '@/actions/db';
 
 type UploadRecord = {
   id: string;
   fileName: string;
   fileSize: number;
   uploadedBy: string;
-  uploadedOn: Timestamp;
+  uploadedOn: string | null;
   filePath: string;
   contentId: string;
 };
@@ -43,7 +42,6 @@ export default function UploadsPage() {
   const [uploads, setUploads] = React.useState<UploadRecord[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [loadingMore, setLoadingMore] = React.useState(false);
-  const [lastVisible, setLastVisible] = React.useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [hasMore, setHasMore] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState('');
   
@@ -55,39 +53,10 @@ export default function UploadsPage() {
     else setLoadingMore(true);
 
     try {
-      let q = query(
-        collection(db, 'uploads'),
-        orderBy('uploadedOn', 'desc'),
-        limit(PAGE_SIZE)
-      );
-      
-      if (search) {
-        q = query(
-          collection(db, 'uploads'),
-          where('fileName', '>=', search),
-          where('fileName', '<=', search + '\uf8ff'),
-          orderBy('fileName'),
-          limit(PAGE_SIZE)
-        );
-      }
-      
-      if (loadMore && lastVisible) {
-        const baseQuery = search 
-            ? query(collection(db, 'uploads'), where('fileName', '>=', search), where('fileName', '<=', search + '\uf8ff'), orderBy('fileName'))
-            : query(collection(db, 'uploads'), orderBy('uploadedOn', 'desc'));
-            
-        q = query(baseQuery, startAfter(lastVisible), limit(PAGE_SIZE));
-      }
-
-      const documentSnapshots = await getDocs(q);
-      const fetchedUploads = documentSnapshots.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      } as UploadRecord));
-      
-      setLastVisible(documentSnapshots.docs[documentSnapshots.docs.length - 1]);
-      setHasMore(fetchedUploads.length === PAGE_SIZE);
-      setUploads(prev => loadMore ? [...prev, ...fetchedUploads] : fetchedUploads);
+      const skip = loadMore ? uploads.length : 0;
+      const result = await listUploadsAction({ search, skip });
+      setHasMore(result.hasMore);
+      setUploads(prev => loadMore ? [...prev, ...result.items] : result.items);
 
     } catch (error) {
       console.error("Error fetching uploads: ", error);
@@ -96,11 +65,10 @@ export default function UploadsPage() {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [lastVisible, toast]);
+  }, [toast, uploads.length]);
   
   React.useEffect(() => {
     const debouncedSearch = setTimeout(() => {
-      setLastVisible(null);
       fetchUploads(false, searchTerm);
     }, 500);
 
@@ -180,7 +148,7 @@ export default function UploadsPage() {
                             
                             <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto">
                                 <div className="text-xs text-muted-foreground text-left sm:text-right">
-                                   <span>{upload.uploadedOn ? formatDistanceToNow(upload.uploadedOn.toDate(), { addSuffix: true }) : 'Unknown date'}</span>
+                                   <span>{upload.uploadedOn ? formatDistanceToNow(new Date(upload.uploadedOn), { addSuffix: true }) : 'Unknown date'}</span>
                                     <span className="mx-1">•</span>
                                    <span>{formatBytes(upload.fileSize)}</span>
                                 </div>

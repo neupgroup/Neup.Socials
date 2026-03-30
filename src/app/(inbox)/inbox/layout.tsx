@@ -47,9 +47,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { collection, query, orderBy, onSnapshot, limit } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { formatDistanceToNow } from 'date-fns';
+import { listConversationsAction } from '@/actions/db';
 
 const inboxNavItems = [
     { href: '/inbox', icon: MessageSquare, label: 'All Messages', count: 24 },
@@ -79,7 +78,7 @@ type Conversation = {
     channelId: string;
     platform: string;
     lastMessage: string;
-    lastMessageAt: any;
+    lastMessageAt: string | null;
     avatar: string;
     unread: boolean;
 };
@@ -237,7 +236,7 @@ function InboxSidebarContent({
                                                     </p>
                                                     <span className="text-xs text-muted-foreground flex-shrink-0">
                                                         {conversation.lastMessageAt
-                                                            ? formatDistanceToNow(conversation.lastMessageAt.toDate(), { addSuffix: true })
+                                                            ? formatDistanceToNow(new Date(conversation.lastMessageAt), { addSuffix: true })
                                                             : ''
                                                         }
                                                     </span>
@@ -310,27 +309,31 @@ export default function InboxLayout({
     const [loading, setLoading] = React.useState(true);
     const [mobileOpen, setMobileOpen] = React.useState(false);
 
-    // Fetch real conversations from Firebase
     React.useEffect(() => {
-        const q = query(
-            collection(db, 'conversations'),
-            orderBy('lastMessageAt', 'desc'),
-            limit(20)
-        );
+        let active = true;
 
-        const unsubscribe = onSnapshot(q, (querySnapshot) => {
-            const convos: Conversation[] = [];
-            querySnapshot.forEach((doc) => {
-                convos.push({ id: doc.id, ...doc.data() } as Conversation);
-            });
-            setConversations(convos);
-            setLoading(false);
-        }, (error) => {
-            console.error('Error fetching conversations:', error);
-            setLoading(false);
-        });
+        const fetchConversations = async () => {
+            try {
+                const convos = await listConversationsAction();
+                if (active) {
+                    setConversations(convos as Conversation[]);
+                    setLoading(false);
+                }
+            } catch (error) {
+                console.error('Error fetching conversations:', error);
+                if (active) {
+                    setLoading(false);
+                }
+            }
+        };
 
-        return () => unsubscribe();
+        fetchConversations();
+        const interval = window.setInterval(fetchConversations, 10000);
+
+        return () => {
+            active = false;
+            window.clearInterval(interval);
+        };
     }, []);
 
     return (

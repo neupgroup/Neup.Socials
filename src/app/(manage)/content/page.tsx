@@ -7,9 +7,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { PlusCircle, Loader2, Search, Twitter, Facebook, Linkedin, Instagram, MoreHorizontal } from 'lucide-react';
-import { collection, getDocs, orderBy, query, limit, startAfter, where, QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { format, formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 import { Input } from '@/components/ui/input';
 import {
   DropdownMenu,
@@ -17,14 +15,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { listPostsAction } from '@/actions/db';
 
 type Post = {
   id: string;
-  message: string;
-  platform: string;
-  createdOn: any; // Firestore Timestamp
-  postLink: string;
-  postCollectionId: string;
+  message: string | null;
+  platform: string | null;
+  createdOn: string | null;
+  postLink: string | null;
+  postCollectionId: string | null;
 };
 
 const PlatformIcon = ({ platform }: { platform: string }) => {
@@ -44,7 +43,6 @@ export default function ContentDashboardPage() {
   const [posts, setPosts] = React.useState<Post[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [loadingMore, setLoadingMore] = React.useState(false);
-  const [lastVisible, setLastVisible] = React.useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [hasMore, setHasMore] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState('');
   
@@ -55,57 +53,20 @@ export default function ContentDashboardPage() {
     else setLoadingMore(true);
 
     try {
-      let q = query(
-        collection(db, 'posts'),
-        orderBy('createdOn', 'desc'),
-        limit(PAGE_SIZE)
-      );
-
-      if (search) {
-        q = query(
-          collection(db, 'posts'),
-          where('message', '>=', search),
-          where('message', '<=', search + '\uf8ff'),
-          orderBy('message'),
-          limit(PAGE_SIZE)
-        );
-      }
-
-      if (loadMore && lastVisible) {
-        const baseQuery = search 
-            ? query(collection(db, 'posts'), where('message', '>=', search), where('message', '<=', search + '\uf8ff'), orderBy('message'))
-            : query(collection(db, 'posts'), orderBy('createdOn', 'desc'));
-
-        q = query(baseQuery, startAfter(lastVisible), limit(PAGE_SIZE));
-      }
-
-      const documentSnapshots = await getDocs(q);
-      const fetchedData = documentSnapshots.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          message: data.message,
-          platform: data.platform,
-          createdOn: data.createdOn,
-          postLink: data.postLink,
-          postCollectionId: data.postCollectionId,
-        } as Post;
-      });
-
-      setLastVisible(documentSnapshots.docs[documentSnapshots.docs.length - 1]);
-      setHasMore(fetchedData.length === PAGE_SIZE);
-      setPosts(prev => loadMore ? [...prev, ...fetchedData] : fetchedData);
+      const skip = loadMore ? posts.length : 0;
+      const result = await listPostsAction({ search, skip });
+      setHasMore(result.hasMore);
+      setPosts(prev => loadMore ? [...prev, ...result.items] : result.items);
     } catch (error) {
       console.error("Error fetching posts: ", error);
     } finally {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [lastVisible]);
+  }, [posts.length]);
 
   React.useEffect(() => {
     const debouncedSearch = setTimeout(() => {
-      setLastVisible(null);
       fetchPosts(false, searchTerm);
     }, 500);
 
@@ -190,12 +151,12 @@ export default function ContentDashboardPage() {
                         <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                             <div className="flex items-center gap-4 flex-1 overflow-hidden">
                                 <div className="bg-muted p-3 rounded-full">
-                                    <PlatformIcon platform={post.platform} />
+                                    <PlatformIcon platform={post.platform ?? ''} />
                                 </div>
                                 <div className="overflow-hidden">
                                     <p className="font-medium truncate">{post.message}</p>
                                     <p className="text-sm text-muted-foreground">
-                                        Published {post.createdOn ? formatDistanceToNow(post.createdOn.toDate(), { addSuffix: true }) : 'on an unknown date'}
+                                        Published {post.createdOn ? formatDistanceToNow(new Date(post.createdOn), { addSuffix: true }) : 'on an unknown date'}
                                     </p>
                                 </div>
                             </div>

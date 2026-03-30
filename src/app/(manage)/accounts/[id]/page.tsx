@@ -9,29 +9,28 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, ArrowLeft, Users, ThumbsUp, Share2, ExternalLink, Twitter, Facebook, Linkedin, Instagram, RefreshCw, Heart, Laugh, Angry, Droplet, Annoyed, History } from 'lucide-react';
-import { doc, getDoc, collection, query, where, orderBy, limit, startAfter, getDocs, DocumentData, QueryDocumentSnapshot, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { getPageInsightsAction } from '@/actions/facebook/insights';
 import { format } from 'date-fns';
 import { logError } from '@/lib/error-logging';
 import { syncPostsAction as syncFacebookPostsAction } from '@/actions/facebook/sync-posts';
 import { syncLinkedInPostsAction } from '@/actions/linkedin/sync-posts';
+import { getAccountAction, listPostsAction } from '@/actions/db';
 
 type Account = {
   id: string;
   platform: string;
-  name: string;
-  username: string;
-  status: string;
-  platformId: string;
+  name: string | null;
+  username: string | null;
+  status: string | null;
+  platformId: string | null;
 };
 
 type Post = {
   id: string;
-  message: string;
-  createdOn: Timestamp;
-  postLink: string;
+  message: string | null;
+  createdOn: string | null;
+  postLink: string | null;
 };
 
 type InsightData = {
@@ -79,7 +78,6 @@ export default function AccountDetailPage() {
   const [loadingMorePosts, setLoadingMorePosts] = React.useState(false);
   const [isSyncing, setIsSyncing] = React.useState(false);
 
-  const [lastVisible, setLastVisible] = React.useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [hasMore, setHasMore] = React.useState(true);
 
   const fetchPosts = React.useCallback(async (loadMore = false) => {
@@ -90,22 +88,11 @@ export default function AccountDetailPage() {
     }
 
     try {
-      let q = query(
-        collection(db, 'posts'),
-        where('accountId', '==', id),
-        orderBy('createdOn', 'desc'),
-        limit(PAGE_SIZE)
-      );
+      const skip = loadMore ? posts.length : 0;
+      const result = await listPostsAction({ accountId: id, skip });
+      const newPosts = result.items as Post[];
 
-      if (loadMore && lastVisible) {
-        q = query(q, startAfter(lastVisible));
-      }
-
-      const documentSnapshots = await getDocs(q);
-      const newPosts = documentSnapshots.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
-
-      setLastVisible(documentSnapshots.docs[documentSnapshots.docs.length - 1]);
-      setHasMore(newPosts.length === PAGE_SIZE);
+      setHasMore(result.hasMore);
       setPosts(prev => loadMore ? [...prev, ...newPosts] : newPosts);
 
     } catch (error: any) {
@@ -121,7 +108,7 @@ export default function AccountDetailPage() {
         setLoadingMorePosts(false);
       }
     }
-  }, [id, toast, lastVisible]);
+  }, [id, posts.length, toast]);
   
   React.useEffect(() => {
     if (!id) {
@@ -132,12 +119,9 @@ export default function AccountDetailPage() {
     const fetchAccountDetails = async () => {
       setLoading(true);
       try {
-        const docRef = doc(db, 'connected_accounts', id);
-        const docSnap = await getDoc(docRef);
+        const acc = await getAccountAction(id);
 
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          const acc = { id: docSnap.id, ...data } as Account;
+        if (acc) {
           setAccount(acc);
 
           if (acc.platform === 'Facebook') {
@@ -185,8 +169,6 @@ export default function AccountDetailPage() {
                 title: 'Sync Complete',
                 description: `${result.postsSynced} new posts were synced.`,
             });
-            // Reset pagination and fetch posts from the start
-            setLastVisible(null);
             await fetchPosts();
         } else {
             throw new Error(result.error || 'Unknown error during sync.');
@@ -330,11 +312,17 @@ export default function AccountDetailPage() {
                     posts.map(post => (
                     <TableRow key={post.id} className="cursor-pointer" onClick={() => router.push(`/content/${post.id}`)}>
                         <TableCell className="max-w-md truncate">{post.message}</TableCell>
-                        <TableCell className="whitespace-nowrap">{format(post.createdOn.toDate(), 'yyyy-MM-dd HH:mm')}</TableCell>
+                        <TableCell className="whitespace-nowrap">{post.createdOn ? format(new Date(post.createdOn), 'yyyy-MM-dd HH:mm') : 'N/A'}</TableCell>
                         <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" asChild>
-                            <a href={post.postLink} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}><ExternalLink className="mr-2 h-4 w-4" /> View</a>
-                        </Button>
+                        {post.postLink ? (
+                          <Button variant="ghost" size="sm" asChild>
+                              <a href={post.postLink} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}><ExternalLink className="mr-2 h-4 w-4" /> View</a>
+                          </Button>
+                        ) : (
+                          <Button variant="ghost" size="sm" disabled>
+                              <ExternalLink className="mr-2 h-4 w-4" /> View
+                          </Button>
+                        )}
                         </TableCell>
                     </TableRow>
                     ))

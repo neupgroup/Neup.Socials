@@ -1,8 +1,7 @@
 
 'use server';
 
-import { doc, getDoc, updateDoc, collection, query, where, getDocs, writeBatch, serverTimestamp, Timestamp, addDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { dataStore } from '@/lib/data-store';
 import { decrypt } from '@/lib/crypto';
 import { getLinkedInPosts } from '@/core/linkedin/api';
 import { logError } from '@/lib/error-logging';
@@ -19,17 +18,17 @@ type SyncResult = {
  * @returns An object indicating success and the number of new posts synced.
  */
 export async function syncLinkedInPostsAction(accountId: string): Promise<SyncResult> {
-  const accountDocRef = doc(db, 'connected_accounts', accountId);
-
   try {
-    const accountSnap = await getDoc(accountDocRef);
-    if (!accountSnap.exists()) {
+    const account = await dataStore.accounts.getById(accountId);
+    if (!account) {
       throw new Error('Account not found.');
     }
-    const account = accountSnap.data();
 
     if (account.platform !== 'LinkedIn') {
       return { success: true, postsSynced: 0 }; // Not a LinkedIn account.
+    }
+    if (!account.encryptedToken || !account.platformId) {
+      throw new Error('LinkedIn account is missing required credentials.');
     }
 
     const accessToken = await decrypt(account.encryptedToken);
@@ -39,33 +38,22 @@ export async function syncLinkedInPostsAction(accountId: string): Promise<SyncRe
     const fetchedPosts = feedResponse.elements;
 
     if (!fetchedPosts || fetchedPosts.length === 0) {
-      await updateDoc(accountDocRef, { lastSyncedAt: serverTimestamp() });
+      await dataStore.accounts.update(accountId, {
+        lastSyncedAt: new Date(),
+        updatedAt: new Date(),
+      });
       return { success: true, postsSynced: 0 };
     }
 
-    const postsCollectionRef = collection(db, 'posts');
     const platformPostIds = fetchedPosts.map(p => p.id);
-    
-    const existingPostIds = new Set<string>();
-    const chunks = [];
-    for (let i = 0; i < platformPostIds.length; i += 30) {
-        chunks.push(platformPostIds.slice(i, i + 30));
-    }
-
-    for (const chunk of chunks) {
-        if (chunk.length === 0) continue;
-        const q = query(postsCollectionRef, where('accountId', '==', accountId), where('platformPostId', 'in', chunk));
-        const snapshot = await getDocs(q);
-        snapshot.docs.forEach(doc => existingPostIds.add(doc.data().platformPostId));
-    }
+    const existingPosts = await dataStore.posts.findExistingPlatformPostIds(accountId, platformPostIds);
+    const existingPostIds = new Set(existingPosts.map((post) => post.platformPostId).filter(Boolean) as string[]);
 
     const newPosts = fetchedPosts.filter(p => !existingPostIds.has(p.id));
 
     if (newPosts.length > 0) {
-      const batch = writeBatch(db);
-      newPosts.forEach(post => {
-        const newPostRef = doc(collection(db, 'posts'));
-        batch.set(newPostRef, {
+      await dataStore.posts.createMany(
+        newPosts.map((post) => ({
           accountId: accountId,
           platform: 'LinkedIn',
           platformPostId: post.id,
@@ -74,13 +62,13 @@ export async function syncLinkedInPostsAction(accountId: string): Promise<SyncRe
           createdOn: new Date(post.createdAt),
           createdBy: account.owner,
           logs: ['Synced from LinkedIn'],
-        });
-      });
-      await batch.commit();
+        }))
+      );
     }
     
-    await updateDoc(accountDocRef, {
-      lastSyncedAt: serverTimestamp(),
+    await dataStore.accounts.update(accountId, {
+      lastSyncedAt: new Date(),
+      updatedAt: new Date(),
     });
 
     return { success: true, postsSynced: newPosts.length };

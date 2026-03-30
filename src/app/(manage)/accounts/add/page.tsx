@@ -14,13 +14,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, Loader2, Facebook, Instagram, Twitter, Linkedin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { getFacebookAuthUrl } from '@/actions/facebook/auth';
 import { getInstagramAuthUrl } from '@/actions/instagram/auth';
 import { getLinkedInAuthUrl } from '@/actions/linkedin/auth';
 import { encrypt } from '@/lib/crypto';
 import { getWhatsAppAccountName } from '@/core/whatsapp/api';
+import { createConnectedAccountAction } from '@/actions/db';
 
 
 const formSchema = z.object({
@@ -84,7 +83,7 @@ export default function AddAccountPage() {
   const handleOAuthConnect = async () => {
     if (!selectedPlatform) return;
     const platform = platformDetails[selectedPlatform];
-    if (!platform || !platform.isOauth || !platform.handler) return;
+    if (!platform || !platform.isOauth || !('handler' in platform) || !platform.handler) return;
 
     setIsSubmitting(true);
     try {
@@ -113,29 +112,25 @@ export default function AddAccountPage() {
 
         const encryptedAccessToken = await encrypt(data.accessToken!);
 
-        await addDoc(collection(db, 'connected_accounts'), {
+        await createConnectedAccountAction({
             platform: 'WhatsApp',
             platformId: data.phoneNumberId!,
             name: accountNameResult.verified_name,
-            username: data.phoneNumberId!, // Use phone number ID as username for consistency
+            username: data.phoneNumberId!,
             nameStatus: accountNameResult.name_status,
             encryptedToken: encryptedAccessToken,
             status: 'Active',
             owner: userId,
-            connectedOn: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-            lastSyncedAt: null,
         });
 
         toast({ title: 'WhatsApp account connected successfully!' });
         router.push('/accounts');
       } else if (data.platform === 'Twitter') {
-         await addDoc(collection(db, 'connected_accounts'), {
+         await createConnectedAccountAction({
             platform: data.platform,
             username: data.username,
             name: data.username,
             status: 'Active',
-            connectedOn: serverTimestamp(),
             owner: userId,
         });
         toast({ title: `${data.platform} account connected successfully!` });

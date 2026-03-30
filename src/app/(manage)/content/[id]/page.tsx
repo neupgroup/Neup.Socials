@@ -10,21 +10,20 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, ArrowLeft, Edit, Trash2, ExternalLink, ThumbsUp, MessageSquare, Share2 } from 'lucide-react';
-import { doc, getDoc, Timestamp, deleteDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { getPostAnalyticsAction } from '@/actions/facebook/post-insights';
+import { deletePostAction, getPostAction, getPostCollectionAction } from '@/actions/db';
 
 type Post = {
   id: string;
-  postCollectionId: string;
-  accountId: string;
-  platform: string;
-  platformPostId: string;
-  message: string;
-  postLink: string;
-  createdOn: Timestamp;
+  postCollectionId: string | null;
+  accountId: string | null;
+  platform: string | null;
+  platformPostId: string | null;
+  message: string | null;
+  postLink: string | null;
+  createdOn: string | null;
   mediaUrls?: string[];
 };
 
@@ -69,18 +68,14 @@ export default function ViewPostPage() {
     if (!id) return;
     const fetchPost = async () => {
       setLoading(true);
-      const docRef = doc(db, 'posts', id);
-      const docSnap = await getDoc(docRef);
+      const postData = await getPostAction(id);
 
-      if (docSnap.exists()) {
-        const postData = { id: docSnap.id, ...docSnap.data() } as Post;
+      if (postData) {
         
-        // If mediaUrls are not directly on the post, fetch them from the collection
         if (!postData.mediaUrls && postData.postCollectionId) {
-            const collectionRef = doc(db, 'postCollections', postData.postCollectionId);
-            const collectionSnap = await getDoc(collectionRef);
-            if (collectionSnap.exists()) {
-                postData.mediaUrls = collectionSnap.data().mediaUrls || [];
+            const collectionData = await getPostCollectionAction(postData.postCollectionId);
+            if (collectionData) {
+                postData.mediaUrls = collectionData.mediaUrls || [];
             }
         }
         setPost(postData);
@@ -98,7 +93,7 @@ export default function ViewPostPage() {
     if (window.confirm('Are you sure you want to delete this post? This action cannot be undone and may not remove the post from the social platform.')) {
         setIsProcessing(true);
         try {
-            await deleteDoc(doc(db, 'posts', post.id));
+            await deletePostAction(post.id);
             toast({ title: 'Post deleted successfully from dashboard.' });
             router.push(`/content/collection/${post.postCollectionId}`);
         } catch (error: any) {
@@ -150,10 +145,12 @@ export default function ViewPostPage() {
         <CardHeader>
           <CardTitle>Published Content</CardTitle>
           <CardDescription>
-            Published on {post.createdOn ? format(post.createdOn.toDate(), 'PPpp') : 'N/A'}.
-            <a href={post.postLink} target="_blank" rel="noopener noreferrer" className="ml-2 text-sm text-primary hover:underline flex items-center gap-1">
-                 View on {post.platform} <ExternalLink className="h-4 w-4" />
-            </a>
+            Published on {post.createdOn ? format(new Date(post.createdOn), 'PPpp') : 'N/A'}.
+            {post.postLink ? (
+              <a href={post.postLink} target="_blank" rel="noopener noreferrer" className="ml-2 text-sm text-primary hover:underline flex items-center gap-1">
+                   View on {post.platform || 'platform'} <ExternalLink className="h-4 w-4" />
+              </a>
+            ) : null}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

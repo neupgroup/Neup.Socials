@@ -6,8 +6,7 @@
 
 import { exchangeCodeForToken, getUserProfile } from '@/core/linkedin/api';
 import { validateState, encrypt } from '@/lib/crypto';
-import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp, query, where, getDocs, updateDoc } from 'firebase/firestore';
+import { dataStore } from '@/lib/data-store';
 import { logError } from '@/lib/error-logging';
 
 /**
@@ -32,36 +31,20 @@ export async function handleLinkedInCallback(code: string, state: string) {
     const fullName = userProfile.name;
 
     const encryptedToken = await encrypt(accessToken);
-    
-    const accountsCollection = collection(db, 'connected_accounts');
-    // OIDC uses 'sub' as the unique identifier for the user.
-    const q = query(accountsCollection, where('platformId', '==', userProfile.sub), where('owner', '==', userId));
-    const existingDocs = await getDocs(q);
 
-    const accountData = {
-        platform: 'LinkedIn',
-        platformId: userProfile.sub, // Use 'sub' from OIDC response as the user's URN component
+    await dataStore.accounts.upsertByOwnerPlatformId({
+      owner: userId,
+      platform: 'LinkedIn',
+      platformId: userProfile.sub,
+      data: {
         name: fullName,
-        username: fullName, // LinkedIn doesn't have a distinct @username like other platforms
-        encryptedToken: encryptedToken,
+        username: fullName,
+        encryptedToken,
         status: 'Active',
-        owner: userId,
-        updatedAt: serverTimestamp(),
+        updatedAt: new Date(),
         lastSyncedAt: null,
-    };
-    
-    if (existingDocs.empty) {
-        await addDoc(accountsCollection, {
-            ...accountData,
-            connectedOn: serverTimestamp(),
-        });
-    } else {
-        const docRef = existingDocs.docs[0].ref;
-        await updateDoc(docRef, {
-            ...accountData,
-            connectedOn: existingDocs.docs[0].data().connectedOn,
-        });
-    }
+      },
+    });
 
     return { success: true, message: `LinkedIn account for ${fullName} connected successfully.` };
   } catch (error: any) {

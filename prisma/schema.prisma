@@ -1,0 +1,162 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model ConnectedAccount {
+  id             String    @id @default(cuid())
+  platform       String
+  platformId     String?
+  name           String?
+  username       String?
+  encryptedToken String?
+  category       String?
+  status         String?
+  owner          String?
+  connectedOn    DateTime  @default(now())
+  updatedAt      DateTime?
+  lastSyncedAt   DateTime?
+  nameStatus     String?
+  metadata       Json?
+  createdAt      DateTime  @default(now())
+
+  @@unique([platform, platformId, owner])
+  @@index([owner, connectedOn])
+  @@index([platform, platformId])
+  @@map("connected_accounts")
+}
+
+model Post {
+  id             String    @id @default(cuid())
+  postCollectionId String?
+  accountId      String?
+  platform       String?
+  platformPostId String?
+  message        String?   @db.Text
+  postLink       String?
+  createdBy      String?
+  createdOn      DateTime  @default(now())
+  analytics      Json?
+  logs           String[]  @default([])
+  mediaUrls      String[]  @default([])
+
+  @@index([accountId, createdOn])
+  @@index([postCollectionId])
+  @@index([platformPostId])
+  @@map("posts")
+}
+
+model PostCollection {
+  id                       String    @id @default(cuid())
+  content                  String    @db.Text
+  mediaUrls                String[]  @default([])
+  status                   String
+  author                   String?
+  createdAt                DateTime  @default(now())
+  postsId                  String[]  @default([])
+  accountIds               String[]  @default([])
+  platforms                String[]  @default([])
+  ctaType                  String?
+  ctaLink                  String?
+  publishedAt              DateTime?
+  scheduledAt              DateTime?
+  originalPostCollectionId String?
+
+  @@index([status, createdAt])
+  @@map("post_collections")
+}
+
+model Upload {
+  id          String    @id @default(cuid())
+  contentName String?
+  fileName    String
+  fileSize    Int
+  fileType    String
+  uploadedBy  String
+  filePath    String
+  platform    String
+  contentId   String
+  uploadedOn  DateTime  @default(now())
+
+  @@index([uploadedOn])
+  @@index([fileName])
+  @@map("uploads")
+}
+
+model ErrorLog {
+  id           String    @id @default(cuid())
+  process      String?
+  location     String?
+  errorMessage String?
+  user         String?
+  context      Json?
+  timestamp    DateTime  @default(now())
+  count        Int       @default(1)
+  source       String?
+  message      String?
+  stack        String?
+  userId       String?
+  request      Json?
+
+  @@index([timestamp])
+  @@map("errors")
+}
+
+model SyncLog {
+  id           String    @id @default(cuid())
+  accountId    String
+  status       String
+  syncedAt     DateTime  @default(now())
+  postsSynced  Int?
+  errorMessage String?
+  range        Json?
+  details      Json?
+
+  @@index([accountId, syncedAt])
+  @@map("sync_logs")
+}
+
+model Conversation {
+  id            String    @id @default(cuid())
+  contactId     String
+  contactName   String
+  channelId     String
+  platform      String
+  lastMessage   String?
+  lastMessageAt DateTime?
+  unread        Boolean   @default(false)
+  avatar        String?
+  createdAt     DateTime  @default(now())
+
+  @@index([channelId, contactId])
+  @@index([lastMessageAt])
+  @@map("conversations")
+}
+
+model ConversationMessage {
+  id                String    @id @default(cuid())
+  conversationId    String
+  platformMessageId String?   @unique
+  text              String
+  sender            String
+  timestamp         DateTime  @default(now())
+  type              String    @default("text")
+  callEvent         String?
+
+  @@index([conversationId, timestamp])
+  @@map("conversation_messages")
+}
+
+model SystemAlert {
+  id        String    @id @default(cuid())
+  type      String
+  platform  String
+  payload   Json?
+  timestamp DateTime  @default(now())
+
+  @@index([timestamp])
+  @@map("system_alerts")
+}

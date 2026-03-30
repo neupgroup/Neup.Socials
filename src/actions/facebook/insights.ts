@@ -3,8 +3,7 @@
  */
 'use server';
 
-import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { dataStore } from '@/lib/data-store';
 import { decrypt } from '@/lib/crypto';
 import { getPageInsights, InsightValue } from '@/core/facebook/api';
 import { subDays, format } from 'date-fns';
@@ -42,14 +41,15 @@ type GetInsightsResult = {
  */
 export async function getConnectedAccounts(ownerId: string = 'neupkishor'): Promise<GetAccountsResult> {
   try {
-    const accountsQuery = query(collection(db, 'connected_accounts'), where('owner', '==', ownerId));
-    const querySnapshot = await getDocs(accountsQuery);
-    const accounts = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      platform: doc.data().platform,
-      name: doc.data().name,
-    }));
-    return { success: true, accounts };
+    const accounts = await dataStore.accounts.list({ owner: ownerId, skip: 0, take: 100 });
+    return {
+      success: true,
+      accounts: accounts.map((account) => ({
+        id: account.id,
+        platform: account.platform,
+        name: account.name ?? account.username ?? account.platformId ?? account.id,
+      })),
+    };
   } catch (error: any) {
     await logError({
       process: 'getConnectedAccounts',
@@ -68,15 +68,16 @@ export async function getConnectedAccounts(ownerId: string = 'neupkishor'): Prom
  */
 export async function getPageInsightsAction(accountId: string): Promise<GetInsightsResult> {
   try {
-    const accountDocRef = doc(db, 'connected_accounts', accountId);
-    const accountSnap = await getDoc(accountDocRef);
+    const account = await dataStore.accounts.getById(accountId);
 
-    if (!accountSnap.exists()) {
+    if (!account) {
       throw new Error('Account not found.');
     }
-    const account = accountSnap.data();
     if (account.platform !== 'Facebook') {
       throw new Error('Insights can only be fetched for Facebook pages.');
+    }
+    if (!account.encryptedToken || !account.platformId) {
+      throw new Error('Facebook account is missing required credentials.');
     }
 
     const pageToken = await decrypt(account.encryptedToken);
@@ -104,7 +105,7 @@ export async function getPageInsightsAction(accountId: string): Promise<GetInsig
     const totalReach = reachMetric?.values.reduce((sum, v) => sum + v.value, 0) || 0;
 
     // The reactions metric provides a breakdown.
-    const reactions = (reactionsMetric?.values[0]?.value as { [key: string]: number }) || {};
+    const reactions = (reactionsMetric?.values[0]?.value as unknown as { [key: string]: number }) || {};
 
 
     return {
@@ -143,4 +144,3 @@ export async function getPageInsightsAction(accountId: string): Promise<GetInsig
     };
   }
 }
-

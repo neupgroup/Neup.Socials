@@ -3,11 +3,9 @@
  */
 'use server';
 
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { dataStore } from '@/lib/data-store';
 import { decrypt } from '@/lib/crypto';
-import { getPagePostInsights, PostInsightMetric } from '@/core/facebook/api';
-import { logError } from '@/lib/error-logging';
+import { getPagePostInsights } from '@/core/facebook/api';
 
 type PostAnalytics = {
     likes: number;
@@ -28,29 +26,28 @@ type GetPostAnalyticsResult = {
  */
 export async function getPostAnalyticsAction(postId: string): Promise<GetPostAnalyticsResult> {
   try {
-    const postDocRef = doc(db, 'posts', postId);
-    const postSnap = await getDoc(postDocRef);
+    const postData = await dataStore.posts.getById(postId);
 
-    if (!postSnap.exists()) {
+    if (!postData) {
       throw new Error('Post not found in Firestore.');
     }
-    const postData = postSnap.data();
     const { platformPostId, accountId } = postData;
 
     if (!platformPostId || !accountId) {
         throw new Error('Post data is incomplete.');
     }
 
-    const accountDocRef = doc(db, 'connected_accounts', accountId);
-    const accountSnap = await getDoc(accountDocRef);
+    const accountData = await dataStore.accounts.getById(accountId);
 
-    if (!accountSnap.exists()) {
+    if (!accountData) {
       throw new Error('Associated account not found.');
     }
-    const accountData = accountSnap.data();
 
     if (accountData.platform !== 'Facebook') {
       return { success: true, analytics: { likes: 0, comments: 0, shares: 0 } }; // Not a FB post
+    }
+    if (!accountData.encryptedToken) {
+      throw new Error('Associated Facebook account is missing credentials.');
     }
 
     const pageToken = await decrypt(accountData.encryptedToken);

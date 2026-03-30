@@ -1,8 +1,7 @@
 
 'use server';
 
-import { doc, getDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { dataStore } from '@/lib/data-store';
 import { logError } from '@/lib/error-logging';
 
 /**
@@ -17,33 +16,29 @@ export async function repostAction(originalPostCollectionId: string): Promise<{
   error?: string;
 }> {
   try {
-    const originalPostRef = doc(db, 'postCollections', originalPostCollectionId);
-    const originalPostSnap = await getDoc(originalPostRef);
+    const originalData = await dataStore.postCollections.getById(originalPostCollectionId);
 
-    if (!originalPostSnap.exists()) {
+    if (!originalData) {
       throw new Error('Original post collection not found.');
     }
 
-    const originalData = originalPostSnap.data();
-
-    // Create a new post object, resetting status and schedule
-    const newPostData = {
+    const newPost = await dataStore.postCollections.create({
       content: originalData.content,
       mediaUrls: originalData.mediaUrls || [],
-      author: originalData.author, // Keep the original author
+      author: originalData.author,
       status: 'Draft',
       platforms: [],
       accountIds: [],
-      createdAt: serverTimestamp(),
+      createdAt: new Date(),
       scheduledAt: null,
       publishedAt: null,
       postsId: [],
-      originalPostCollectionId: originalPostCollectionId, // Keep a reference to the original
-    };
+      originalPostCollectionId,
+      ctaType: originalData.ctaType,
+      ctaLink: originalData.ctaLink,
+    });
 
-    const newPostRef = await addDoc(collection(db, 'postCollections'), newPostData);
-
-    return { success: true, newPostId: newPostRef.id };
+    return { success: true, newPostId: newPost.id };
   } catch (error: any) {
     console.error(`[repostAction] Error duplicating post ${originalPostCollectionId}:`, error);
     await logError({

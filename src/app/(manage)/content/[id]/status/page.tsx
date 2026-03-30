@@ -9,14 +9,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { ArrowLeft, CheckCircle, Clock, BarChart2, Loader2, FileText } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Label } from '@/components/ui/label';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { getPostCollectionAction } from '@/actions/db';
 
 type PostCollection = {
   id: string;
-  status: 'Published' | 'Scheduled' | 'Draft';
+  status: string;
   platforms: string[]; // Kept for display
   publishedAt?: string;
   scheduledAt?: string;
@@ -41,18 +40,15 @@ export default function PostStatusPage() {
     if (!id) return;
     const fetchPostCollection = async () => {
       setLoading(true);
-      const docRef = doc(db, 'postCollections', id);
-      const docSnap = await getDoc(docRef);
+      const data = await getPostCollectionAction(id);
 
-      if (docSnap.exists()) {
-        const data = docSnap.data();
+      if (data) {
         setPostCollection({
-          id: docSnap.id,
+          id: data.id,
           status: data.status,
           platforms: data.platforms || [],
-          publishedAt: data.publishedAt ? format(data.publishedAt.toDate(), 'PPpp') : undefined,
-          scheduledAt: data.scheduledAt ? format(data.scheduledAt.toDate(), 'PPpp') : undefined,
-          // Mock analytics for now
+          publishedAt: data.publishedAt ? format(new Date(data.publishedAt), 'PPpp') : undefined,
+          scheduledAt: data.scheduledAt ? format(new Date(data.scheduledAt), 'PPpp') : undefined,
           analytics: data.status === 'Published' ? { likes: 120, comments: 15, shares: 45, reach: 1500 } : undefined
         });
       } else {

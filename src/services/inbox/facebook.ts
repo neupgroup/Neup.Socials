@@ -1,10 +1,6 @@
 
 'use server';
 
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { logError } from '@/lib/error-logging';
-
 /**
  * Processes the incoming webhook payload from Facebook.
  * @param payload The full webhook payload from Meta.

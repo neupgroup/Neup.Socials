@@ -6,8 +6,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Send, Loader2, Twitter, Facebook, Linkedin, MoreVertical, Phone, Video, Info } from 'lucide-react';
-import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, getDoc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { formatDistanceToNow } from 'date-fns';
 import { sendReplyAction } from '@/actions/inbox/sender';
 import { useToast } from '@/hooks/use-toast';
@@ -17,12 +15,17 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+    getConversationAction,
+    listConversationMessagesAction,
+    recordOutgoingMessageAction,
+} from '@/actions/db';
 
 type Message = {
     id: string;
     text: string;
     sender: 'user' | 'agent';
-    timestamp: any;
+    timestamp: string | null;
 };
 
 type Conversation = {
@@ -32,7 +35,7 @@ type Conversation = {
     channelId: string;
     platform: string;
     lastMessage: string;
-    lastMessageAt: any;
+    lastMessageAt: string | null;
     avatar: string;
     unread: boolean;
 };
@@ -65,15 +68,12 @@ export default function ConversationPage() {
     const messagesEndRef = React.useRef<HTMLDivElement>(null);
     const { toast } = useToast();
 
-    // Fetch conversation details
     React.useEffect(() => {
         const fetchConversation = async () => {
             try {
-                const docRef = doc(db, 'conversations', conversationId);
-                const docSnap = await getDoc(docRef);
-
-                if (docSnap.exists()) {
-                    setConversation({ id: docSnap.id, ...docSnap.data() } as Conversation);
+                const conversationData = await getConversationAction(conversationId);
+                if (conversationData) {
+                    setConversation(conversationData as Conversation);
                 }
                 setLoading(false);
             } catch (error) {
@@ -85,23 +85,24 @@ export default function ConversationPage() {
         fetchConversation();
     }, [conversationId]);
 
-    // Fetch messages in real-time
     React.useEffect(() => {
         if (conversationId) {
-            const q = query(
-                collection(db, 'conversations', conversationId, 'messages'),
-                orderBy('timestamp')
-            );
+            let active = true;
 
-            const unsubscribe = onSnapshot(q, (querySnapshot) => {
-                const msgs: Message[] = [];
-                querySnapshot.forEach((doc) => {
-                    msgs.push({ id: doc.id, ...doc.data() } as Message);
-                });
-                setMessages(msgs);
-            });
+            const fetchMessages = async () => {
+                const msgs = await listConversationMessagesAction(conversationId);
+                if (active) {
+                    setMessages(msgs as Message[]);
+                }
+            };
 
-            return () => unsubscribe();
+            fetchMessages();
+            const interval = window.setInterval(fetchMessages, 5000);
+
+            return () => {
+                active = false;
+                window.clearInterval(interval);
+            };
         }
     }, [conversationId]);
 
@@ -121,7 +122,7 @@ export default function ConversationPage() {
             id: tempId,
             text: reply,
             sender: 'agent',
-            timestamp: new Date()
+            timestamp: new Date().toISOString()
         };
         setMessages(prev => [...prev, newMessage]);
         const currentReply = reply;
@@ -136,22 +137,25 @@ export default function ConversationPage() {
 
         setSending(false);
 
-        if (result.success && result.messageId) {
-            // Update local message with real data from DB
-            const messagesCol = collection(db, 'conversations', conversationId, 'messages');
-            await addDoc(messagesCol, {
+        if (result.success && result.messageId && conversation) {
+            const saved = await recordOutgoingMessageAction({
+                conversationId,
+                channelId: conversation.channelId,
+                contactId: conversation.contactId,
+                contactName: conversation.contactName,
+                platform: conversation.platform,
                 text: currentReply,
-                sender: 'agent',
-                timestamp: serverTimestamp()
+                avatar: conversation.avatar,
             });
-
-            // Update the last message on the conversation
-            const convoDocRef = doc(db, 'conversations', conversationId);
-            await updateDoc(convoDocRef, {
-                lastMessage: currentReply,
-                lastMessageAt: serverTimestamp(),
-                unread: false
-            });
+            if (saved.conversation) {
+                setConversation(saved.conversation as Conversation);
+            }
+            if (saved.message) {
+                setMessages((prev) => [
+                    ...prev.filter((message) => message.id !== tempId),
+                    saved.message as Message,
+                ]);
+            }
         } else {
             toast({
                 title: 'Failed to send message',
@@ -267,7 +271,7 @@ export default function ConversationPage() {
                                     <div className={`px-4 pb-1 text-xs ${msg.sender === 'user' ? 'text-muted-foreground' : 'text-primary-foreground/70'
                                         }`}>
                                         {formatDistanceToNow(
-                                            msg.timestamp.toDate ? msg.timestamp.toDate() : msg.timestamp,
+                                            new Date(msg.timestamp),
                                             { addSuffix: true }
                                         )}
                                     </div>

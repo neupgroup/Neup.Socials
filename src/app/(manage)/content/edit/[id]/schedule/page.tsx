@@ -15,9 +15,8 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useRouter, useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { doc, getDoc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { publishPostAction } from '@/actions/content/publish';
+import { getPostCollectionAction, updatePostCollectionAction } from '@/actions/db';
 
 export default function EditSchedulePage() {
   const params = useParams();
@@ -33,12 +32,10 @@ export default function EditSchedulePage() {
   React.useEffect(() => {
     const fetchPostCollection = async () => {
       setIsLoading(true);
-      const docRef = doc(db, 'postCollections', id);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        const data = docSnap.data();
+      const data = await getPostCollectionAction(id);
+      if (data) {
         if (data.status === 'Scheduled' && data.scheduledAt) {
-          const scheduledDate = data.scheduledAt.toDate();
+          const scheduledDate = new Date(data.scheduledAt);
           setScheduleOption('later');
           setPostDate(scheduledDate);
           setPostTime(format(scheduledDate, 'HH:mm'));
@@ -70,11 +67,10 @@ export default function EditSchedulePage() {
         const scheduledDateTime = new Date(postDate);
         scheduledDateTime.setHours(parseInt(hours, 10), parseInt(minutes, 10));
 
-        const docRef = doc(db, 'postCollections', id);
-        await updateDoc(docRef, {
+        await updatePostCollectionAction(id, {
           status: 'Scheduled',
-          scheduledAt: Timestamp.fromDate(scheduledDateTime),
-          publishedAt: null, // Ensure publishedAt is cleared if re-scheduling
+          scheduledAt: scheduledDateTime.toISOString(),
+          publishedAt: null,
         });
       }
 

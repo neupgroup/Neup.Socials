@@ -2,8 +2,7 @@
 
 import { logError } from "@/lib/error-logging";
 import { sendTextMessage as sendWhatsAppMessage } from "@/core/whatsapp/api";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { dataStore } from "@/lib/data-store";
 import { decrypt } from "@/lib/crypto";
 
 type SendMessageResult = {
@@ -28,17 +27,16 @@ export async function sendReplyAction(platform: string, channelId: string, recip
                 throw new Error("WhatsApp channel ID is missing.");
             }
 
-            // Fetch the WhatsApp account configuration from 'connected_accounts'
-            const accountDocRef = doc(db, 'connected_accounts', channelId);
-            const accountSnap = await getDoc(accountDocRef);
+            const accountData = await dataStore.accounts.getById(channelId);
 
-            if (!accountSnap.exists()) {
+            if (!accountData) {
                 throw new Error(`WhatsApp account with ID ${channelId} not found.`);
             }
-
-            const accountData = accountSnap.data();
+            if (!accountData.encryptedToken || !accountData.platformId) {
+                throw new Error(`WhatsApp account with ID ${channelId} is missing credentials.`);
+            }
             const accessToken = await decrypt(accountData.encryptedToken);
-            const phoneNumberId = accountData.platformId; // For WhatsApp, we store the phone number ID here
+            const phoneNumberId = accountData.platformId;
 
             const result = await sendWhatsAppMessage(accessToken, phoneNumberId, recipientId, message);
             
@@ -48,9 +46,7 @@ export async function sendReplyAction(platform: string, channelId: string, recip
             }
             return { success: true, messageId };
         } else {
-            // Placeholder for other platforms
             console.warn(`Sending messages via ${platform} is not yet implemented.`);
-            // To avoid breaking the UI, we can simulate a success for now
             return { success: true, messageId: `simulated_${Date.now()}` };
         }
     } catch (error: any) {
