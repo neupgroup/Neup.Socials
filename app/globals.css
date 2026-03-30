@@ -1,0 +1,188 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 201 44% 98%;
+    --foreground: 215 58% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 215 58% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 58% 11%;
+    --primary: 188 88% 41%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 200 45% 95%;
+    --secondary-foreground: 215 58% 11%;
+    --muted: 204 38% 94%;
+    --muted-foreground: 216 17% 41%;
+    --accent: 38 87% 92%;
+    --accent-foreground: 215 58% 11%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 204 30% 86%;
+    --input: 204 30% 86%;
+    --ring: 188 88% 41%;
+    --chart-1: 188 88% 41%;
+    --chart-2: 28 86% 58%;
+    --chart-3: 209 52% 35%;
+    --chart-4: 150 48% 44%;
+    --chart-5: 352 74% 61%;
+    --radius: 0.8rem;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 215 58% 11%;
+    --sidebar-primary: 188 88% 41%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 204 38% 94%;
+    --sidebar-accent-foreground: 215 58% 11%;
+    --sidebar-border: 204 30% 86%;
+    --sidebar-ring: 188 88% 41%;
+  }
+  .dark {
+    --background: 216 42% 10%;
+    --foreground: 204 36% 95%;
+    --card: 217 41% 13%;
+    --card-foreground: 210 40% 98%;
+    --popover: 217 41% 13%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 188 78% 52%;
+    --primary-foreground: 216 42% 10%;
+    --secondary: 216 30% 19%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 216 30% 19%;
+    --muted-foreground: 212 20% 72%;
+    --accent: 216 30% 19%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 216 24% 23%;
+    --input: 216 24% 23%;
+    --ring: 188 78% 52%;
+    --chart-1: 188 78% 52%;
+    --chart-2: 28 84% 60%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 150 48% 44%;
+    --chart-5: 340 75% 55%;
+    --sidebar-background: 217 41% 13%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 188 78% 52%;
+    --sidebar-primary-foreground: 216 42% 10%;
+    --sidebar-accent: 216 30% 19%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 216 24% 23%;
+    --sidebar-ring: 188 78% 52%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .container {
+    @apply w-full max-w-7xl mx-auto px-4;
+  }
+
+  .animate-rise {
+    animation: rise-in 0.75s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  .animate-rise-delay {
+    animation: rise-in 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) 0.08s both;
+  }
+
+  .animate-fade-up {
+    animation: fade-up 0.72s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* nprogress styles */
+#nprogress {
+  pointer-events: none;
+}
+
+#nprogress .bar {
+  background: hsl(var(--primary));
+  position: fixed;
+  z-index: 1031;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+}
+
+#nprogress .peg {
+  display: block;
+  position: absolute;
+  right: 0px;
+  width: 100px;
+  height: 100%;
+  box-shadow: 0 0 10px hsl(var(--primary)), 0 0 5px hsl(var(--primary));
+  opacity: 1.0;
+  transform: rotate(3deg) translate(0px, -4px);
+}
+
+#nprogress .spinner {
+  display: block;
+  position: fixed;
+  z-index: 1031;
+  top: 15px;
+  right: 15px;
+}
+
+#nprogress .spinner-icon {
+  width: 18px;
+  height: 18px;
+  box-sizing: border-box;
+  border: solid 2px transparent;
+  border-top-color: hsl(var(--primary));
+  border-left-color: hsl(var(--primary));
+  border-radius: 50%;
+  animation: nprogress-spinner 400ms linear infinite;
+}
+
+.nprogress-custom-parent {
+  overflow: hidden;
+  position: relative;
+}
+
+.nprogress-custom-parent #nprogress .spinner,
+.nprogress-custom-parent #nprogress .bar {
+  position: absolute;
+}
+
+@keyframes nprogress-spinner {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

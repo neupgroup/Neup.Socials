@@ -160,3 +160,9 @@ model SystemAlert {
   @@index([timestamp])
   @@map("system_alerts")
 }
+
+model Account {
+  account_id String @id
+
+  @@map("accounts")
+}
