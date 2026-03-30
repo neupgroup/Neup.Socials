@@ -12,7 +12,6 @@ This file documents implemented features by platform, the files used for each fe
 	- actions/facebook/auth.ts
 	- actions/facebook/callback.ts
 	- core/facebook/api.ts
-	- app/api/auth/callback/facebook/route.ts
 	- app/bridge/callback.v1/auth.facebook/route.ts
 	- app/(manage)/accounts/add/page.tsx
 - Support pages:
@@ -101,7 +100,7 @@ This file documents implemented features by platform, the files used for each fe
 		- facebook.application
 		- facebook.adaccount
 - Files used:
-	- app/bridge/webhook/v1/facebook/route.ts
+	- app/bridge/webhook.v1/facebook/route.ts
 	- services/inbox/facebook.ts
 	- app/bridge/webhook.v1/_helpers.ts
 	- app/bridge/webhook.v1/facebook.page/route.ts
@@ -126,7 +125,7 @@ This file documents implemented features by platform, the files used for each fe
 	- actions/instagram/auth.ts
 	- actions/instagram/callback.ts
 	- core/instagram/api.ts
-	- app/api/auth/callback/instagram/route.ts
+	- app/bridge/callback.v1/auth.instagram/route.ts
 	- app/(manage)/accounts/add/page.tsx
 - Support pages:
 	- https://developers.facebook.com/docs/instagram-basic-display-api
@@ -144,7 +143,7 @@ This file documents implemented features by platform, the files used for each fe
 	- actions/linkedin/auth.ts
 	- actions/linkedin/callback.ts
 	- core/linkedin/api.ts
-	- app/api/auth/callback/linkedin/route.ts
+	- app/bridge/callback.v1/auth.linkedin/route.ts
 	- app/(manage)/accounts/add/page.tsx
 - Support pages:
 	- https://learn.microsoft.com/linkedin/shared/authentication/authorization-code-flow
@@ -197,7 +196,7 @@ This file documents implemented features by platform, the files used for each fe
 	- Creates/updates conversations and stores conversation messages.
 	- Stores account alerts/review/settings events in system alerts.
 - Files used:
-	- app/bridge/webhook/v1/whatsapp/route.ts
+	- app/bridge/webhook.v1/whatsapp/route.ts
 	- services/inbox/whatsapp.ts
 - Support pages:
 	- https://developers.facebook.com/docs/whatsapp/cloud-api/webhooks
@@ -249,5 +248,5 @@ This file documents implemented features by platform, the files used for each fe
 - Feature:
 	- Health/info response for bridge root.
 - Files used:
-	- app/bridge/api/route.ts
+	- app/bridge/api.v1/route.ts
 
