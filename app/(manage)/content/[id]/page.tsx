@@ -16,6 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { getPostAnalyticsAction } from '@/actions/facebook/post-insights';
 import { deletePostAction, getPostAction, getPostCollectionAction } from '@/actions/db';
 import { fetchPostCommentsAction, postCommentAction, postReplyAction } from '@/actions/facebook/comments';
+import { getFacebookPostVideoAction } from '@/actions/facebook/get-video';
 
 type Post = {
   id: string;
@@ -42,6 +43,18 @@ type Comment = {
     id: string;
     name: string;
   };
+};
+
+type FacebookVideo = {
+  id: string;
+  sourceUrl?: string;
+  embedHtml?: string;
+  permalinkUrl?: string;
+  title?: string;
+  description?: string;
+  lengthSeconds?: number;
+  views?: number;
+  thumbnailUrl?: string;
 };
 
 const PostAnalytics = ({ postId }: { postId: string }) => {
@@ -222,6 +235,74 @@ const PostComments = ({ postId, platform }: { postId: string; platform: string |
   );
 };
 
+const FacebookPostVideo = ({ postId, platform }: { postId: string; platform: string | null }) => {
+  const { data, error, isLoading } = useSWR(
+    isFacebookPlatform(platform) ? `${postId}-facebook-video` : null,
+    () => getFacebookPostVideoAction(postId)
+  );
+
+  if (!isFacebookPlatform(platform)) {
+    return null;
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Loading video...
+      </div>
+    );
+  }
+
+  if (error || !data?.success || !data.video) {
+    return null;
+  }
+
+  const video = data.video as FacebookVideo;
+
+  return (
+    <div className="space-y-3">
+      {video.sourceUrl ? (
+        <video
+          controls
+          playsInline
+          preload="metadata"
+          poster={video.thumbnailUrl}
+          className="w-full rounded-lg border bg-black"
+        >
+          <source src={video.sourceUrl} />
+          Your browser does not support video playback.
+        </video>
+      ) : video.embedHtml ? (
+        <div
+          className="w-full overflow-hidden rounded-lg border bg-muted"
+          dangerouslySetInnerHTML={{ __html: video.embedHtml }}
+        />
+      ) : null}
+
+      {(video.title || video.views !== undefined || video.permalinkUrl) && (
+        <div className="space-y-1">
+          {video.title ? <p className="font-medium">{video.title}</p> : null}
+          <div className="text-xs text-muted-foreground space-x-3">
+            {video.views !== undefined ? <span>{video.views} views</span> : null}
+            {video.lengthSeconds ? <span>{Math.round(video.lengthSeconds)} sec</span> : null}
+            {video.permalinkUrl ? (
+              <a
+                href={video.permalinkUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                Open on Facebook
+              </a>
+            ) : null}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function ViewPostPage() {
   const params = useParams();
   const id = params.id as string;
@@ -322,6 +403,10 @@ export default function ViewPostPage() {
         </CardHeader>
         <CardContent className="space-y-4">
             <p className="whitespace-pre-wrap text-muted-foreground p-4 border rounded-lg bg-muted/20">{post.message}</p>
+
+            {isFacebookPlatform(post.platform) && (
+              <FacebookPostVideo postId={post.id} platform={post.platform} />
+            )}
             
             {post.mediaUrls && post.mediaUrls.length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
