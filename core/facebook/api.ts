@@ -1,11 +1,18 @@
 
 /**
  * @fileoverview Core functions for interacting with the Facebook Graph API.
+ * 
+ * Uses v25.0 (current version) aligned with Meta's Facebook Login for Business
+ * and Messenger Platform specifications.
+ * 
+ * @see https://developers.facebook.com/docs/graph-api/
+ * @see https://developers.facebook.com/docs/messages
+ * @see https://developers.facebook.com/docs/pages-api
  */
 'use server';
 import * as mime from 'mime-types';
 
-const API_VERSION = 'v23.0';
+const API_VERSION = 'v25.0';
 const GRAPH_API_BASE_URL = `https://graph.facebook.com/${API_VERSION}`;
 
 type AccessTokenResponse = {

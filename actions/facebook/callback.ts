@@ -1,6 +1,29 @@
 
 /**
  * @fileoverview Handles the OAuth callback from Facebook.
+ * 
+ * This implements Facebook Login for Business + Messenger Platform onboarding (v25.0).
+ * 
+ * Flow:
+ * 1. User is redirected from Facebook OAuth with authorization code
+ * 2. Code is exchanged for user access token
+ * 3. User access token is exchanged for long-lived token
+ * 4. User's managed Facebook Pages are fetched
+ * 5. For each page, a Page access token is obtained
+ * 6. Page access token is encrypted and stored with user-selected intents
+ * 7. App is subscribed to Page webhooks for real-time feed/message events
+ * 
+ * ⚠️ IMPORTANT REQUIREMENTS:
+ * For Messenger permissions (pages_messaging, pages_manage_metadata) to work:
+ * - Your Meta app must have Advanced Access Approval for these permissions
+ * - The app must be configured with Messenger Platform use case
+ * - Users must be admins/developers on your Meta app
+ * 
+ * Without Advanced Access, Meta will silently grant/ignore these permissions.
+ * 
+ * @see https://developers.facebook.com/docs/facebook-login/access-tokens
+ * @see https://developers.facebook.com/docs/messages
+ * @see https://developers.facebook.com/docs/pages-api/webhooks-for-pages
  */
 'use server';
 
@@ -30,7 +53,15 @@ function extractFacebookIntentsFromState(state: string): FacebookAuthIntent[] {
 /**
  * Handles the OAuth callback from Facebook. It exchanges the authorization code
  * for an access token, fetches the user's pages, and stores the page information
- * securely in Firestore.
+ * securely in Postgres with user-selected intentions.
+ * 
+ * The user-selected intents (messages, posts) are persisted in account.metadata.authIntents
+ * so that later API calls respect what the user authorized.
+ * 
+ * ⚠️ CRITICAL: If users selected 'messages' intent:
+ * - You MUST have Advanced Access Approval from Meta for pages_messaging and pages_manage_metadata
+ * - Without it, Facebook will grant the scopes but API calls to messages endpoints may fail
+ * - Test with a developer account first; Advanced Access applies per-app
  *
  * @param code - The authorization code provided by Facebook.
  * @param state - The state parameter for CSRF validation.

@@ -1,5 +1,16 @@
 /**
  * @fileoverview Action to generate the Facebook OAuth URL.
+ * 
+ * This implements Facebook Login for Business + Messenger Platform onboarding.
+ * Based on Meta's current documentation (v25.0), this flow:
+ * 1. Uses Facebook Login for Business (not plain Facebook Login)
+ * 2. Requests Messenger Platform permissions (pages_messaging, pages_manage_metadata, etc.)
+ * 3. Obtains Page access tokens for Messenger API integration
+ * 4. Requires Advanced Access Approval from Meta for Messenger permissions
+ * 
+ * @see https://developers.facebook.com/docs/facebook-login
+ * @see https://developers.facebook.com/docs/messages
+ * @see https://developers.facebook.com/docs/pages-api
  */
 'use server';
 
@@ -7,7 +18,7 @@ import { generateRandomState } from '@/lib/crypto';
 import { logError } from '@/lib/error-logging';
 import { FACEBOOK_AUTH_INTENTS, type FacebookAuthIntent } from './auth-intents';
 
-const FB_OAUTH_BASE_URL = 'https://www.facebook.com/v20.0/dialog/oauth';
+const FB_OAUTH_BASE_URL = 'https://www.facebook.com/v25.0/dialog/oauth';
 const FACEBOOK_BASE_SCOPES = ['pages_show_list'];
 
 function normalizeIntents(intents?: FacebookAuthIntent[]): FacebookAuthIntent[] {
@@ -19,18 +30,25 @@ function normalizeIntents(intents?: FacebookAuthIntent[]): FacebookAuthIntent[] 
 function scopesForIntents(intents: FacebookAuthIntent[]): string[] {
   const scopes = new Set<string>(FACEBOOK_BASE_SCOPES);
 
-  // Required to install app subscriptions on the Page (/subscribed_apps).
+  // pages_manage_metadata: Required for webhook subscriptions + Messenger onboarding.
+  // This permission must be approved via Advanced Access in Meta App Dashboard.
   if (intents.length > 0) {
     scopes.add('pages_manage_metadata');
   }
 
   if (intents.includes('messages')) {
-    // For Page conversations/messages APIs, Meta requires pages_messaging.
+    // Messenger Platform permissions (v25.0):
+    // - pages_messaging: Send/receive Page messages. Requires Advanced Access Approval.
+    // - pages_read_engagement: Read conversation metadata and engagement data.
+    // Both are required per Meta's current Messenger onboarding docs.
     scopes.add('pages_messaging');
     scopes.add('pages_read_engagement');
   }
 
   if (intents.includes('posts')) {
+    // Feed/Posts management:
+    // - pages_read_engagement: Read page posts and analytics.
+    // - pages_manage_posts: Create and manage page posts.
     scopes.add('pages_read_engagement');
     scopes.add('pages_manage_posts');
   }
@@ -40,8 +58,18 @@ function scopesForIntents(intents: FacebookAuthIntent[]): string[] {
 
 /**
  * Generates the URL to redirect the user to for Facebook authentication.
+ * 
+ * ⚠️ IMPORTANT: For Messenger Platform permissions (pages_messaging, pages_manage_metadata)
+ * to work, you must:
+ * 1. Configure your Meta app with proper use case mapping (Messenger Platform)
+ * 2. Have Advanced Access Approval from Meta for Messenger-related permissions
+ * 3. Ensure users are added as admins/developers to your Meta app
+ * 
+ * Without these, Meta will silently ignore pages_messaging even though the scope name is valid.
+ * 
  * @param userId - The ID of the user initiating the request.
- * @returns The full Facebook OAuth dialog URL.
+ * @param intents - User intentions: 'messages' or 'posts' (or both).
+ * @returns The full Facebook OAuth dialog URL (v25.0).
  */
 export async function getFacebookAuthUrl(userId: string, intents?: FacebookAuthIntent[]): Promise<string> {
   try {
