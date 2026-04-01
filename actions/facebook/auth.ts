@@ -27,7 +27,7 @@ export async function getFacebookAuthUrl(userId: string): Promise<string> {
       redirect_uri: 'https://neupgroup.com/socials/bridge/callback.v1/auth.facebook',
       state: encodeURIComponent(state),
       // These scopes request permissions to manage pages and read engagement.
-      scope: 'pages_manage_posts,pages_read_engagement,pages_show_list,business_management,read_insights',
+      scope: 'pages_manage_posts,pages_read_engagement,pages_show_list,pages_messaging,business_management,read_insights',
       response_type: 'code',
     });
 
