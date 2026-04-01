@@ -255,6 +255,17 @@ model IdentityPlatform {
   @@map("identity_platform")
 }
 
+model FacebookComment {
+  id          String           @id @default(cuid())
+  psid        String
+  comment     String           @db.Text
+  commentedOn DateTime         @map("commented_on")
+  moreInfo    Json?            @map("moreinfo")
+
+  @@index([psid, commentedOn])
+  @@map("facebook_comments")
+}
+
 model Account {
   account_id  String       @id
   spaceAssets SpaceAsset[]

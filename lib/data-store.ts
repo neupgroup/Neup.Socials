@@ -724,6 +724,94 @@ export const dataStore = {
         },
       }),
   },
+  identityUnified: {
+    create: async (data: {
+      name: string;
+      moreInfo?: unknown;
+      createdOn?: Date;
+    }) =>
+      prisma.identityUnified.create({
+        data: {
+          name: data.name,
+          moreInfo: data.moreInfo === undefined ? undefined : toJson(data.moreInfo),
+          createdOn: data.createdOn ?? new Date(),
+        },
+      }),
+    update: async (
+      id: string,
+      data: {
+        name?: string;
+        moreInfo?: unknown;
+      }
+    ) =>
+      prisma.identityUnified.update({
+        where: { id },
+        data: {
+          name: data.name,
+          moreInfo: data.moreInfo === undefined ? undefined : toJson(data.moreInfo),
+        },
+      }),
+  },
+  identityPlatform: {
+    findByPlatformUserId: async (data: { platform: string; platUserId: string }) =>
+      prisma.identityPlatform.findUnique({
+        where: {
+          platform_platUserId: {
+            platform: data.platform,
+            platUserId: data.platUserId,
+          },
+        },
+        include: { unified: true },
+      }),
+    upsertWithUnified: async (data: {
+      platform: string;
+      platUserId: string;
+      name: string;
+      moreInfo?: unknown;
+    }) => {
+      const existing = await prisma.identityPlatform.findUnique({
+        where: {
+          platform_platUserId: {
+            platform: data.platform,
+            platUserId: data.platUserId,
+          },
+        },
+        include: { unified: true },
+      });
+
+      if (existing) {
+        const unified = await prisma.identityUnified.update({
+          where: { id: existing.unifiedId },
+          data: {
+            name: data.name,
+            moreInfo: data.moreInfo === undefined ? undefined : toJson(data.moreInfo),
+          },
+        });
+
+        return {
+          ...existing,
+          unified,
+        };
+      }
+
+      const unified = await prisma.identityUnified.create({
+        data: {
+          name: data.name,
+          moreInfo: data.moreInfo === undefined ? undefined : toJson(data.moreInfo),
+          createdOn: new Date(),
+        },
+      });
+
+      return prisma.identityPlatform.create({
+        data: {
+          platform: data.platform,
+          platUserId: data.platUserId,
+          unifiedId: unified.id,
+        },
+        include: { unified: true },
+      });
+    },
+  },
   commentors: {
     findByPlatformProfileAndUser: async (data: {
       platform: string;
@@ -814,6 +902,43 @@ export const dataStore = {
         },
         include: { commentor: true },
         orderBy: [{ on: 'desc' }, { id: 'desc' }],
+        take,
+      }),
+  },
+  facebookComments: {
+    findExisting: async (data: {
+      psid: string;
+      comment: string;
+      commentedOn: Date;
+    }) =>
+      prisma.facebookComment.findFirst({
+        where: {
+          psid: data.psid,
+          comment: data.comment,
+          commentedOn: data.commentedOn,
+        },
+      }),
+    create: async (data: {
+      psid: string;
+      comment: string;
+      commentedOn?: Date;
+      moreInfo?: unknown;
+    }) =>
+      prisma.facebookComment.create({
+        data: {
+          psid: data.psid,
+          comment: data.comment,
+          commentedOn: data.commentedOn ?? new Date(),
+          moreInfo: data.moreInfo === undefined ? undefined : toJson(data.moreInfo),
+        },
+      }),
+    listRecent: async ({
+      take = 300,
+    }: {
+      take?: number;
+    } = {}) =>
+      prisma.facebookComment.findMany({
+        orderBy: [{ commentedOn: 'desc' }, { id: 'desc' }],
         take,
       }),
   },

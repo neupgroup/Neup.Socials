@@ -47,6 +47,13 @@ type FacebookCommentDetailResponse = {
   };
 };
 
+export type FacebookPageScopedProfile = {
+  id: string;
+  first_name?: string;
+  last_name?: string;
+  profile_pic?: string;
+};
+
 type CommentActionResponse = {
   id: string;
 };
@@ -246,4 +253,20 @@ export async function postReplyToComment(
   });
 
   return handleApiResponse<CommentActionResponse>(res);
+}
+
+/**
+ * Fetches page-scoped profile details for a commenter PSID.
+ */
+export async function getPageScopedProfile(
+  psid: string,
+  pageToken: string
+): Promise<FacebookPageScopedProfile> {
+  const params = new URLSearchParams({
+    access_token: pageToken,
+    fields: 'first_name,last_name,profile_pic',
+  });
+
+  const res = await fetch(`${GRAPH_API_BASE_URL}/${psid}?${params.toString()}`);
+  return handleApiResponse<FacebookPageScopedProfile>(res);
 }

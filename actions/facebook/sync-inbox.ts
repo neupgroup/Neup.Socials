@@ -5,6 +5,7 @@ import { dataStore } from '@/lib/data-store';
 import { logError } from '@/lib/error-logging';
 import { getPageConversationsWithMessages } from '@/core/facebook/messages';
 import { getPagePostComments } from '@/core/facebook/comments';
+import { getPageScopedProfile } from '@/core/facebook/comments';
 
 type SyncResult = {
   success: boolean;
@@ -181,12 +182,35 @@ export async function syncFacebookCommentsAction(accountId: string): Promise<Syn
     let saved = 0;
 
     for (const item of comments) {
+      let resolvedName = item.commenterName;
+      let profilePic = '';
+
+      try {
+        const profile = await getPageScopedProfile(item.commenterId, pageToken);
+        const fullName = `${String(profile.first_name ?? '').trim()} ${String(profile.last_name ?? '').trim()}`.trim();
+        resolvedName = fullName || resolvedName;
+        profilePic = String(profile.profile_pic ?? '').trim();
+      } catch {
+        // Fallback to comment payload name if profile endpoint is unavailable.
+      }
+
       const commentor = await dataStore.commentors.upsertByPlatformProfileAndUser({
         platform: 'Facebook',
         onProfile: pageId,
         platformUserId: item.commenterId,
-        name: item.commenterName,
+        name: resolvedName,
         firstInteraction: new Date(item.createdTime),
+      });
+
+      await dataStore.identityPlatform.upsertWithUnified({
+        platform: 'facebook',
+        platUserId: item.commenterId,
+        name: resolvedName,
+        moreInfo: {
+          profilePic: profilePic || null,
+          pageId,
+          source: 'syncFacebookCommentsAction',
+        },
       });
 
       const platformCommentId = `facebook:${pageId}:${item.commentId}`;
@@ -206,13 +230,38 @@ export async function syncFacebookCommentsAction(accountId: string): Promise<Syn
         saved += 1;
       }
 
+      const commentedOn = new Date(item.createdTime);
+      const existingFacebookComment = await dataStore.facebookComments.findExisting({
+        psid: item.commenterId,
+        comment: item.commentText,
+        commentedOn,
+      });
+
+      if (!existingFacebookComment) {
+        await dataStore.facebookComments.create({
+          psid: item.commenterId,
+          comment: item.commentText,
+          commentedOn,
+          moreInfo: {
+            pageId,
+            commentId: item.commentId,
+            postId: item.postId,
+            postMessage: item.postMessage,
+            permalinkUrl: item.permalinkUrl,
+            commenterName: resolvedName,
+            commenterProfilePic: profilePic || null,
+            source: 'syncFacebookCommentsAction',
+          },
+        });
+      }
+
       await upsertConversationMessage({
         accountId,
         contactId: item.commenterId,
-        contactName: item.commenterName,
+        contactName: resolvedName,
         text: item.postId ? `Comment on ${item.postId}: ${item.commentText}` : `Comment: ${item.commentText}`,
         platformMessageId: `fb_comment:${accountId}:${item.commentId}`,
-        timestamp: new Date(item.createdTime),
+        timestamp: commentedOn,
         type: 'comment',
       });
     }

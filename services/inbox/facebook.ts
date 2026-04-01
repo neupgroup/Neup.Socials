@@ -5,6 +5,7 @@ import { dataStore } from '@/lib/data-store';
 import { logError } from '@/lib/error-logging';
 import { decrypt } from '@/lib/crypto';
 import { getPageCommentById } from '@/core/facebook/comments';
+import { getPageScopedProfile } from '@/core/facebook/comments';
 
 /**
  * Processes the incoming webhook payload from Facebook.
@@ -233,6 +234,7 @@ async function handleFeedCommentChange(pageId: string, change: any) {
     const postId = String(value?.post_id ?? value?.postId ?? '');
     let commentText = String(value?.message ?? '').trim();
     let commenterName = String(value?.from?.name ?? '').trim();
+    let commenterProfilePic = '';
 
     const accounts = await getFacebookAccountsByPageId(pageId);
     if (!accounts.length) {
@@ -249,6 +251,21 @@ async function handleFeedCommentChange(pageId: string, change: any) {
                 commenterName = commenterName || String(detailedComment?.from?.name ?? '').trim();
             } catch {
                 // Keep payload fallback values if detail lookup fails.
+            }
+        }
+    }
+
+    if (commenterId) {
+        const primary = accounts[0];
+        if (primary?.encryptedToken) {
+            try {
+                const token = await decrypt(primary.encryptedToken);
+                const profile = await getPageScopedProfile(commenterId, token);
+                const profileName = `${String(profile.first_name ?? '').trim()} ${String(profile.last_name ?? '').trim()}`.trim();
+                commenterName = profileName || commenterName;
+                commenterProfilePic = String(profile.profile_pic ?? '').trim();
+            } catch {
+                // Keep existing fallback if PSID profile lookup fails.
             }
         }
     }
@@ -273,6 +290,19 @@ async function handleFeedCommentChange(pageId: string, change: any) {
         firstInteraction: timestamp,
     });
 
+    await dataStore.identityPlatform.upsertWithUnified({
+        platform: 'facebook',
+        platUserId: commenterId,
+        name: displayName,
+        moreInfo: {
+            firstName: displayName.split(' ').slice(0, -1).join(' ') || displayName,
+            lastName: displayName.split(' ').slice(-1)[0] || '',
+            profilePic: commenterProfilePic || null,
+            pageId,
+            source: 'facebook.webhook.feed.comment',
+        },
+    });
+
     if (commentId) {
         const existingComment = await dataStore.comments.findByPlatformCommentId(`facebook:${pageId}:${commentId}`);
         if (!existingComment) {
@@ -286,6 +316,28 @@ async function handleFeedCommentChange(pageId: string, change: any) {
                 postId: postId || null,
                 postMessage: null,
                 permalinkUrl: null,
+            });
+        }
+
+        const existingFacebookComment = await dataStore.facebookComments.findExisting({
+            psid: commenterId,
+            comment: commentText,
+            commentedOn: timestamp,
+        });
+
+        if (!existingFacebookComment) {
+            await dataStore.facebookComments.create({
+                psid: commenterId,
+                comment: commentText,
+                commentedOn: timestamp,
+                moreInfo: {
+                    pageId,
+                    commentId,
+                    postId,
+                    commenterName: displayName,
+                    commenterProfilePic: commenterProfilePic || null,
+                    source: 'facebook.webhook.feed.comment',
+                },
             });
         }
     }

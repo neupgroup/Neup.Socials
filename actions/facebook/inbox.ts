@@ -13,6 +13,7 @@ export type FacebookInboxItem = {
   pageName: string;
   fromId: string;
   fromName: string;
+  fromProfilePic?: string;
   text: string;
   createdTime: string;
   postId?: string;
@@ -26,25 +27,20 @@ export async function listFacebookInboxFeedAction(): Promise<FacebookInboxItem[]
     (account) => account.platform === 'Facebook' && account.platformId && account.encryptedToken
   );
 
-  const pageIds = facebookAccounts.map((account) => account.platformId as string);
-  const savedComments = pageIds.length
-    ? await dataStore.comments.listByPlatformAndProfiles({
-        platform: 'Facebook',
-        onProfiles: pageIds,
-        take: 500,
-      })
-    : [];
+  const savedComments = await dataStore.facebookComments.listRecent({ take: 500 });
+  const uniquePsids = Array.from(new Set(savedComments.map((item) => item.psid)));
+  const identities = await Promise.all(
+    uniquePsids.map(async (psid) => {
+      const identity = await dataStore.identityPlatform.findByPlatformUserId({
+        platform: 'facebook',
+        platUserId: psid,
+      });
 
-  const commentsByPageId = new Map<string, typeof savedComments>();
-  for (const comment of savedComments) {
-    const existing = commentsByPageId.get(comment.onProfile);
-    if (existing) {
-      existing.push(comment);
-    } else {
-      commentsByPageId.set(comment.onProfile, [comment]);
-    }
-  }
+      return [psid, identity] as const;
+    })
+  );
 
+  const identityByPsid = new Map(identities);
   const perAccountResults = await Promise.all(
     facebookAccounts.map(async (account) => {
       try {
@@ -73,7 +69,12 @@ export async function listFacebookInboxFeedAction(): Promise<FacebookInboxItem[]
           });
         }
 
-        const comments = intents.includes('posts') ? (commentsByPageId.get(pageId) ?? []) : [];
+        const comments = intents.includes('posts')
+          ? savedComments.filter((item) => {
+              const moreInfo = (item.moreInfo ?? {}) as { pageId?: string };
+              return String(moreInfo.pageId ?? '') === pageId;
+            })
+          : [];
 
         const mappedMessages: FacebookInboxItem[] = messages.map((item) => ({
           id: `message_${item.messageId}`,
@@ -86,19 +87,36 @@ export async function listFacebookInboxFeedAction(): Promise<FacebookInboxItem[]
           createdTime: item.createdTime,
         }));
 
-        const mappedComments: FacebookInboxItem[] = comments.map((item: (typeof savedComments)[number]) => ({
-          id: `comment_${item.id}`,
-          type: 'comment',
-          pageId,
-          pageName: account.name || 'Facebook Page',
-          fromId: item.commentor.platformUserId,
-          fromName: item.commentor.name,
-          text: item.comment,
-          createdTime: item.on.toISOString(),
-          postId: item.postId ?? undefined,
-          postMessage: item.postMessage ?? undefined,
-          postPermalinkUrl: item.permalinkUrl ?? undefined,
-        }));
+        const mappedComments: FacebookInboxItem[] = comments.map((item: (typeof savedComments)[number]) => {
+          const identity = identityByPsid.get(item.psid);
+          const moreInfo = (item.moreInfo ?? {}) as {
+            postId?: string;
+            postMessage?: string;
+            permalinkUrl?: string;
+            commenterName?: string;
+            commenterProfilePic?: string;
+          };
+          const name = identity?.unified?.name || moreInfo.commenterName || `Facebook User ${item.psid.slice(-6)}`;
+          const profilePic =
+            typeof identity?.unified?.moreInfo === 'object' && identity?.unified?.moreInfo
+              ? String((identity.unified.moreInfo as { profilePic?: string }).profilePic ?? '')
+              : String(moreInfo.commenterProfilePic ?? '');
+
+          return {
+            id: `comment_${item.id}`,
+            type: 'comment',
+            pageId,
+            pageName: account.name || 'Facebook Page',
+            fromId: item.psid,
+            fromName: name,
+            fromProfilePic: profilePic || undefined,
+            text: item.comment,
+            createdTime: item.commentedOn.toISOString(),
+            postId: moreInfo.postId ?? undefined,
+            postMessage: moreInfo.postMessage ?? undefined,
+            postPermalinkUrl: moreInfo.permalinkUrl ?? undefined,
+          };
+        });
 
         return [...mappedMessages, ...mappedComments];
       } catch (error: any) {

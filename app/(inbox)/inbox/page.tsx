@@ -79,16 +79,34 @@ export default function InboxPage() {
               {facebookItems.map((item) => (
                 <div key={item.id} className="rounded-lg border bg-card p-4">
                   <div className="flex items-start justify-between gap-4">
-                    <div className="space-y-1 min-w-0">
-                      <p className="text-sm font-medium truncate">
-                        {item.fromName}
-                        <span className="ml-2 text-xs text-muted-foreground">
-                          on {item.pageName}
-                        </span>
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {item.type === 'comment' ? 'Post comment' : 'Message'}
-                      </p>
+                    <div className="flex items-start gap-3 min-w-0">
+                      {item.fromProfilePic ? (
+                        <img
+                          src={item.fromProfilePic}
+                          alt={item.fromName}
+                          className="h-9 w-9 rounded-full object-cover border"
+                        />
+                      ) : (
+                        <div className="h-9 w-9 rounded-full border bg-muted text-xs flex items-center justify-center">
+                          {item.fromName
+                            .split(' ')
+                            .map((part) => part[0])
+                            .join('')
+                            .slice(0, 2)
+                            .toUpperCase()}
+                        </div>
+                      )}
+                      <div className="space-y-1 min-w-0">
+                        <p className="text-sm font-medium truncate">
+                          {item.fromName}
+                          <span className="ml-2 text-xs text-muted-foreground">
+                            on {item.pageName}
+                          </span>
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {item.type === 'comment' ? 'Post comment' : 'Message'}
+                        </p>
+                      </div>
                     </div>
                     <span className="text-xs text-muted-foreground whitespace-nowrap">
                       {formatDistanceToNow(new Date(item.createdTime), { addSuffix: true })}
