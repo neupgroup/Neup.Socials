@@ -11,6 +11,30 @@ import { getPageCommentById } from '@/core/facebook/comments';
  * @param payload The full webhook payload from Meta.
  */
 export async function processFacebookWebhook(payload: any) {
+    return processFacebookWebhookByType(payload, {
+        includeMessaging: true,
+        includeFeedChanges: true,
+    });
+}
+
+export async function processFacebookMessagesWebhook(payload: any) {
+    return processFacebookWebhookByType(payload, {
+        includeMessaging: true,
+        includeFeedChanges: false,
+    });
+}
+
+export async function processFacebookFeedWebhook(payload: any) {
+    return processFacebookWebhookByType(payload, {
+        includeMessaging: false,
+        includeFeedChanges: true,
+    });
+}
+
+async function processFacebookWebhookByType(
+    payload: any,
+    options: { includeMessaging: boolean; includeFeedChanges: boolean }
+) {
     console.log('⚡ [Service] Starting Facebook webhook processing...');
 
     // Basic structure check - FB webhooks usually have 'object': 'page' or similar
@@ -33,14 +57,14 @@ export async function processFacebookWebhook(payload: any) {
         // or 'changes' for feed/other events.
 
         // Handle 'messaging' events (common for Messenger)
-        if (entry.messaging) {
+        if (options.includeMessaging && entry.messaging) {
             for (const messagingEvent of entry.messaging) {
                 await handleMessagingEvent(pageId, messagingEvent);
             }
         }
 
         // Handle 'changes' events (feed, etc.)
-        if (entry.changes) {
+        if (options.includeFeedChanges && entry.changes) {
             for (const change of entry.changes) {
                 await handleChangeEvent(pageId, change);
             }
@@ -152,8 +176,8 @@ async function handleMessagingEvent(pageId: string, event: any) {
             : new Date();
 
         await Promise.all(
-            accounts.map((account) =>
-                saveIncomingFacebookItem({
+            accounts.map(async (account) => {
+                await saveIncomingFacebookItem({
                     accountId: account.id,
                     contactId: senderId,
                     contactName: senderName,
@@ -161,8 +185,21 @@ async function handleMessagingEvent(pageId: string, event: any) {
                     platformMessageId: `fb_msg:${account.id}:${rawMessageId}`,
                     timestamp,
                     type: 'text',
-                })
-            )
+                });
+
+                await dataStore.syncLogEntries.create({
+                    type: 'messages',
+                    platform: 'facebook',
+                    forProfile: account.id,
+                    moreInfo: {
+                        source: 'facebook.webhook.messages',
+                        pageId,
+                        senderId,
+                        senderName,
+                        messageId: rawMessageId,
+                    },
+                });
+            })
         );
     } catch (error: any) {
         await logError({
@@ -254,8 +291,8 @@ async function handleFeedCommentChange(pageId: string, change: any) {
     }
 
     await Promise.all(
-        accounts.map((account) =>
-            saveIncomingFacebookItem({
+        accounts.map(async (account) => {
+            await saveIncomingFacebookItem({
                 accountId: account.id,
                 contactId: commenterId,
                 contactName: displayName,
@@ -263,8 +300,22 @@ async function handleFeedCommentChange(pageId: string, change: any) {
                 platformMessageId: `fb_comment:${account.id}:${commentId || `${commenterId}:${timestamp.getTime()}`}`,
                 timestamp,
                 type: 'comment',
-            })
-        )
+            });
+
+            await dataStore.syncLogEntries.create({
+                type: 'comments',
+                platform: 'facebook',
+                forProfile: account.id,
+                moreInfo: {
+                    source: 'facebook.webhook.feed',
+                    pageId,
+                    commenterId,
+                    commenterName: displayName,
+                    commentId,
+                    postId,
+                },
+            });
+        })
     );
 }
 

@@ -585,6 +585,48 @@ export const dataStore = {
         },
       }),
   },
+  syncLogEntries: {
+    listByProfile: async ({
+      platform,
+      forProfile,
+      type,
+      take = 100,
+    }: {
+      platform: string;
+      forProfile: string;
+      type?: string;
+      take?: number;
+    }) =>
+      prisma.syncLogEntry.findMany({
+        where: {
+          platform,
+          forProfile,
+          ...(type ? { type } : {}),
+        },
+        orderBy: [{ createdOn: 'desc' }, { id: 'desc' }],
+        take,
+      }),
+    create: async (data: {
+      type: 'info' | 'posts' | 'comments' | 'messages' | string;
+      platform: string;
+      forProfile: string;
+      sinceTime?: Date | null;
+      toTime?: Date | null;
+      moreInfo?: unknown;
+      createdOn?: Date;
+    }) =>
+      prisma.syncLogEntry.create({
+        data: {
+          type: data.type,
+          platform: data.platform,
+          forProfile: data.forProfile,
+          sinceTime: data.sinceTime ?? null,
+          toTime: data.toTime ?? null,
+          moreInfo: data.moreInfo === undefined ? undefined : toJson(data.moreInfo),
+          createdOn: data.createdOn ?? new Date(),
+        },
+      }),
+  },
   conversations: {
     list: async ({ take = 20 }: { take?: number } = {}) =>
       prisma.conversation.findMany({

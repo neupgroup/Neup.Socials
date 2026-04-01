@@ -119,6 +119,21 @@ model SyncLog {
   @@map("sync_logs")
 }
 
+model SyncLogEntry {
+  id         String   @id @default(cuid())
+  type       String
+  platform   String
+  forProfile String   @map("for_profile")
+  sinceTime  DateTime? @map("since_time")
+  toTime     DateTime? @map("to_time")
+  moreInfo   Json?    @map("moreinfo")
+  createdOn  DateTime @default(now()) @map("created_on")
+
+  @@index([platform, forProfile, createdOn])
+  @@index([type, createdOn])
+  @@map("sync_log")
+}
+
 model Conversation {
   id            String    @id @default(cuid())
   contactId     String

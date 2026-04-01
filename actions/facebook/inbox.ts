@@ -58,6 +58,21 @@ export async function listFacebookInboxFeedAction(): Promise<FacebookInboxItem[]
           ? await getPageConversationsWithMessages(pageId, await decrypt(account.encryptedToken as string))
           : [];
 
+        if (intents.includes('messages')) {
+          await dataStore.syncLogEntries.create({
+            type: 'messages',
+            platform: 'facebook',
+            forProfile: account.id,
+            moreInfo: {
+              accountId: account.id,
+              pageId,
+              pageName: account.name,
+              fetchedCount: messages.length,
+              source: 'listFacebookInboxFeedAction',
+            },
+          });
+        }
+
         const comments = intents.includes('posts') ? (commentsByPageId.get(pageId) ?? []) : [];
 
         const mappedMessages: FacebookInboxItem[] = messages.map((item) => ({
