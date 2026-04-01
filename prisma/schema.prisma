@@ -134,6 +134,28 @@ model SyncLogEntry {
   @@map("sync_log")
 }
 
+model Space {
+  id     String       @id @default(cuid())
+  name   String
+  assets SpaceAsset[]
+
+  @@map("space")
+}
+
+model SpaceAsset {
+  id       String  @id @default(cuid())
+  spaceId  String  @map("space_id")
+  platform String
+  assetId  String  @map("asset_id")
+  space    Space   @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  account  Account @relation(fields: [assetId], references: [account_id], onDelete: Cascade)
+
+  @@unique([spaceId, platform, assetId])
+  @@index([spaceId])
+  @@index([platform, assetId])
+  @@map("space_assets")
+}
+
 model Conversation {
   id            String    @id @default(cuid())
   contactId     String
@@ -210,8 +232,32 @@ model Comment {
   @@map("comments")
 }
 
+model IdentityUnified {
+  id              String             @id @default(cuid())
+  name            String
+  moreInfo        Json?              @map("more_info")
+  createdOn       DateTime           @default(now()) @map("created_on")
+  platformEntries IdentityPlatform[]
+
+  @@map("identity_unified")
+}
+
+model IdentityPlatform {
+  id         String          @id @default(cuid())
+  platUserId String          @map("platuserid")
+  platform   String
+  unifiedId  String          @map("unified_id")
+  unified    IdentityUnified  @relation(fields: [unifiedId], references: [id], onDelete: Cascade)
+
+  @@unique([platform, platUserId])
+  @@index([unifiedId])
+  @@index([platform, platUserId])
+  @@map("identity_platform")
+}
+
 model Account {
-  account_id String @id
+  account_id  String       @id
+  spaceAssets SpaceAsset[]
 
   @@map("accounts")
 }

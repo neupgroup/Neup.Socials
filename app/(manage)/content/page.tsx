@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { PlusCircle, Loader2, Search, Twitter, Facebook, Linkedin, Instagram, MoreHorizontal } from 'lucide-react';
+import { PlusCircle, Loader2, Search, Twitter, Facebook, Linkedin, Instagram, MoreHorizontal, ThumbsUp, MessageSquare, Share2, Repeat2, Eye } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Input } from '@/components/ui/input';
 import {
@@ -24,7 +24,55 @@ type Post = {
   createdOn: string | null;
   postLink: string | null;
   postCollectionId: string | null;
+  analytics?: Record<string, unknown> | null;
 };
+
+type BasicStats = {
+  likes?: number;
+  comments?: number;
+  shares?: number;
+  reposts?: number;
+  views?: number;
+};
+
+const toNumber = (value: unknown): number | undefined => {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
+};
+
+const pickMetric = (source: Record<string, unknown>, keys: string[]): number | undefined => {
+  for (const key of keys) {
+    const metric = toNumber(source[key]);
+    if (metric !== undefined) {
+      return metric;
+    }
+  }
+  return undefined;
+};
+
+const getBasicStats = (analytics?: Record<string, unknown> | null): BasicStats => {
+  if (!analytics || typeof analytics !== 'object') return {};
+
+  return {
+    likes: pickMetric(analytics, ['likes', 'likeCount', 'reactions', 'reactionCount']),
+    comments: pickMetric(analytics, ['comments', 'commentCount', 'replyCount']),
+    shares: pickMetric(analytics, ['shares', 'shareCount']),
+    reposts: pickMetric(analytics, ['reposts', 'repostCount', 'reshares']),
+    views: pickMetric(analytics, ['views', 'viewCount', 'impressions', 'impressionCount']),
+  };
+};
+
+const StatItem = ({ label, value, icon }: { label: string; value: number; icon: React.ReactNode }) => (
+  <div className="inline-flex items-center gap-1.5 rounded-md border bg-muted/40 px-2 py-1 text-xs text-muted-foreground">
+    {icon}
+    <span className="font-medium text-foreground">{value.toLocaleString()}</span>
+    <span>{label}</span>
+  </div>
+);
 
 const PlatformIcon = ({ platform }: { platform: string }) => {
     switch(platform) {
@@ -158,6 +206,26 @@ export default function ContentDashboardPage() {
                                     <p className="text-sm text-muted-foreground">
                                         Published {post.createdOn ? formatDistanceToNow(new Date(post.createdOn), { addSuffix: true }) : 'on an unknown date'}
                                     </p>
+                                    {(() => {
+                                      const stats = getBasicStats(post.analytics);
+                                      const statEntries: Array<{ key: string; value: number; label: string; icon: React.ReactNode }> = [];
+
+                                      if (stats.likes !== undefined) statEntries.push({ key: 'likes', value: stats.likes, label: 'Likes', icon: <ThumbsUp className="h-3 w-3" /> });
+                                      if (stats.comments !== undefined) statEntries.push({ key: 'comments', value: stats.comments, label: 'Comments', icon: <MessageSquare className="h-3 w-3" /> });
+                                      if (stats.shares !== undefined) statEntries.push({ key: 'shares', value: stats.shares, label: 'Shares', icon: <Share2 className="h-3 w-3" /> });
+                                      if (stats.reposts !== undefined) statEntries.push({ key: 'reposts', value: stats.reposts, label: 'Reposts', icon: <Repeat2 className="h-3 w-3" /> });
+                                      if (stats.views !== undefined) statEntries.push({ key: 'views', value: stats.views, label: 'Views', icon: <Eye className="h-3 w-3" /> });
+
+                                      if (statEntries.length === 0) return null;
+
+                                      return (
+                                        <div className="mt-2 flex flex-wrap gap-2">
+                                          {statEntries.map((entry) => (
+                                            <StatItem key={entry.key} label={entry.label} value={entry.value} icon={entry.icon} />
+                                          ))}
+                                        </div>
+                                      );
+                                    })()}
                                 </div>
                             </div>
                             
