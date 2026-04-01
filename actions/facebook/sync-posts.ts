@@ -43,10 +43,10 @@ async function createSyncLog(accountId: string, status: 'Success' | 'Failed', de
 
 
 /**
- * Fetches posts from a Facebook Page and stores them in Firestore.
+ * Fetches posts from a Facebook Page and stores them in the data store.
  * Implements an intelligent sync logic to avoid re-fetching all posts.
  * Can take optional since/until timestamps to fetch specific ranges.
- * @param accountId The Firestore document ID of the connected account.
+ * @param accountId The connected account record ID in the data store.
  * @param options Optional object with since and until Unix timestamps.
  * @returns An object indicating success and the number of new posts synced.
  */

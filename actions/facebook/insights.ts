@@ -90,7 +90,7 @@ export async function getConnectedAccounts(ownerId: string = 'neupkishor'): Prom
 
 /**
  * Fetches key insights for a specific Facebook Page.
- * @param accountId The Firestore document ID of the connected account.
+ * @param accountId The connected account record ID in the data store.
  * @returns An object containing key insights.
  */
 export async function getPageInsightsAction(

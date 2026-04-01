@@ -21,7 +21,7 @@ type GetPostAnalyticsResult = {
 
 /**
  * Fetches key insights for a specific Facebook Post.
- * @param postId The Firestore document ID of the post in the 'posts' collection.
+ * @param postId The Post record ID in the data store.
  * @returns An object containing key post analytics.
  */
 export async function getPostAnalyticsAction(postId: string): Promise<GetPostAnalyticsResult> {
@@ -29,7 +29,7 @@ export async function getPostAnalyticsAction(postId: string): Promise<GetPostAna
     const postData = await dataStore.posts.getById(postId);
 
     if (!postData) {
-      throw new Error('Post not found in Firestore.');
+      throw new Error('Post not found in data store.');
     }
     const { platformPostId, accountId } = postData;
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { handleFacebookCallback } from '@/actions/facebook/callback';
 import { logError } from '@/lib/error-logging';
+import { toAppUrl } from '@/lib/app-url';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -16,7 +17,7 @@ export async function GET(request: NextRequest) {
       errorMessage: errorDescription || 'User denied the request or an error occurred.',
       context: { error, errorDescription },
     });
-    return NextResponse.redirect(new URL('/accounts/add?error=facebook-denied', request.url));
+    return NextResponse.redirect(toAppUrl('/accounts/add?error=facebook-denied'));
   }
 
   if (!code || !state) {
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
       location: 'GET /bridge/callback.v1/auth.facebook',
       errorMessage: 'Missing code or state parameter in callback.',
     });
-    return NextResponse.redirect(new URL('/accounts/add?error=invalid-callback', request.url));
+    return NextResponse.redirect(toAppUrl('/accounts/add?error=invalid-callback'));
   }
 
   state = decodeURIComponent(state);
@@ -33,8 +34,8 @@ export async function GET(request: NextRequest) {
   const result = await handleFacebookCallback(code, state);
 
   if (result.success) {
-    return NextResponse.redirect(new URL('/accounts?status=success', request.url));
+    return NextResponse.redirect(toAppUrl('/accounts?status=success'));
   }
 
-  return NextResponse.redirect(new URL(`/accounts/add?error=${result.error}`, request.url));
+  return NextResponse.redirect(toAppUrl(`/accounts/add?error=${encodeURIComponent(result.error ?? 'callback-failed')}`));
 }
