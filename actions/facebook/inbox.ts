@@ -3,7 +3,6 @@
 import { decrypt } from '@/lib/crypto';
 import { dataStore } from '@/lib/data-store';
 import { logError } from '@/lib/error-logging';
-import { getPagePostComments } from '@/core/facebook/comments';
 import { getPageConversationsWithMessages } from '@/core/facebook/messages';
 import { type FacebookAuthIntent } from './auth-intents';
 
@@ -27,20 +26,39 @@ export async function listFacebookInboxFeedAction(): Promise<FacebookInboxItem[]
     (account) => account.platform === 'Facebook' && account.platformId && account.encryptedToken
   );
 
+  const pageIds = facebookAccounts.map((account) => account.platformId as string);
+  const savedComments = pageIds.length
+    ? await dataStore.comments.listByPlatformAndProfiles({
+        platform: 'Facebook',
+        onProfiles: pageIds,
+        take: 500,
+      })
+    : [];
+
+  const commentsByPageId = new Map<string, typeof savedComments>();
+  for (const comment of savedComments) {
+    const existing = commentsByPageId.get(comment.onProfile);
+    if (existing) {
+      existing.push(comment);
+    } else {
+      commentsByPageId.set(comment.onProfile, [comment]);
+    }
+  }
+
   const perAccountResults = await Promise.all(
     facebookAccounts.map(async (account) => {
       try {
         const pageId = account.platformId as string;
-        const pageToken = await decrypt(account.encryptedToken as string);
         const accountMetadata = (account.metadata ?? {}) as { authIntents?: FacebookAuthIntent[] };
         const intents = Array.isArray(accountMetadata.authIntents) && accountMetadata.authIntents.length > 0
           ? accountMetadata.authIntents
           : (['posts'] as FacebookAuthIntent[]);
 
-        const [messages, comments] = await Promise.all([
-          intents.includes('messages') ? getPageConversationsWithMessages(pageId, pageToken) : Promise.resolve([]),
-          intents.includes('posts') ? getPagePostComments(pageId, pageToken) : Promise.resolve([]),
-        ]);
+        const messages = intents.includes('messages')
+          ? await getPageConversationsWithMessages(pageId, await decrypt(account.encryptedToken as string))
+          : [];
+
+        const comments = intents.includes('posts') ? (commentsByPageId.get(pageId) ?? []) : [];
 
         const mappedMessages: FacebookInboxItem[] = messages.map((item) => ({
           id: `message_${item.messageId}`,
@@ -53,18 +71,18 @@ export async function listFacebookInboxFeedAction(): Promise<FacebookInboxItem[]
           createdTime: item.createdTime,
         }));
 
-        const mappedComments: FacebookInboxItem[] = comments.map((item) => ({
-          id: `comment_${item.commentId}`,
+        const mappedComments: FacebookInboxItem[] = comments.map((item: (typeof savedComments)[number]) => ({
+          id: `comment_${item.id}`,
           type: 'comment',
           pageId,
           pageName: account.name || 'Facebook Page',
-          fromId: item.commenterId,
-          fromName: item.commenterName,
-          text: item.commentText,
-          createdTime: item.createdTime,
-          postId: item.postId,
-          postMessage: item.postMessage,
-          postPermalinkUrl: item.permalinkUrl,
+          fromId: item.commentor.platformUserId,
+          fromName: item.commentor.name,
+          text: item.comment,
+          createdTime: item.on.toISOString(),
+          postId: item.postId ?? undefined,
+          postMessage: item.postMessage ?? undefined,
+          postPermalinkUrl: item.permalinkUrl ?? undefined,
         }));
 
         return [...mappedMessages, ...mappedComments];

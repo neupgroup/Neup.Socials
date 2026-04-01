@@ -680,4 +680,83 @@ export const dataStore = {
         },
       }),
   },
+  commentors: {
+    upsertByPlatformProfileAndUser: async (data: {
+      platform: string;
+      onProfile: string;
+      platformUserId: string;
+      name: string;
+      firstInteraction?: Date;
+    }) =>
+      prisma.commentor.upsert({
+        where: {
+          platform_onProfile_platformUserId: {
+            platform: data.platform,
+            onProfile: data.onProfile,
+            platformUserId: data.platformUserId,
+          },
+        },
+        update: {
+          name: data.name,
+          firstInteraction: data.firstInteraction,
+        },
+        create: {
+          platform: data.platform,
+          onProfile: data.onProfile,
+          platformUserId: data.platformUserId,
+          name: data.name,
+          firstInteraction: data.firstInteraction ?? new Date(),
+        },
+      }),
+  },
+  comments: {
+    findByPlatformCommentId: async (platformCommentId: string) =>
+      prisma.comment.findUnique({
+        where: { platformCommentId },
+        include: { commentor: true },
+      }),
+    create: async (data: {
+      by: string;
+      onProfile: string;
+      comment: string;
+      on?: Date;
+      platform: string;
+      platformCommentId?: string | null;
+      postId?: string | null;
+      postMessage?: string | null;
+      permalinkUrl?: string | null;
+    }) =>
+      prisma.comment.create({
+        data: {
+          by: data.by,
+          onProfile: data.onProfile,
+          comment: data.comment,
+          on: data.on ?? new Date(),
+          platform: data.platform,
+          platformCommentId: data.platformCommentId,
+          postId: data.postId,
+          postMessage: data.postMessage,
+          permalinkUrl: data.permalinkUrl,
+        },
+        include: { commentor: true },
+      }),
+    listByPlatformAndProfiles: async ({
+      platform,
+      onProfiles,
+      take = 200,
+    }: {
+      platform: string;
+      onProfiles: string[];
+      take?: number;
+    }) =>
+      prisma.comment.findMany({
+        where: {
+          platform,
+          onProfile: { in: onProfiles },
+        },
+        include: { commentor: true },
+        orderBy: [{ on: 'desc' }, { id: 'desc' }],
+        take,
+      }),
+  },
 };

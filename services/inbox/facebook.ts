@@ -228,6 +228,31 @@ async function handleFeedCommentChange(pageId: string, change: any) {
         ? `Comment on ${postId}: ${commentText}`
         : `Comment: ${commentText}`;
 
+    const primaryCommentor = await dataStore.commentors.upsertByPlatformProfileAndUser({
+        platform: 'Facebook',
+        onProfile: pageId,
+        platformUserId: commenterId,
+        name: displayName,
+        firstInteraction: timestamp,
+    });
+
+    if (commentId) {
+        const existingComment = await dataStore.comments.findByPlatformCommentId(`facebook:${pageId}:${commentId}`);
+        if (!existingComment) {
+            await dataStore.comments.create({
+                by: primaryCommentor.id,
+                onProfile: pageId,
+                comment: commentText,
+                on: timestamp,
+                platform: 'Facebook',
+                platformCommentId: `facebook:${pageId}:${commentId}`,
+                postId: postId || null,
+                postMessage: null,
+                permalinkUrl: null,
+            });
+        }
+    }
+
     await Promise.all(
         accounts.map((account) =>
             saveIncomingFacebookItem({

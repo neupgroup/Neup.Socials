@@ -161,6 +161,40 @@ model SystemAlert {
   @@map("system_alerts")
 }
 
+model Commentor {
+  id               String    @id @default(cuid())
+  platform         String
+  onProfile        String    @map("on_profile")
+  platformUserId   String    @map("platform_user_id")
+  name             String
+  firstInteraction DateTime  @default(now()) @map("first_interaction")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  comments         Comment[]
+
+  @@unique([platform, onProfile, platformUserId])
+  @@index([platform, onProfile])
+  @@map("commentors")
+}
+
+model Comment {
+  id                String    @id @default(cuid())
+  by                String
+  onProfile         String    @map("on_profile")
+  comment           String    @db.Text
+  on                DateTime
+  platform          String
+  platformCommentId String?   @unique @map("platform_comment_id")
+  postId            String?   @map("post_id")
+  postMessage       String?   @map("post_message") @db.Text
+  permalinkUrl      String?   @map("permalink_url")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  commentor         Commentor @relation(fields: [by], references: [id], onDelete: Cascade)
+
+  @@index([platform, onProfile, on])
+  @@index([by, on])
+  @@map("comments")
+}
+
 model Account {
   account_id String @id
 
