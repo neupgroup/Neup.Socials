@@ -61,9 +61,39 @@ export async function fetchPostCommentsAction(
     }
 
     const response = await getPostComments(post.platformPostId, pageToken, 50);
+
+    const onProfile = account.platformId ?? '';
+    const comments = await Promise.all(
+      (response.data || []).map(async (comment) => {
+        const commenterId = String(comment?.from?.id ?? '').trim();
+        let commenterName = String(comment?.from?.name ?? '').trim();
+
+        if (!commenterName && onProfile && commenterId) {
+          const savedCommentor = await dataStore.commentors.findByPlatformProfileAndUser({
+            platform: 'facebook',
+            onProfile,
+            platformUserId: commenterId,
+          });
+          commenterName = String(savedCommentor?.name ?? '').trim();
+        }
+
+        if (!commenterName) {
+          commenterName = commenterId ? `Facebook User ${commenterId.slice(-6)}` : 'Facebook User';
+        }
+
+        return {
+          ...comment,
+          from: {
+            id: commenterId,
+            name: commenterName,
+          },
+        };
+      })
+    );
+
     return {
       success: true,
-      comments: response.data || [],
+      comments,
     };
   } catch (error) {
     const err = error as Error;

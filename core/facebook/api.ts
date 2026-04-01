@@ -671,7 +671,7 @@ export async function getPostComments(
 ): Promise<GetPostCommentsResponse> {
   const params = new URLSearchParams({
     access_token: pageToken,
-    fields: 'id,message,created_time,from',
+    fields: 'id,message,created_time,from{id,name}',
     limit: String(limit),
   });
 

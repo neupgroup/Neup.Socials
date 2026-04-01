@@ -723,6 +723,20 @@ export const dataStore = {
       }),
   },
   commentors: {
+    findByPlatformProfileAndUser: async (data: {
+      platform: string;
+      onProfile: string;
+      platformUserId: string;
+    }) =>
+      prisma.commentor.findUnique({
+        where: {
+          platform_onProfile_platformUserId: {
+            platform: data.platform,
+            onProfile: data.onProfile,
+            platformUserId: data.platformUserId,
+          },
+        },
+      }),
     upsertByPlatformProfileAndUser: async (data: {
       platform: string;
       onProfile: string;
