@@ -1,9 +1,15 @@
 /**
  * @fileoverview Core functions for Facebook Page post comments.
+ * 
+ * Uses v25.0 (current version) aligned with Meta's Facebook Login for Business
+ * and Pages API specifications.
+ * 
+ * @see https://developers.facebook.com/docs/pages-api/comments
+ * @see https://developers.facebook.com/docs/pages-api/posts
  */
 'use server';
 
-const API_VERSION = 'v23.0';
+const API_VERSION = 'v25.0';
 const GRAPH_API_BASE_URL = `https://graph.facebook.com/${API_VERSION}`;
 
 type ErrorResponse = {
@@ -38,6 +44,39 @@ type FacebookCommentDetailResponse = {
   from?: {
     id: string;
     name: string;
+  };
+};
+
+type CommentActionResponse = {
+  id: string;
+};
+
+type FacebookCommentWithRepliesResponse = {
+  data: Array<{
+    id: string;
+    message?: string;
+    created_time?: string;
+    from?: {
+      id: string;
+      name: string;
+    };
+    comments?: {
+      data?: Array<{
+        id: string;
+        message?: string;
+        created_time?: string;
+        from?: {
+          id: string;
+          name: string;
+        };
+      }>;
+    };
+  }>;
+  paging?: {
+    cursors?: {
+      before?: string;
+      after?: string;
+    };
   };
 };
 
@@ -129,4 +168,82 @@ export async function getPageCommentById(
 
   const res = await fetch(`${GRAPH_API_BASE_URL}/${commentId}?${params.toString()}`);
   return handleApiResponse<FacebookCommentDetailResponse>(res);
+}
+
+/**
+ * Fetches comments on a specific post with optional replies.
+ * Aligned with Pages API v25.0
+ * @see https://developers.facebook.com/docs/pages-api/posts
+ */
+export async function getPostComments(
+  postId: string,
+  pageToken: string,
+  options?: {
+    limit?: number;
+    includeReplies?: boolean;
+  }
+): Promise<FacebookCommentWithRepliesResponse> {
+  const limit = options?.limit ?? 25;
+  const fields = options?.includeReplies 
+    ? `id,message,created_time,from,comments.limit(10){id,message,created_time,from}` 
+    : 'id,message,created_time,from';
+
+  const params = new URLSearchParams({
+    access_token: pageToken,
+    fields,
+    limit: String(limit),
+  });
+
+  const res = await fetch(`${GRAPH_API_BASE_URL}/${postId}/comments?${params.toString()}`);
+  return handleApiResponse<FacebookCommentWithRepliesResponse>(res);
+}
+
+/**
+ * Posts a comment on a Facebook Page post.
+ * @param postId The ID of the post to comment on
+ * @param pageToken The Page Access Token with pages_manage_engagement permission
+ * @param message The comment text (can include @mentions as @[PSID])
+ * @see https://developers.facebook.com/docs/pages-api/comments
+ */
+export async function postCommentOnPost(
+  postId: string,
+  pageToken: string,
+  message: string
+): Promise<CommentActionResponse> {
+  const params = new URLSearchParams({
+    access_token: pageToken,
+    message,
+  });
+
+  const res = await fetch(`${GRAPH_API_BASE_URL}/${postId}/comments`, {
+    method: 'POST',
+    body: params,
+  });
+
+  return handleApiResponse<CommentActionResponse>(res);
+}
+
+/**
+ * Posts a reply to a comment on a Facebook Page.
+ * @param commentId The ID of the comment to reply to
+ * @param pageToken The Page Access Token with pages_manage_engagement permission
+ * @param message The reply text (can include @mentions as @[PSID] or @[PSID,PSID])
+ * @see https://developers.facebook.com/docs/pages-api/comments
+ */
+export async function postReplyToComment(
+  commentId: string,
+  pageToken: string,
+  message: string
+): Promise<CommentActionResponse> {
+  const params = new URLSearchParams({
+    access_token: pageToken,
+    message,
+  });
+
+  const res = await fetch(`${GRAPH_API_BASE_URL}/${commentId}`, {
+    method: 'POST',
+    body: params,
+  });
+
+  return handleApiResponse<CommentActionResponse>(res);
 }

@@ -49,8 +49,10 @@ function scopesForIntents(intents: FacebookAuthIntent[]): string[] {
     // Feed/Posts management:
     // - pages_read_engagement: Read page posts and analytics.
     // - pages_manage_posts: Create and manage page posts.
+    // - pages_manage_engagement: Moderate and manage comments. Requires Advanced Access Approval.
     scopes.add('pages_read_engagement');
     scopes.add('pages_manage_posts');
+    scopes.add('pages_manage_engagement');
   }
 
   return Array.from(scopes);

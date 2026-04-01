@@ -9,11 +9,13 @@ import useSWR from 'swr';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, ArrowLeft, Edit, Trash2, ExternalLink, ThumbsUp, MessageSquare, Share2 } from 'lucide-react';
+import { Loader2, ArrowLeft, Edit, Trash2, ExternalLink, ThumbsUp, MessageSquare, Share2, Send, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { Textarea } from '@/components/ui/textarea';
 import { getPostAnalyticsAction } from '@/actions/facebook/post-insights';
 import { deletePostAction, getPostAction, getPostCollectionAction } from '@/actions/db';
+import { fetchPostCommentsAction, postCommentAction, postReplyAction } from '@/actions/facebook/comments';
 
 type Post = {
   id: string;
@@ -28,6 +30,16 @@ type Post = {
 };
 
 const analyticsFetcher = (postId: string) => getPostAnalyticsAction(postId);
+
+type Comment = {
+  id: string;
+  message?: string;
+  created_time?: string;
+  from?: {
+    id: string;
+    name: string;
+  };
+};
 
 const PostAnalytics = ({ postId }: { postId: string }) => {
     const { data, error, isLoading } = useSWR(postId ? `${postId}-analytics` : null, () => analyticsFetcher(postId));
@@ -53,6 +65,158 @@ const PostAnalytics = ({ postId }: { postId: string }) => {
             </div>
         </div>
     );
+};
+
+const PostComments = ({ postId, platform }: { postId: string; platform: string | null }) => {
+  const { toast } = useToast();
+  const [comments, setComments] = React.useState<Comment[]>([]);
+  const [newComment, setNewComment] = React.useState('');
+  const [replyingToId, setReplyingToId] = React.useState<string | null>(null);
+  const [replyText, setReplyText] = React.useState('');
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [isPosting, setIsPosting] = React.useState(false);
+
+  const fetchComments = async () => {
+    if (platform !== 'facebook') return;
+    setIsLoading(true);
+    try {
+      const result = await fetchPostCommentsAction(postId);
+      if (result.success && result.comments) {
+        setComments(result.comments);
+      } else {
+        toast({ title: 'Failed to load comments', description: result.error, variant: 'destructive' });
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchComments();
+  }, [postId, platform]);
+
+  const handlePostComment = async () => {
+    if (!newComment.trim()) return;
+    setIsPosting(true);
+    try {
+      const result = await postCommentAction(postId, newComment);
+      if (result.success) {
+        toast({ title: 'Comment posted successfully' });
+        setNewComment('');
+        await fetchComments();
+      } else {
+        toast({ title: 'Failed to post comment', description: result.error, variant: 'destructive' });
+      }
+    } finally {
+      setIsPosting(false);
+    }
+  };
+
+  const handlePostReply = async (commentId: string) => {
+    if (!replyText.trim()) return;
+    setIsPosting(true);
+    try {
+      const result = await postReplyAction(commentId, postId, replyText);
+      if (result.success) {
+        toast({ title: 'Reply posted successfully' });
+        setReplyText('');
+        setReplyingToId(null);
+        await fetchComments();
+      } else {
+        toast({ title: 'Failed to post reply', description: result.error, variant: 'destructive' });
+      }
+    } finally {
+      setIsPosting(false);
+    }
+  };
+
+  if (platform !== 'facebook') {
+    return <p className="text-sm text-muted-foreground">Comments are only available for Facebook posts.</p>;
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold">Comments ({comments.length})</h3>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={fetchComments}
+          disabled={isLoading}
+        >
+          <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+        </Button>
+      </div>
+
+      <div className="space-y-3">
+        <Textarea
+          placeholder="Post a comment as your page..."
+          value={newComment}
+          onChange={(e) => setNewComment(e.target.value)}
+          disabled={isPosting}
+          className="min-h-20"
+        />
+        <Button
+          onClick={handlePostComment}
+          disabled={isPosting || !newComment.trim()}
+          className="w-full"
+        >
+          {isPosting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+          Post Comment
+        </Button>
+      </div>
+
+      <div className="space-y-4 mt-6">
+        {isLoading ? (
+          <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin" /></div>
+        ) : comments.length === 0 ? (
+          <p className="text-center text-muted-foreground py-8">No comments yet.</p>
+        ) : (
+          comments.map((comment) => (
+            <div key={comment.id} className="border rounded-lg p-4 bg-muted/30 space-y-2">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="font-semibold text-sm">{comment.from?.name || 'Unknown'}</p>
+                  {comment.created_time && (
+                    <p className="text-xs text-muted-foreground">{format(new Date(comment.created_time), 'PPp')}</p>
+                  )}
+                </div>
+              </div>
+              <p className="text-sm whitespace-pre-wrap">{comment.message}</p>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setReplyingToId(replyingToId === comment.id ? null : comment.id)}
+              >
+                {replyingToId === comment.id ? 'Cancel Reply' : 'Reply'}
+              </Button>
+
+              {replyingToId === comment.id && (
+                <div className="mt-3 pt-3 border-t space-y-2">
+                  <Textarea
+                    placeholder="Write a reply..."
+                    value={replyText}
+                    onChange={(e) => setReplyText(e.target.value)}
+                    disabled={isPosting}
+                    className="min-h-16"
+                  />
+                  <Button
+                    onClick={() => handlePostReply(comment.id)}
+                    disabled={isPosting || !replyText.trim()}
+                    size="sm"
+                    className="w-full"
+                  >
+                    {isPosting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                    Post Reply
+                  </Button>
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default function ViewPostPage() {
@@ -168,7 +332,7 @@ export default function ViewPostPage() {
         </CardContent>
       </Card>
       
-      {post.platform === 'Facebook' && (
+      {post.platform === 'facebook' && (
         <Card>
             <CardHeader>
                 <CardTitle>Post Analytics</CardTitle>
@@ -176,6 +340,18 @@ export default function ViewPostPage() {
             </CardHeader>
             <CardContent>
                 <PostAnalytics postId={post.id} />
+            </CardContent>
+        </Card>
+      )}
+
+      {post.platform === 'facebook' && (
+        <Card>
+            <CardHeader>
+                <CardTitle>Comments & Replies</CardTitle>
+                <CardDescription>View and manage comments on this post.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <PostComments postId={post.id} platform={post.platform} />
             </CardContent>
         </Card>
       )}

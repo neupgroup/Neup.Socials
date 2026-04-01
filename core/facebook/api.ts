@@ -173,6 +173,30 @@ export type PageRatingsResponse = {
   };
 };
 
+export type PostComment = {
+  id: string;
+  message?: string;
+  created_time?: string;
+  from?: {
+    id: string;
+    name: string;
+  };
+};
+
+export type GetPostCommentsResponse = {
+  data: PostComment[];
+  paging?: {
+    cursors?: {
+      before?: string;
+      after?: string;
+    };
+  };
+};
+
+export type PostCommentResponse = {
+  id: string;
+};
+
 
 async function handleApiResponse<T>(res: Response): Promise<T> {
   const json = await res.json();
@@ -631,4 +655,78 @@ export async function publishToPage(
   });
 
   return handleApiResponse<PublishPostResponse>(res);
+}
+
+/**
+ * Fetches comments on a specific post.
+ * @param postId The ID of the post to fetch comments for
+ * @param pageToken The Page Access Token with pages_read_engagement permission
+ * @param limit Maximum number of comments to fetch (default: 25)
+ * @see https://developers.facebook.com/docs/pages-api/posts
+ */
+export async function getPostComments(
+  postId: string,
+  pageToken: string,
+  limit = 25
+): Promise<GetPostCommentsResponse> {
+  const params = new URLSearchParams({
+    access_token: pageToken,
+    fields: 'id,message,created_time,from',
+    limit: String(limit),
+  });
+
+  const res = await fetch(`${GRAPH_API_BASE_URL}/${postId}/comments?${params.toString()}`);
+  return handleApiResponse<GetPostCommentsResponse>(res);
+}
+
+/**
+ * Posts a comment on a Facebook Page post.
+ * Page will be the author of the comment.
+ * @param postId The ID of the post to comment on
+ * @param pageToken The Page Access Token with pages_manage_engagement permission
+ * @param message The comment text (can include @mentions as @[PSID])
+ * @see https://developers.facebook.com/docs/pages-api/comments
+ */
+export async function postCommentOnPost(
+  postId: string,
+  pageToken: string,
+  message: string
+): Promise<PostCommentResponse> {
+  const params = new URLSearchParams({
+    access_token: pageToken,
+    message,
+  });
+
+  const res = await fetch(`${GRAPH_API_BASE_URL}/${postId}/comments`, {
+    method: 'POST',
+    body: params,
+  });
+
+  return handleApiResponse<PostCommentResponse>(res);
+}
+
+/**
+ * Posts a reply to a comment on a Facebook Page.
+ * Page will be the author of the reply.
+ * @param commentId The ID of the comment to reply to
+ * @param pageToken The Page Access Token with pages_manage_engagement permission
+ * @param message The reply text (can include @mentions as @[PSID] or @[PSID,PSID])
+ * @see https://developers.facebook.com/docs/pages-api/comments
+ */
+export async function postReplyToComment(
+  commentId: string,
+  pageToken: string,
+  message: string
+): Promise<PostCommentResponse> {
+  const params = new URLSearchParams({
+    access_token: pageToken,
+    message,
+  });
+
+  const res = await fetch(`${GRAPH_API_BASE_URL}/${commentId}`, {
+    method: 'POST',
+    body: params,
+  });
+
+  return handleApiResponse<PostCommentResponse>(res);
 }
