@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import Link from 'next/link';
 import { MessageSquare, Inbox, Loader2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { listFacebookInboxFeedAction, type FacebookInboxItem } from '@/actions/facebook/inbox';
@@ -132,7 +133,16 @@ export default function InboxPage() {
                       )}
                       <div className="space-y-1 min-w-0">
                         <p className="text-sm font-medium truncate">
-                          {item.fromName}
+                          {item.type === 'comment' ? (
+                            <Link
+                              href={`/user/${encodeURIComponent(item.fromId)}?platform=facebook&accountId=${encodeURIComponent(item.accountId)}`}
+                              className="underline-offset-4 hover:underline"
+                            >
+                              {item.fromName}
+                            </Link>
+                          ) : (
+                            item.fromName
+                          )}
                           <span className="ml-2 text-xs text-muted-foreground">
                             on {item.pageName}
                           </span>

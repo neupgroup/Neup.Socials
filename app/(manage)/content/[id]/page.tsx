@@ -83,7 +83,7 @@ const PostAnalytics = ({ postId }: { postId: string }) => {
     );
 };
 
-const PostComments = ({ postId, platform }: { postId: string; platform: string | null }) => {
+const PostComments = ({ postId, platform, accountId }: { postId: string; platform: string | null; accountId?: string | null }) => {
   const { toast } = useToast();
   const [comments, setComments] = React.useState<Comment[]>([]);
   const [newComment, setNewComment] = React.useState('');
@@ -192,7 +192,18 @@ const PostComments = ({ postId, platform }: { postId: string; platform: string |
             <div key={comment.id} className="border rounded-lg p-4 bg-muted/30 space-y-2">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-semibold text-sm">{comment.from?.name || 'Unknown'}</p>
+                  <p className="font-semibold text-sm">
+                    {comment.from?.id ? (
+                      <Link
+                        href={`/user/${encodeURIComponent(comment.from.id)}?platform=facebook${accountId ? `&accountId=${encodeURIComponent(accountId)}` : ''}`}
+                        className="underline-offset-4 hover:underline"
+                      >
+                        {comment.from?.name || 'Facebook User'}
+                      </Link>
+                    ) : (
+                      comment.from?.name || 'Unknown'
+                    )}
+                  </p>
                   {comment.created_time && (
                     <p className="text-xs text-muted-foreground">{format(new Date(comment.created_time), 'PPp')}</p>
                   )}
@@ -439,7 +450,7 @@ export default function ViewPostPage() {
                 <CardDescription>View and manage comments on this post.</CardDescription>
             </CardHeader>
             <CardContent>
-                <PostComments postId={post.id} platform={post.platform} />
+                <PostComments postId={post.id} platform={post.platform} accountId={post.accountId} />
             </CardContent>
         </Card>
       )}
