@@ -25,8 +25,9 @@ function scopesForIntents(intents: FacebookAuthIntent[]): string[] {
   }
 
   if (intents.includes('messages')) {
-    // read_page_mailboxes is used to read page conversations/messages.
-    scopes.add('read_page_mailboxes');
+    // For Page conversations/messages APIs, Meta requires pages_messaging.
+    scopes.add('pages_messaging');
+    scopes.add('pages_read_engagement');
   }
 
   if (intents.includes('posts')) {
