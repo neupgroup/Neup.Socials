@@ -1,10 +1,7 @@
 'use server';
 
-import { decrypt } from '@/lib/crypto';
 import { dataStore } from '@/lib/data-store';
 import { logError } from '@/lib/error-logging';
-import { getPageConversationsWithMessages } from '@/core/facebook/messages';
-import { type FacebookAuthIntent } from './auth-intents';
 
 export type FacebookInboxItem = {
   id: string;
@@ -24,10 +21,36 @@ export type FacebookInboxItem = {
 export async function listFacebookInboxFeedAction(): Promise<FacebookInboxItem[]> {
   const accounts = await dataStore.accounts.list({ take: 200 });
   const facebookAccounts = accounts.filter(
-    (account) => account.platform === 'Facebook' && account.platformId && account.encryptedToken
+    (account) => account.platform === 'Facebook' && account.platformId
   );
 
-  const savedComments = await dataStore.facebookComments.listRecent({ take: 500 });
+  if (!facebookAccounts.length) {
+    return [];
+  }
+
+  const accountById = new Map(facebookAccounts.map((account) => [account.id, account]));
+  const pageIds = facebookAccounts.map((account) => String(account.platformId));
+  const accountIds = facebookAccounts.map((account) => account.id);
+
+  const savedComments: Array<{
+    id: string;
+    psid: string;
+    comment: string;
+    commentedOn: Date;
+    moreInfo: unknown;
+  }> = await dataStore.facebookComments.listRecent({ take: 500 });
+  const commentors = await dataStore.commentors.listByPlatformAndProfiles({
+    platform: 'Facebook',
+    onProfiles: pageIds,
+    take: 2000,
+  });
+  const commentorByPageAndPsid = new Map<string, (typeof commentors)[number]>(
+    commentors.map((item: (typeof commentors)[number]): [string, (typeof commentors)[number]] => [
+      `${item.onProfile}:${item.platformUserId}`,
+      item,
+    ])
+  );
+
   const uniquePsids = Array.from(new Set(savedComments.map((item) => item.psid)));
   const identities = await Promise.all(
     uniquePsids.map(async (psid) => {
@@ -41,51 +64,57 @@ export async function listFacebookInboxFeedAction(): Promise<FacebookInboxItem[]
   );
 
   const identityByPsid = new Map(identities);
+
+  const conversations = await dataStore.conversations.listByChannelIds({
+    channelIds: accountIds,
+    take: 400,
+  });
+  const conversationById = new Map(conversations.map((conversation) => [conversation.id, conversation]));
+  const latestMessages = await dataStore.messages.listByConversationIds({
+    conversationIds: conversations.map((item) => item.id),
+    take: 1200,
+  });
+
+  const latestByConversation = new Map<string, (typeof latestMessages)[number]>();
+  for (const message of latestMessages) {
+    if (!latestByConversation.has(message.conversationId)) {
+      latestByConversation.set(message.conversationId, message);
+    }
+  }
+
+  const mappedMessages: FacebookInboxItem[] = conversations
+    .map((conversation) => {
+      const account = accountById.get(conversation.channelId);
+      if (!account) {
+        return null;
+      }
+
+      const latest = latestByConversation.get(conversation.id);
+      if (!latest) {
+        return null;
+      }
+
+      return {
+        id: `message_${conversation.id}`,
+        type: latest.type === 'comment' ? 'comment' : 'message',
+        pageId: String(account.platformId),
+        pageName: account.name || 'Facebook Page',
+        fromId: conversation.contactId,
+        fromName: conversation.contactName || `Facebook User ${conversation.contactId.slice(-6)}`,
+        text: latest.text,
+        createdTime: latest.timestamp.toISOString(),
+      } as FacebookInboxItem;
+    })
+    .filter((item): item is FacebookInboxItem => item !== null);
+
   const perAccountResults = await Promise.all(
     facebookAccounts.map(async (account) => {
       try {
         const pageId = account.platformId as string;
-        const accountMetadata = (account.metadata ?? {}) as { authIntents?: FacebookAuthIntent[] };
-        const intents = Array.isArray(accountMetadata.authIntents) && accountMetadata.authIntents.length > 0
-          ? accountMetadata.authIntents
-          : (['posts'] as FacebookAuthIntent[]);
-
-        const messages = intents.includes('messages')
-          ? await getPageConversationsWithMessages(pageId, await decrypt(account.encryptedToken as string))
-          : [];
-
-        if (intents.includes('messages')) {
-          await dataStore.syncLogEntries.create({
-            type: 'messages',
-            platform: 'facebook',
-            forProfile: account.id,
-            moreInfo: {
-              accountId: account.id,
-              pageId,
-              pageName: account.name,
-              fetchedCount: messages.length,
-              source: 'listFacebookInboxFeedAction',
-            },
-          });
-        }
-
-        const comments = intents.includes('posts')
-          ? savedComments.filter((item) => {
-              const moreInfo = (item.moreInfo ?? {}) as { pageId?: string };
-              return String(moreInfo.pageId ?? '') === pageId;
-            })
-          : [];
-
-        const mappedMessages: FacebookInboxItem[] = messages.map((item) => ({
-          id: `message_${item.messageId}`,
-          type: 'message',
-          pageId,
-          pageName: account.name || 'Facebook Page',
-          fromId: item.senderId,
-          fromName: item.senderName,
-          text: item.text,
-          createdTime: item.createdTime,
-        }));
+        const comments = savedComments.filter((item) => {
+          const moreInfo = (item.moreInfo ?? {}) as { pageId?: string };
+          return String(moreInfo.pageId ?? '') === pageId;
+        });
 
         const mappedComments: FacebookInboxItem[] = comments.map((item: (typeof savedComments)[number]) => {
           const identity = identityByPsid.get(item.psid);
@@ -96,7 +125,12 @@ export async function listFacebookInboxFeedAction(): Promise<FacebookInboxItem[]
             commenterName?: string;
             commenterProfilePic?: string;
           };
-          const name = identity?.unified?.name || moreInfo.commenterName || `Facebook User ${item.psid.slice(-6)}`;
+          const commentor = commentorByPageAndPsid.get(`${pageId}:${item.psid}`);
+          const name =
+            commentor?.name ||
+            identity?.unified?.name ||
+            moreInfo.commenterName ||
+            `Facebook User ${item.psid.slice(-6)}`;
           const profilePic =
             typeof identity?.unified?.moreInfo === 'object' && identity?.unified?.moreInfo
               ? String((identity.unified.moreInfo as { profilePic?: string }).profilePic ?? '')
@@ -118,7 +152,7 @@ export async function listFacebookInboxFeedAction(): Promise<FacebookInboxItem[]
           };
         });
 
-        return [...mappedMessages, ...mappedComments];
+        return mappedComments;
       } catch (error: any) {
         await logError({
           process: 'listFacebookInboxFeedAction',
@@ -136,7 +170,7 @@ export async function listFacebookInboxFeedAction(): Promise<FacebookInboxItem[]
     })
   );
 
-  return perAccountResults
+  return [...mappedMessages, ...perAccountResults.flat()]
     .flat()
     .sort((a, b) => new Date(b.createdTime).getTime() - new Date(a.createdTime).getTime());
 }

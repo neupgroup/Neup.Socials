@@ -355,6 +355,38 @@ export const dataStore = {
           })
         )
       ),
+    update: async (
+      id: string,
+      data: {
+        postCollectionId?: string | null;
+        accountId?: string | null;
+        platform?: string | null;
+        platformPostId?: string | null;
+        message?: string | null;
+        postLink?: string | null;
+        createdBy?: string | null;
+        createdOn?: Date;
+        analytics?: unknown;
+        logs?: string[];
+        mediaUrls?: string[];
+      }
+    ) =>
+      prisma.post.update({
+        where: { id },
+        data: {
+          postCollectionId: data.postCollectionId,
+          accountId: data.accountId,
+          platform: data.platform,
+          platformPostId: data.platformPostId,
+          message: data.message,
+          postLink: data.postLink,
+          createdBy: data.createdBy,
+          createdOn: data.createdOn,
+          analytics: data.analytics === undefined ? undefined : toJson(data.analytics),
+          logs: data.logs,
+          mediaUrls: data.mediaUrls,
+        },
+      }),
     delete: async (id: string) => prisma.post.delete({ where: { id } }),
   },
   postCollections: {
@@ -640,6 +672,20 @@ export const dataStore = {
       prisma.conversation.findFirst({
         where: { contactId, channelId },
       }),
+    listByChannelIds: async ({
+      channelIds,
+      take = 200,
+    }: {
+      channelIds: string[];
+      take?: number;
+    }) =>
+      prisma.conversation.findMany({
+        where: {
+          channelId: { in: channelIds },
+        },
+        orderBy: [{ lastMessageAt: 'desc' }, { id: 'desc' }],
+        take,
+      }),
     create: async (data: {
       contactId: string;
       contactName: string;
@@ -682,6 +728,20 @@ export const dataStore = {
       prisma.conversationMessage.findMany({
         where: { conversationId },
         orderBy: [{ timestamp: 'asc' }, { id: 'asc' }],
+      }),
+    listByConversationIds: async ({
+      conversationIds,
+      take = 1000,
+    }: {
+      conversationIds: string[];
+      take?: number;
+    }) =>
+      prisma.conversationMessage.findMany({
+        where: {
+          conversationId: { in: conversationIds },
+        },
+        orderBy: [{ timestamp: 'desc' }, { id: 'desc' }],
+        take,
       }),
     findByPlatformMessageId: async (platformMessageId: string) =>
       prisma.conversationMessage.findUnique({
@@ -853,6 +913,22 @@ export const dataStore = {
           name: data.name,
           firstInteraction: data.firstInteraction ?? new Date(),
         },
+      }),
+    listByPlatformAndProfiles: async ({
+      platform,
+      onProfiles,
+      take = 1000,
+    }: {
+      platform: string;
+      onProfiles: string[];
+      take?: number;
+    }) =>
+      prisma.commentor.findMany({
+        where: {
+          platform,
+          onProfile: { in: onProfiles },
+        },
+        take,
       }),
   },
   comments: {

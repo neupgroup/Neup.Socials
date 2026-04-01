@@ -119,3 +119,22 @@ export async function getPostAnalyticsAction(postId: string): Promise<GetPostAna
     return { success: false, error: error.message };
   }
 }
+
+export async function refreshPostAnalyticsAction(postId: string): Promise<GetPostAnalyticsResult> {
+  const result = await getPostAnalyticsAction(postId);
+  if (!result.success || !result.analytics) {
+    return result;
+  }
+
+  await dataStore.posts.update(postId, {
+    analytics: {
+      likes: result.analytics.likes,
+      comments: result.analytics.comments,
+      shares: result.analytics.shares,
+      ...(result.analytics.views !== undefined ? { views: result.analytics.views } : {}),
+      refreshedAt: new Date().toISOString(),
+    },
+  });
+
+  return result;
+}

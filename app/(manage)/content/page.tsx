@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { listPostsAction } from '@/actions/db';
-import { getPostAnalyticsAction } from '@/actions/facebook/post-insights';
+import { refreshPostAnalyticsAction } from '@/actions/facebook/post-insights';
 
 type Post = {
   id: string;
@@ -105,36 +105,7 @@ export default function ContentDashboardPage() {
       const skip = loadMore ? posts.length : 0;
       const result = await listPostsAction({ search, skip });
       setHasMore(result.hasMore);
-      const nextItems = loadMore ? [...posts, ...result.items] : result.items;
-
-      const missingAnalytics = nextItems.filter((post) => {
-        const platform = (post.platform ?? '').toLowerCase();
-        const analytics = post.analytics;
-        return platform === 'facebook' && (!analytics || typeof analytics !== 'object');
-      });
-
-      if (missingAnalytics.length) {
-        const analyticsResults = await Promise.all(
-          missingAnalytics.map(async (post) => {
-            const insight = await getPostAnalyticsAction(post.id);
-            return {
-              postId: post.id,
-              analytics: insight.success ? insight.analytics ?? null : null,
-            };
-          })
-        );
-
-        const analyticsByPostId = new Map(analyticsResults.map((item) => [item.postId, item.analytics]));
-
-        setPosts(
-          nextItems.map((post) => ({
-            ...post,
-            analytics: analyticsByPostId.get(post.id) ?? post.analytics,
-          }))
-        );
-      } else {
-        setPosts(nextItems);
-      }
+      setPosts(loadMore ? [...posts, ...result.items] : result.items);
     } catch (error) {
       console.error("Error fetching posts: ", error);
     } finally {
@@ -162,6 +133,32 @@ export default function ContentDashboardPage() {
           fetchPosts(true, searchTerm);
       }
   }
+
+  const handleRefreshStats = async (postId: string) => {
+    try {
+      const result = await refreshPostAnalyticsAction(postId);
+      if (!result.success || !result.analytics) {
+        return;
+      }
+
+      setPosts((current) =>
+        current.map((post) =>
+          post.id === postId
+            ? {
+                ...post,
+                analytics: {
+                  ...post.analytics,
+                  ...result.analytics,
+                  refreshedAt: new Date().toISOString(),
+                },
+              }
+            : post
+        )
+      );
+    } catch (error) {
+      console.error('Error refreshing post stats: ', error);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -269,6 +266,16 @@ export default function ContentDashboardPage() {
                                     <DropdownMenuContent align="end">
                                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); router.push(`/content/${post.id}`) }}>View Details</DropdownMenuItem>
                                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); router.push(`/content/collection/${post.postCollectionId}`) }}>View Collection</DropdownMenuItem>
+                                        {(post.platform ?? '').toLowerCase() === 'facebook' ? (
+                                          <DropdownMenuItem
+                                            onClick={async (e) => {
+                                              e.stopPropagation();
+                                              await handleRefreshStats(post.id);
+                                            }}
+                                          >
+                                            Refresh Stats
+                                          </DropdownMenuItem>
+                                        ) : null}
                                         <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
