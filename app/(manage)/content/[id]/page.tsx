@@ -310,6 +310,12 @@ const FacebookPostVideo = ({ postId, platform }: { postId: string; platform: str
     () => getFacebookPostVideoAction(postId)
   );
 
+  React.useEffect(() => {
+    if (window.FB) {
+      window.FB.XFBML.parse();
+    }
+  }, [data]);
+
   if (!isFacebookPlatform(platform)) {
     return null;
   }
@@ -331,7 +337,24 @@ const FacebookPostVideo = ({ postId, platform }: { postId: string; platform: str
 
   return (
     <div className="space-y-3">
-      {video.sourceUrl ? (
+      {video.permalinkUrl ? (
+        <div 
+          className="fb-video"
+          data-href={video.permalinkUrl}
+          data-width="500"
+          data-show-text="false"
+        >
+          <blockquote 
+            cite={video.permalinkUrl}
+            className="fb-xfbml-parse-ignore"
+          >
+            <a href={video.permalinkUrl}>
+              {video.title || 'Video'}
+            </a>
+            {video.title && <p>{video.title}</p>}
+          </blockquote>
+        </div>
+      ) : video.sourceUrl ? (
         <video
           controls
           playsInline
@@ -349,9 +372,8 @@ const FacebookPostVideo = ({ postId, platform }: { postId: string; platform: str
         />
       ) : null}
 
-      {(video.title || video.views !== undefined || video.permalinkUrl) && (
+      {(video.views !== undefined || video.permalinkUrl) && !video.permalinkUrl && (
         <div className="space-y-1">
-          {video.title ? <p className="font-medium">{video.title}</p> : null}
           <div className="text-xs text-muted-foreground space-x-3">
             {video.views !== undefined ? <span>{video.views} views</span> : null}
             {video.lengthSeconds ? <span>{Math.round(video.lengthSeconds)} sec</span> : null}
