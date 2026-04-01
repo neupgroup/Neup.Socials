@@ -124,6 +124,19 @@ type PagePost = {
   message?: string;
   story?: string;
   permalink_url: string;
+  shares?: {
+    count?: number;
+  };
+  reactions?: {
+    summary?: {
+      total_count?: number;
+    };
+  };
+  comments?: {
+    summary?: {
+      total_count?: number;
+    };
+  };
 }
 
 export type PageFeedResponse = {
@@ -359,7 +372,7 @@ export async function getPosts(
 ): Promise<PageFeedResponse> {
   const params = new URLSearchParams({
     access_token: pageToken,
-    fields: 'id,created_time,message,story,permalink_url',
+    fields: 'id,created_time,message,story,permalink_url,shares,reactions.summary(total_count).limit(0),comments.summary(total_count).limit(0)',
     limit: '100', // Fetch up to 100 posts per request
   });
 

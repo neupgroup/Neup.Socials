@@ -14,6 +14,7 @@ type PostAnalytics = {
     likes: number;
     comments: number;
     shares: number;
+  views?: number;
 };
 
 type GetPostAnalyticsResult = {
@@ -59,6 +60,7 @@ export async function getPostAnalyticsAction(postId: string): Promise<GetPostAna
     const metrics = [
         'post_reactions_by_type_total', // This gives an object with all reaction types
         'post_activity_by_action_type', // This gives comments and shares
+      'post_video_views',
     ];
     
     const insights = await getPagePostInsights(platformPostId, pageToken, metrics);
@@ -69,9 +71,18 @@ export async function getPostAnalyticsAction(postId: string): Promise<GetPostAna
     let totalLikes = 0;
     if (reactionsMetric && reactionsMetric.values.length > 0) {
         const reactionValues = reactionsMetric.values[0].value as { [key: string]: number };
-        if (reactionValues && reactionValues.like) {
+        if (reactionValues) {
              totalLikes = Object.values(reactionValues).reduce((sum, value) => sum + value, 0);
         }
+    }
+
+    const viewsMetric = insights.data.find(m => m.name === 'post_video_views');
+    let totalViews: number | undefined;
+    if (viewsMetric && viewsMetric.values.length > 0) {
+      const viewValue = viewsMetric.values[0].value;
+      if (typeof viewValue === 'number') {
+        totalViews = viewValue;
+      }
     }
     
     let totalComments = 0;
@@ -97,6 +108,7 @@ export async function getPostAnalyticsAction(postId: string): Promise<GetPostAna
         likes: totalLikes,
         comments: totalComments,
         shares: totalShares,
+        views: totalViews,
       },
     };
 

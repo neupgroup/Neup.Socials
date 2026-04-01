@@ -141,6 +141,11 @@ export async function syncPostsAction(accountId: string, options?: { since?: num
           postLink: post.permalink_url,
           createdOn: new Date(post.created_time),
           createdBy: account.owner,
+          analytics: {
+            likes: post.reactions?.summary?.total_count ?? 0,
+            comments: post.comments?.summary?.total_count ?? 0,
+            shares: post.shares?.count ?? 0,
+          },
           logs: ['Synced from Facebook'],
         }))
       );

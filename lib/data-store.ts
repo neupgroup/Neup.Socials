@@ -331,6 +331,7 @@ export const dataStore = {
         postLink?: string | null;
         createdBy?: string | null;
         createdOn?: Date;
+        analytics?: unknown;
         logs?: string[];
         mediaUrls?: string[];
       }>
@@ -347,6 +348,7 @@ export const dataStore = {
               postLink: item.postLink,
               createdBy: item.createdBy,
               createdOn: item.createdOn ?? new Date(),
+              analytics: item.analytics === undefined ? undefined : toJson(item.analytics),
               logs: item.logs ?? [],
               mediaUrls: item.mediaUrls ?? [],
             },

@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { listPostsAction } from '@/actions/db';
+import { getPostAnalyticsAction } from '@/actions/facebook/post-insights';
 
 type Post = {
   id: string;
@@ -104,14 +105,43 @@ export default function ContentDashboardPage() {
       const skip = loadMore ? posts.length : 0;
       const result = await listPostsAction({ search, skip });
       setHasMore(result.hasMore);
-      setPosts(prev => loadMore ? [...prev, ...result.items] : result.items);
+      const nextItems = loadMore ? [...posts, ...result.items] : result.items;
+
+      const missingAnalytics = nextItems.filter((post) => {
+        const platform = (post.platform ?? '').toLowerCase();
+        const analytics = post.analytics;
+        return platform === 'facebook' && (!analytics || typeof analytics !== 'object');
+      });
+
+      if (missingAnalytics.length) {
+        const analyticsResults = await Promise.all(
+          missingAnalytics.map(async (post) => {
+            const insight = await getPostAnalyticsAction(post.id);
+            return {
+              postId: post.id,
+              analytics: insight.success ? insight.analytics ?? null : null,
+            };
+          })
+        );
+
+        const analyticsByPostId = new Map(analyticsResults.map((item) => [item.postId, item.analytics]));
+
+        setPosts(
+          nextItems.map((post) => ({
+            ...post,
+            analytics: analyticsByPostId.get(post.id) ?? post.analytics,
+          }))
+        );
+      } else {
+        setPosts(nextItems);
+      }
     } catch (error) {
       console.error("Error fetching posts: ", error);
     } finally {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [posts.length]);
+  }, [posts]);
 
   React.useEffect(() => {
     const debouncedSearch = setTimeout(() => {

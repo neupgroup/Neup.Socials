@@ -79,7 +79,7 @@ export async function publishContent(postCollectionId: string) {
             postLink: postLink,
             createdBy: collectionData.author,
             createdOn: new Date(),
-            analytics: [],
+          analytics: {},
             logs: ['Published successfully'],
             mediaUrls: collectionData.mediaUrls,
         };
