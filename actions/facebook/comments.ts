@@ -5,6 +5,9 @@ import { decrypt } from '@/lib/crypto';
 import { logError } from '@/lib/error-logging';
 import { getPostComments, postCommentOnPost, postReplyToComment } from '@/core/facebook/api';
 
+const isFacebookPlatform = (platform: string | null | undefined) =>
+  (platform ?? '').toLowerCase() === 'facebook';
+
 export type FetchCommentsResult = {
   success: boolean;
   comments?: Array<{
@@ -34,7 +37,7 @@ export async function fetchPostCommentsAction(
 ): Promise<FetchCommentsResult> {
   try {
     const post = await dataStore.posts.getById(postId);
-    if (!post?.platformPostId || post.platform !== 'facebook') {
+    if (!post?.platformPostId || !isFacebookPlatform(post.platform)) {
       return { success: false, error: 'Post not found or not a Facebook post' };
     }
 
@@ -92,7 +95,7 @@ export async function postCommentAction(
     }
 
     const post = await dataStore.posts.getById(postId);
-    if (!post?.platformPostId || post.platform !== 'facebook') {
+    if (!post?.platformPostId || !isFacebookPlatform(post.platform)) {
       return { success: false, error: 'Post not found or not a Facebook post' };
     }
 
@@ -153,7 +156,7 @@ export async function postReplyAction(
     }
 
     const post = await dataStore.posts.getById(postId);
-    if (!post?.platformPostId || post.platform !== 'facebook') {
+    if (!post?.platformPostId || !isFacebookPlatform(post.platform)) {
       return { success: false, error: 'Post not found or not a Facebook post' };
     }
 

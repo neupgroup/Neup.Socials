@@ -29,6 +29,9 @@ type Post = {
   mediaUrls?: string[];
 };
 
+const isFacebookPlatform = (platform: string | null | undefined) =>
+  (platform ?? '').toLowerCase() === 'facebook';
+
 const analyticsFetcher = (postId: string) => getPostAnalyticsAction(postId);
 
 type Comment = {
@@ -77,7 +80,7 @@ const PostComments = ({ postId, platform }: { postId: string; platform: string |
   const [isPosting, setIsPosting] = React.useState(false);
 
   const fetchComments = async () => {
-    if (platform !== 'facebook') return;
+    if (!isFacebookPlatform(platform)) return;
     setIsLoading(true);
     try {
       const result = await fetchPostCommentsAction(postId);
@@ -130,7 +133,7 @@ const PostComments = ({ postId, platform }: { postId: string; platform: string |
     }
   };
 
-  if (platform !== 'facebook') {
+  if (!isFacebookPlatform(platform)) {
     return <p className="text-sm text-muted-foreground">Comments are only available for Facebook posts.</p>;
   }
 
@@ -332,7 +335,7 @@ export default function ViewPostPage() {
         </CardContent>
       </Card>
       
-      {post.platform === 'facebook' && (
+        {isFacebookPlatform(post.platform) && (
         <Card>
             <CardHeader>
                 <CardTitle>Post Analytics</CardTitle>
@@ -344,7 +347,7 @@ export default function ViewPostPage() {
         </Card>
       )}
 
-      {post.platform === 'facebook' && (
+        {isFacebookPlatform(post.platform) && (
         <Card>
             <CardHeader>
                 <CardTitle>Comments & Replies</CardTitle>

@@ -7,6 +7,9 @@ import { dataStore } from '@/lib/data-store';
 import { decrypt } from '@/lib/crypto';
 import { getPagePostInsights } from '@/core/facebook/api';
 
+const isFacebookPlatform = (platform: string | null | undefined) =>
+  (platform ?? '').toLowerCase() === 'facebook';
+
 type PostAnalytics = {
     likes: number;
     comments: number;
@@ -43,7 +46,7 @@ export async function getPostAnalyticsAction(postId: string): Promise<GetPostAna
       throw new Error('Associated account not found.');
     }
 
-    if (accountData.platform !== 'Facebook') {
+    if (!isFacebookPlatform(accountData.platform)) {
       return { success: true, analytics: { likes: 0, comments: 0, shares: 0 } }; // Not a FB post
     }
     if (!accountData.encryptedToken) {
