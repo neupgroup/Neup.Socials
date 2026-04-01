@@ -3,7 +3,7 @@
  */
 'use server';
 
-const API_VERSION = 'v23.0';
+const API_VERSION = 'v25.0';
 const GRAPH_API_BASE_URL = `https://graph.facebook.com/${API_VERSION}`;
 
 type ErrorResponse = {
@@ -34,6 +34,11 @@ type FacebookConversationResponse = {
       }>;
     };
   }>;
+};
+
+type SendPageMessageResponse = {
+  recipient_id?: string;
+  message_id?: string;
 };
 
 export type FacebookPageMessageItem = {
@@ -104,4 +109,43 @@ export async function getPageConversationsWithMessages(
   }
 
   return items;
+}
+
+/**
+ * Sends a Messenger text message from a Facebook Page to a recipient PSID.
+ */
+export async function sendPageTextMessage(
+  pageId: string,
+  pageToken: string,
+  recipientId: string,
+  text: string
+): Promise<{ messageId: string }> {
+  const trimmed = text.trim();
+  if (!pageId || !recipientId || !trimmed) {
+    throw new Error('Page ID, recipient ID, and message text are required.');
+  }
+
+  const params = new URLSearchParams({
+    access_token: pageToken,
+  });
+
+  const res = await fetch(`${GRAPH_API_BASE_URL}/${pageId}/messages?${params.toString()}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      messaging_type: 'RESPONSE',
+      recipient: { id: recipientId },
+      message: { text: trimmed },
+    }),
+  });
+
+  const payload = await handleApiResponse<SendPageMessageResponse>(res);
+  const messageId = String(payload.message_id ?? '').trim();
+  if (!messageId) {
+    throw new Error('No message ID returned from Facebook API.');
+  }
+
+  return { messageId };
 }

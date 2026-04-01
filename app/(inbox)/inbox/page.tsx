@@ -4,10 +4,44 @@ import * as React from 'react';
 import { MessageSquare, Inbox, Loader2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { listFacebookInboxFeedAction, type FacebookInboxItem } from '@/actions/facebook/inbox';
+import { sendReplyAction } from '@/actions/inbox/sender';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 export default function InboxPage() {
   const [facebookItems, setFacebookItems] = React.useState<FacebookInboxItem[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [sendingTo, setSendingTo] = React.useState<string | null>(null);
+  const { toast } = useToast();
+
+  const handleMessageCommenter = React.useCallback(async (item: FacebookInboxItem) => {
+    const message = window.prompt(`Send a message to ${item.fromName}`);
+    if (!message || !message.trim()) {
+      return;
+    }
+
+    setSendingTo(item.id);
+    try {
+      const result = await sendReplyAction('Facebook', item.accountId, item.fromId, message.trim());
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to send message.');
+      }
+
+      toast({
+        title: 'Message sent',
+        description: `Sent message to ${item.fromName}.`,
+      });
+    } catch (error) {
+      const err = error as Error;
+      toast({
+        title: 'Send failed',
+        description: err.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setSendingTo(null);
+    }
+  }, [toast]);
 
   React.useEffect(() => {
     let active = true;
@@ -122,6 +156,27 @@ export default function InboxPage() {
                   <p className="mt-3 text-sm whitespace-pre-wrap break-words">
                     {item.text}
                   </p>
+
+                  {item.type === 'comment' ? (
+                    <div className="mt-3">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={sendingTo === item.id}
+                        onClick={() => handleMessageCommenter(item)}
+                      >
+                        {sendingTo === item.id ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Sending...
+                          </>
+                        ) : (
+                          'Message user'
+                        )}
+                      </Button>
+                    </div>
+                  ) : null}
                 </div>
               ))}
             </div>

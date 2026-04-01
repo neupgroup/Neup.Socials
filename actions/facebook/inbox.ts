@@ -6,6 +6,7 @@ import { logError } from '@/lib/error-logging';
 export type FacebookInboxItem = {
   id: string;
   type: 'message' | 'comment';
+  accountId: string;
   pageId: string;
   pageName: string;
   fromId: string;
@@ -97,6 +98,7 @@ export async function listFacebookInboxFeedAction(): Promise<FacebookInboxItem[]
       return {
         id: `message_${conversation.id}`,
         type: latest.type === 'comment' ? 'comment' : 'message',
+        accountId: account.id,
         pageId: String(account.platformId),
         pageName: account.name || 'Facebook Page',
         fromId: conversation.contactId,
@@ -139,6 +141,7 @@ export async function listFacebookInboxFeedAction(): Promise<FacebookInboxItem[]
           return {
             id: `comment_${item.id}`,
             type: 'comment',
+            accountId: account.id,
             pageId,
             pageName: account.name || 'Facebook Page',
             fromId: item.psid,

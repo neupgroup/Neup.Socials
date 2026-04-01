@@ -2,6 +2,7 @@
 
 import { logError } from "@/lib/error-logging";
 import { sendTextMessage as sendWhatsAppMessage } from "../../core/whatsapp/api";
+import { sendPageTextMessage as sendFacebookPageMessage } from "@/core/facebook/messages";
 import { dataStore } from "@/lib/data-store";
 import { decrypt } from "@/lib/crypto";
 
@@ -45,6 +46,24 @@ export async function sendReplyAction(platform: string, channelId: string, recip
                 throw new Error('No message ID returned from WhatsApp API.');
             }
             return { success: true, messageId };
+        } else if (platform === 'Facebook') {
+            if (!channelId) {
+                throw new Error("Facebook channel ID is missing.");
+            }
+
+            const accountData = await dataStore.accounts.getById(channelId);
+            if (!accountData) {
+                throw new Error(`Facebook account with ID ${channelId} not found.`);
+            }
+            if (!accountData.encryptedToken || !accountData.platformId) {
+                throw new Error(`Facebook account with ID ${channelId} is missing credentials.`);
+            }
+
+            const pageToken = await decrypt(accountData.encryptedToken);
+            const pageId = accountData.platformId;
+            const result = await sendFacebookPageMessage(pageId, pageToken, recipientId, message);
+
+            return { success: true, messageId: result.messageId };
         } else {
             console.warn(`Sending messages via ${platform} is not yet implemented.`);
             return { success: true, messageId: `simulated_${Date.now()}` };
