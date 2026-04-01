@@ -14,29 +14,10 @@ type ErrorResponse = {
   };
 };
 
-type PostAttachment = {
-  type?: string;
-  media_type?: string;
-  target?: {
-    id?: string;
-  };
-  subattachments?: {
-    data?: Array<{
-      type?: string;
-      media_type?: string;
-      target?: {
-        id?: string;
-      };
-    }>;
-  };
-};
-
 type PostVideoLookupResponse = {
   id?: string;
   object_id?: string;
-  attachments?: {
-    data?: PostAttachment[];
-  };
+  permalink_url?: string;
 };
 
 type VideoNodeResponse = {
@@ -85,7 +66,7 @@ async function handleApiResponse<T>(res: Response): Promise<T> {
 async function getPostVideoCandidates(postId: string, pageToken: string): Promise<string[]> {
   const params = new URLSearchParams({
     access_token: pageToken,
-    fields: 'id,object_id,attachments{type,media_type,target{id},subattachments{type,media_type,target{id}}}',
+    fields: 'id,object_id,permalink_url',
   });
 
   const res = await fetch(`${GRAPH_API_BASE_URL}/${postId}?${params.toString()}`);
@@ -95,20 +76,6 @@ async function getPostVideoCandidates(postId: string, pageToken: string): Promis
 
   if (payload.object_id) {
     candidates.add(payload.object_id);
-  }
-
-  for (const attachment of payload.attachments?.data ?? []) {
-    const candidateId = attachment.target?.id;
-    if (candidateId) {
-      candidates.add(candidateId);
-    }
-
-    for (const sub of attachment.subattachments?.data ?? []) {
-      const subId = sub.target?.id;
-      if (subId) {
-        candidates.add(subId);
-      }
-    }
   }
 
   return Array.from(candidates);
