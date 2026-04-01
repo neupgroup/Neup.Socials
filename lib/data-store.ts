@@ -592,15 +592,15 @@ export const dataStore = {
       type,
       take = 100,
     }: {
-      platform: string;
+      platform?: string;
       forProfile: string;
       type?: string;
       take?: number;
     }) =>
       prisma.syncLogEntry.findMany({
         where: {
-          platform,
           forProfile,
+          ...(platform ? { platform } : {}),
           ...(type ? { type } : {}),
         },
         orderBy: [{ createdOn: 'desc' }, { id: 'desc' }],

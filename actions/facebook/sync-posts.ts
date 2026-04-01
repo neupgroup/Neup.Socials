@@ -30,6 +30,24 @@ async function createSyncLog(accountId: string, status: 'Success' | 'Failed', de
             range: (details as { range?: unknown }).range,
             details,
         });
+
+        const range =
+          (details as { range?: { since?: string; until?: string } }).range ?? undefined;
+        const sinceTime = range?.since ? new Date(range.since) : null;
+        const toTime = range?.until ? new Date(range.until) : null;
+
+        await dataStore.syncLogEntries.create({
+          type: status === 'Success' ? 'posts' : 'info',
+          platform: 'facebook',
+          forProfile: accountId,
+          sinceTime,
+          toTime,
+          moreInfo: {
+            status,
+            ...(details as Record<string, unknown>),
+            source: 'syncPostsAction',
+          },
+        });
     } catch(error: any) {
         console.error("Failed to create sync log:", error);
         await logError({

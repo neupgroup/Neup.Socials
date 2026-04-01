@@ -261,11 +261,61 @@ export async function getErrorAction(id: string) {
 }
 
 export async function listSyncLogsAction(accountId: string) {
-  const logs = await dataStore.syncLogs.listByAccountId(accountId);
-  return logs.map((log) => ({
-    ...log,
-    syncedAt: toIso(log.syncedAt),
+  const account = await dataStore.accounts.getById(accountId);
+  if (!account) {
+    return [];
+  }
+
+  const [entries, legacyLogs] = await Promise.all([
+    dataStore.syncLogEntries.listByProfile({
+      forProfile: accountId,
+      take: 300,
+    }),
+    dataStore.syncLogs.listByAccountId(accountId),
+  ]);
+
+  const mappedEntries = entries.map((entry) => ({
+    id: entry.id,
+    type: entry.type,
+    platform: entry.platform,
+    forProfile: entry.forProfile,
+    sinceTime: toIso(entry.sinceTime),
+    toTime: toIso(entry.toTime),
+    moreInfo: entry.moreInfo,
+    createdOn: toIso(entry.createdOn),
+    source: 'sync_log',
   }));
+
+  const mappedLegacy = legacyLogs.map((log) => {
+    const range =
+      log.range && typeof log.range === 'object' && !Array.isArray(log.range)
+        ? (log.range as { since?: string; until?: string })
+        : {};
+
+    return {
+      id: `legacy_${log.id}`,
+      type: 'posts',
+      platform: account.platform.toLowerCase(),
+      forProfile: accountId,
+      sinceTime: range.since ?? null,
+      toTime: range.until ?? null,
+      moreInfo: {
+        status: log.status,
+        postsSynced: log.postsSynced,
+        errorMessage: log.errorMessage,
+        details: log.details,
+        source: 'legacy.sync_logs',
+      },
+      createdOn: toIso(log.syncedAt),
+      source: 'sync_logs',
+    };
+  });
+
+  return [...mappedEntries, ...mappedLegacy].sort((a, b) => {
+    const aTime = a.createdOn ? new Date(a.createdOn).getTime() : 0;
+    const bTime = b.createdOn ? new Date(b.createdOn).getTime() : 0;
+    return bTime - aTime;
+  });
 }
 
 export async function listConversationsAction() {

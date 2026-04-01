@@ -12,18 +12,25 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@
 import { Loader2, ArrowLeft, History, CheckCircle, XCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { syncPostsAction } from '@/actions/facebook/sync-posts';
+import { syncFacebookCommentsAction, syncFacebookMessagesAction } from '@/actions/facebook/sync-inbox';
 import { listSyncLogsAction } from '@/actions/db';
 
 type SyncLog = {
     id: string;
-    syncedAt: string | null;
-    status: 'Success' | 'Failed';
-    postsSynced?: number;
-    errorMessage?: string;
-    range?: {
-        since: string;
-        until: string;
-    };
+    type: string;
+    platform: string;
+    createdOn: string | null;
+    sinceTime?: string | null;
+    toTime?: string | null;
+    moreInfo?: {
+        status?: 'Success' | 'Failed' | string;
+        postsSynced?: number;
+        fetched?: number;
+        saved?: number;
+        operation?: string;
+        errorMessage?: string;
+        source?: string;
+    } | null;
 };
 
 export default function FetchHistoryPage() {
@@ -36,44 +43,49 @@ export default function FetchHistoryPage() {
     const [loading, setLoading] = React.useState(true);
     const [isSyncing, setIsSyncing] = React.useState<string | null>(null);
 
-    React.useEffect(() => {
+    const loadLogs = React.useCallback(async () => {
         if (!id) return;
 
         setLoading(true);
-        listSyncLogsAction(id)
-            .then((fetchedLogs) => {
-                setLogs(
-                    fetchedLogs.map((log) => ({
-                        id: log.id,
-                        syncedAt: log.syncedAt,
-                        status: log.status as 'Success' | 'Failed',
-                        postsSynced: log.postsSynced ?? undefined,
-                        errorMessage: log.errorMessage ?? undefined,
-                        range:
-                            log.range && typeof log.range === 'object' && !Array.isArray(log.range)
-                                ? (log.range as { since: string; until: string })
-                                : undefined,
-                    }))
-                );
-                setLoading(false);
-            })
-            .catch((error) => {
-                console.error("Error fetching sync logs:", error);
-                toast({ title: 'Failed to load sync history', variant: 'destructive' });
-                setLoading(false);
-            });
+        try {
+            const fetchedLogs = await listSyncLogsAction(id);
+            setLogs(
+                fetchedLogs.map((log) => ({
+                    id: log.id,
+                    type: log.type,
+                    platform: log.platform,
+                    createdOn: log.createdOn,
+                    sinceTime: log.sinceTime ?? null,
+                    toTime: log.toTime ?? null,
+                    moreInfo:
+                        log.moreInfo && typeof log.moreInfo === 'object' && !Array.isArray(log.moreInfo)
+                            ? (log.moreInfo as SyncLog['moreInfo'])
+                            : null,
+                }))
+            );
+        } catch (error) {
+            console.error('Error fetching sync logs:', error);
+            toast({ title: 'Failed to load sync history', variant: 'destructive' });
+        } finally {
+            setLoading(false);
+        }
     }, [id, toast]);
+
+    React.useEffect(() => {
+        loadLogs();
+    }, [loadLogs]);
     
-    const handleSync = async (type: 'older' | 'newer') => {
+    const handleSync = async (type: 'older' | 'newer' | 'comments' | 'messages') => {
         if (!id) return;
         setIsSyncing(type);
         
-        let options: { since?: number, until?: number } | undefined = undefined;
+        let options: { since?: number, until?: number } | undefined;
 
         if (type === 'older' && logs.length > 0) {
-            const oldestSinceDate = logs.reduce((oldest, log) => {
-                if (log.range?.since && new Date(log.range.since) < oldest) {
-                    return new Date(log.range.since);
+            const postsLogs = logs.filter((log) => log.type === 'posts' && !!log.sinceTime);
+            const oldestSinceDate = postsLogs.reduce((oldest, log) => {
+                if (log.sinceTime && new Date(log.sinceTime) < oldest) {
+                    return new Date(log.sinceTime);
                 }
                 return oldest;
             }, new Date());
@@ -84,12 +96,23 @@ export default function FetchHistoryPage() {
         }
 
         try {
-            const result = await syncPostsAction(id, options);
+            let result: { success: boolean; synced?: number; postsSynced?: number; error?: string };
+
+            if (type === 'comments') {
+                result = await syncFacebookCommentsAction(id);
+            } else if (type === 'messages') {
+                result = await syncFacebookMessagesAction(id);
+            } else {
+                result = await syncPostsAction(id, options);
+            }
+
             if (result.success) {
+                const syncedCount = result.synced ?? result.postsSynced ?? 0;
                 toast({
                     title: 'Sync Complete',
-                    description: `${result.postsSynced} new posts were synced.`,
+                    description: `${syncedCount} new item(s) were synced.`,
                 });
+                await loadLogs();
             } else {
                 throw new Error(result.error || 'Unknown sync error');
             }
@@ -127,6 +150,14 @@ export default function FetchHistoryPage() {
                         {isSyncing === 'newer' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                         Sync Newer Posts
                     </Button>
+                    <Button variant="outline" onClick={() => handleSync('comments')} disabled={!!isSyncing}>
+                        {isSyncing === 'comments' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                        Sync Comments
+                    </Button>
+                    <Button variant="outline" onClick={() => handleSync('messages')} disabled={!!isSyncing}>
+                        {isSyncing === 'messages' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                        Sync Messages
+                    </Button>
                 </div>
             </div>
 
@@ -137,7 +168,7 @@ export default function FetchHistoryPage() {
                         Fetch Logs
                     </CardTitle>
                     <CardDescription>
-                        A log of all post synchronization attempts, with the newest first.
+                        A unified log of posts, comments, messages, and related sync info.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -146,7 +177,7 @@ export default function FetchHistoryPage() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Date</TableHead>
-                                    <TableHead>Status</TableHead>
+                                    <TableHead>Type</TableHead>
                                     <TableHead>Details</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -160,33 +191,36 @@ export default function FetchHistoryPage() {
                                 ) : logs.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={3} className="text-center text-muted-foreground h-24">
-                                            No sync history found. Try syncing some posts.
+                                            No sync history found. Run a sync to generate logs.
                                         </TableCell>
                                     </TableRow>
                                 ) : (
                                     logs.map((log) => (
                                         <TableRow key={log.id}>
                                             <TableCell className="font-mono text-xs whitespace-nowrap">
-                                                {log.syncedAt ? format(new Date(log.syncedAt), 'PPpp') : 'N/A'}
+                                                {log.createdOn ? format(new Date(log.createdOn), 'PPpp') : 'N/A'}
                                             </TableCell>
                                             <TableCell>
-                                                <Badge variant={log.status === 'Success' ? 'default' : 'destructive'}>
-                                                    {log.status === 'Success' ? 
-                                                        <CheckCircle className="mr-1 h-3 w-3" /> : 
-                                                        <XCircle className="mr-1 h-3 w-3" />
+                                                <Badge variant={log.moreInfo?.status === 'Failed' ? 'destructive' : 'default'}>
+                                                    {log.moreInfo?.status === 'Failed' ? 
+                                                        <XCircle className="mr-1 h-3 w-3" /> :
+                                                        <CheckCircle className="mr-1 h-3 w-3" />
                                                     }
-                                                    {log.status}
+                                                    {log.type}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell>
-                                                {log.status === 'Success' ?
-                                                    `Synced ${log.postsSynced} new post(s).`
-                                                    :
-                                                    <span className="text-destructive text-sm">{log.errorMessage}</span>
-                                                }
-                                                {log.range && (
+                                                {log.moreInfo?.status === 'Failed' ? (
+                                                    <span className="text-destructive text-sm">{log.moreInfo.errorMessage || 'Sync failed.'}</span>
+                                                ) : (
+                                                    <span>
+                                                        Synced {log.moreInfo?.saved ?? log.moreInfo?.postsSynced ?? 0} item(s)
+                                                        {typeof log.moreInfo?.fetched === 'number' ? ` (fetched ${log.moreInfo.fetched})` : ''}.
+                                                    </span>
+                                                )}
+                                                {(log.sinceTime || log.toTime) && (
                                                     <p className="text-xs text-muted-foreground font-mono whitespace-nowrap">
-                                                        Range: {format(new Date(log.range.since), 'P')} - {format(new Date(log.range.until), 'P')}
+                                                        Range: {log.sinceTime ? format(new Date(log.sinceTime), 'P') : 'N/A'} - {log.toTime ? format(new Date(log.toTime), 'P') : 'N/A'}
                                                     </p>
                                                 )}
                                             </TableCell>

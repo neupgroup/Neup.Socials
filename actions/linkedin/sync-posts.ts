@@ -42,6 +42,18 @@ export async function syncLinkedInPostsAction(accountId: string): Promise<SyncRe
         lastSyncedAt: new Date(),
         updatedAt: new Date(),
       });
+
+      await dataStore.syncLogEntries.create({
+        type: 'posts',
+        platform: 'linkedin',
+        forProfile: accountId,
+        moreInfo: {
+          status: 'Success',
+          postsSynced: 0,
+          source: 'syncLinkedInPostsAction',
+        },
+      });
+
       return { success: true, postsSynced: 0 };
     }
 
@@ -71,8 +83,32 @@ export async function syncLinkedInPostsAction(accountId: string): Promise<SyncRe
       updatedAt: new Date(),
     });
 
+    await dataStore.syncLogEntries.create({
+      type: 'posts',
+      platform: 'linkedin',
+      forProfile: accountId,
+      moreInfo: {
+        status: 'Success',
+        postsSynced: newPosts.length,
+        fetchedPosts: fetchedPosts.length,
+        source: 'syncLinkedInPostsAction',
+      },
+    });
+
     return { success: true, postsSynced: newPosts.length };
   } catch (error: any) {
+    await dataStore.syncLogEntries.create({
+      type: 'info',
+      platform: 'linkedin',
+      forProfile: accountId,
+      moreInfo: {
+        status: 'Failed',
+        operation: 'posts',
+        errorMessage: error.message,
+        source: 'syncLinkedInPostsAction',
+      },
+    });
+
     await logError({
       process: 'syncLinkedInPostsAction',
       location: 'Sync Posts Action',
