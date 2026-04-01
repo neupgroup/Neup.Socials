@@ -31,6 +31,16 @@ type FacebookPostsWithCommentsResponse = {
   }>;
 };
 
+type FacebookCommentDetailResponse = {
+  id: string;
+  message?: string;
+  created_time?: string;
+  from?: {
+    id: string;
+    name: string;
+  };
+};
+
 export type FacebookPostCommentItem = {
   postId: string;
   postMessage: string;
@@ -73,7 +83,7 @@ export async function getPagePostComments(
     fields: `id,message,permalink_url,comments.limit(${commentLimit}){id,message,created_time,from}`,
   });
 
-  const res = await fetch(`${GRAPH_API_BASE_URL}/${pageId}/posts?${params.toString()}`);
+  const res = await fetch(`${GRAPH_API_BASE_URL}/${pageId}/feed?${params.toString()}`);
   const payload = await handleApiResponse<FacebookPostsWithCommentsResponse>(res);
 
   const items: FacebookPostCommentItem[] = [];
@@ -103,4 +113,20 @@ export async function getPagePostComments(
   }
 
   return items;
+}
+
+/**
+ * Fetches a single page comment by id.
+ */
+export async function getPageCommentById(
+  commentId: string,
+  pageToken: string
+): Promise<FacebookCommentDetailResponse> {
+  const params = new URLSearchParams({
+    access_token: pageToken,
+    fields: 'id,message,created_time,from',
+  });
+
+  const res = await fetch(`${GRAPH_API_BASE_URL}/${commentId}?${params.toString()}`);
+  return handleApiResponse<FacebookCommentDetailResponse>(res);
 }

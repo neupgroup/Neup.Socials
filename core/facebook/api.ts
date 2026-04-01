@@ -339,8 +339,34 @@ export async function getPosts(
     params.append('until', String(until));
   }
 
-  const res = await fetch(`${GRAPH_API_BASE_URL}/${pageId}/published_posts?${params.toString()}`);
+  const res = await fetch(`${GRAPH_API_BASE_URL}/${pageId}/feed?${params.toString()}`);
   return handleApiResponse<PageFeedResponse>(res);
+}
+
+/**
+ * Installs this app on the page for webhook delivery with selected fields.
+ */
+export async function subscribeAppToPageWebhooks(
+  pageId: string,
+  pageToken: string,
+  subscribedFields: string[]
+): Promise<{ success: boolean | string }> {
+  const fields = Array.from(new Set(subscribedFields.filter(Boolean)));
+  if (!fields.length) {
+    return { success: true };
+  }
+
+  const params = new URLSearchParams({
+    access_token: pageToken,
+    subscribed_fields: fields.join(','),
+  });
+
+  const res = await fetch(`${GRAPH_API_BASE_URL}/${pageId}/subscribed_apps`, {
+    method: 'POST',
+    body: params,
+  });
+
+  return handleApiResponse<{ success: boolean | string }>(res);
 }
 
 /**

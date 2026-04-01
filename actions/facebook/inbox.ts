@@ -5,6 +5,7 @@ import { dataStore } from '@/lib/data-store';
 import { logError } from '@/lib/error-logging';
 import { getPagePostComments } from '@/core/facebook/comments';
 import { getPageConversationsWithMessages } from '@/core/facebook/messages';
+import { type FacebookAuthIntent } from './auth-intents';
 
 export type FacebookInboxItem = {
   id: string;
@@ -31,10 +32,14 @@ export async function listFacebookInboxFeedAction(): Promise<FacebookInboxItem[]
       try {
         const pageId = account.platformId as string;
         const pageToken = await decrypt(account.encryptedToken as string);
+        const accountMetadata = (account.metadata ?? {}) as { authIntents?: FacebookAuthIntent[] };
+        const intents = Array.isArray(accountMetadata.authIntents) && accountMetadata.authIntents.length > 0
+          ? accountMetadata.authIntents
+          : (['posts'] as FacebookAuthIntent[]);
 
         const [messages, comments] = await Promise.all([
-          getPageConversationsWithMessages(pageId, pageToken),
-          getPagePostComments(pageId, pageToken),
+          intents.includes('messages') ? getPageConversationsWithMessages(pageId, pageToken) : Promise.resolve([]),
+          intents.includes('posts') ? getPagePostComments(pageId, pageToken) : Promise.resolve([]),
         ]);
 
         const mappedMessages: FacebookInboxItem[] = messages.map((item) => ({

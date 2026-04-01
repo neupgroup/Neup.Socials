@@ -92,6 +92,16 @@ export const dataStore = {
       prisma.connectedAccount.findFirst({
         where: { owner, platform, platformId },
       }),
+    findByPlatformPlatformId: async ({
+      platform,
+      platformId,
+    }: {
+      platform: string;
+      platformId: string;
+    }) =>
+      prisma.connectedAccount.findMany({
+        where: { platform, platformId },
+      }),
     upsertByOwnerPlatformId: async ({
       owner,
       platform,

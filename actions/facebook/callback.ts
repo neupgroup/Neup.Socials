@@ -8,10 +8,24 @@ import {
   exchangeCodeForShortLivedToken,
   exchangeForLongLivedToken,
   getUserPages,
+  subscribeAppToPageWebhooks,
 } from '../../core/facebook/api';
+import { FACEBOOK_AUTH_INTENTS, type FacebookAuthIntent } from './auth-intents';
 import { validateState, encrypt } from '@/lib/crypto';
 import { dataStore } from '@/lib/data-store';
 import { logError } from '@/lib/error-logging';
+
+function extractFacebookIntentsFromState(state: string): FacebookAuthIntent[] {
+  try {
+    const decoded = JSON.parse(Buffer.from(state, 'base64').toString('utf8'));
+    const intents = Array.isArray(decoded.facebookIntents) ? decoded.facebookIntents : [];
+    const validIntents = new Set(FACEBOOK_AUTH_INTENTS);
+    const selected = intents.filter((intent: string): intent is FacebookAuthIntent => validIntents.has(intent as FacebookAuthIntent));
+    return selected.length > 0 ? selected : ['posts'];
+  } catch {
+    return ['posts'];
+  }
+}
 
 /**
  * Handles the OAuth callback from Facebook. It exchanges the authorization code
@@ -31,6 +45,7 @@ export async function handleFacebookCallback(code: string, state: string) {
     if (!userId) {
       throw new Error('State validation failed: No user ID present.');
     }
+    const selectedIntents = extractFacebookIntentsFromState(state);
 
     // 2. Exchange the code for a short-lived user access token.
     const shortLivedTokenResponse = await exchangeCodeForShortLivedToken(code);
@@ -67,9 +82,32 @@ export async function handleFacebookCallback(code: string, state: string) {
             tasks: page.tasks ?? [],
             category: page.category ?? null,
             categoryList: page.category_list ?? [],
+            authIntents: selectedIntents,
           },
         },
       });
+
+      // Install app subscriptions for real-time Page webhook delivery.
+      // feed covers post/comment changes; messages is only requested when user selected that intent.
+      try {
+        const subscribedFields = [
+          'feed',
+          ...(selectedIntents.includes('messages') ? ['messages'] : []),
+        ];
+        await subscribeAppToPageWebhooks(page.id, page.access_token, subscribedFields);
+      } catch (subscriptionError: any) {
+        await logError({
+          process: 'subscribeAppToPageWebhooks',
+          location: 'Facebook Callback Handler',
+          errorMessage: subscriptionError?.message || 'Failed to subscribe app to Facebook page webhooks.',
+          user: userId,
+          context: {
+            pageId: page.id,
+            pageName: page.name,
+            selectedIntents,
+          },
+        });
+      }
     }
 
     return { success: true, message: `${pagesResponse.data.length} Facebook page(s) connected successfully.` };

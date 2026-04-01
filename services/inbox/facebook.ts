@@ -3,6 +3,8 @@
 
 import { dataStore } from '@/lib/data-store';
 import { logError } from '@/lib/error-logging';
+import { decrypt } from '@/lib/crypto';
+import { getPageCommentById } from '@/core/facebook/comments';
 
 /**
  * Processes the incoming webhook payload from Facebook.
@@ -25,36 +27,232 @@ export async function processFacebookWebhook(payload: any) {
     }
 
     for (const entry of payload.entry) {
+        const pageId = String(entry?.id ?? '');
+
         // Facebook entries often have 'messaging' array within entry directly for some versions,
         // or 'changes' for feed/other events.
 
         // Handle 'messaging' events (common for Messenger)
         if (entry.messaging) {
             for (const messagingEvent of entry.messaging) {
-                await handleMessagingEvent(messagingEvent);
+                await handleMessagingEvent(pageId, messagingEvent);
             }
         }
 
         // Handle 'changes' events (feed, etc.)
         if (entry.changes) {
             for (const change of entry.changes) {
-                await handleChangeEvent(change);
+                await handleChangeEvent(pageId, change);
             }
         }
     }
 }
 
-async function handleMessagingEvent(event: any) {
-    console.log('💬 [Service] Processing messaging event:', event);
-    // TODO: Implement actual message handling (find/create conversation, add message)
-    // For now, we'll just log it clearly or maybe save raw event if useful
+async function getFacebookAccountsByPageId(pageId: string) {
+    if (!pageId) {
+        return [];
+    }
+
+    return dataStore.accounts.findByPlatformPlatformId({
+        platform: 'Facebook',
+        platformId: pageId,
+    });
 }
 
-async function handleChangeEvent(change: any) {
+async function saveIncomingFacebookItem(params: {
+    accountId: string;
+    contactId: string;
+    contactName: string;
+    text: string;
+    platformMessageId: string;
+    timestamp: Date;
+    type?: string;
+}) {
+    const {
+        accountId,
+        contactId,
+        contactName,
+        text,
+        platformMessageId,
+        timestamp,
+        type = 'text',
+    } = params;
+
+    if (!text.trim()) {
+        return;
+    }
+
+    const existing = await dataStore.messages.findByPlatformMessageId(platformMessageId);
+    if (existing) {
+        return;
+    }
+
+    const avatar = contactName
+        .split(' ')
+        .map((part) => part[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase();
+
+    let conversation = await dataStore.conversations.findByContactAndChannel(contactId, accountId);
+
+    if (!conversation) {
+        conversation = await dataStore.conversations.create({
+            contactId,
+            contactName,
+            channelId: accountId,
+            platform: 'Facebook',
+            lastMessage: text,
+            lastMessageAt: timestamp,
+            unread: true,
+            avatar,
+        });
+    } else {
+        conversation = await dataStore.conversations.update(conversation.id, {
+            contactName,
+            lastMessage: text,
+            lastMessageAt: timestamp,
+            unread: true,
+            avatar: conversation.avatar || avatar,
+        });
+    }
+
+    await dataStore.messages.create({
+        conversationId: conversation.id,
+        platformMessageId,
+        text,
+        sender: 'user',
+        timestamp,
+        type,
+    });
+}
+
+async function handleMessagingEvent(pageId: string, event: any) {
+    try {
+        const messageText = String(event?.message?.text ?? '').trim();
+        const senderId = String(event?.sender?.id ?? '');
+        const rawMessageId = String(event?.message?.mid ?? event?.message?.id ?? '');
+
+        if (!messageText || !senderId || !rawMessageId) {
+            return;
+        }
+
+        if (senderId === pageId) {
+            return;
+        }
+
+        const accounts = await getFacebookAccountsByPageId(pageId || String(event?.recipient?.id ?? ''));
+        if (!accounts.length) {
+            return;
+        }
+
+        const senderName = String(event?.sender?.name ?? '').trim() || `Facebook User ${senderId.slice(-6)}`;
+        const timestamp = typeof event?.timestamp === 'number'
+            ? new Date(event.timestamp)
+            : new Date();
+
+        await Promise.all(
+            accounts.map((account) =>
+                saveIncomingFacebookItem({
+                    accountId: account.id,
+                    contactId: senderId,
+                    contactName: senderName,
+                    text: messageText,
+                    platformMessageId: `fb_msg:${account.id}:${rawMessageId}`,
+                    timestamp,
+                    type: 'text',
+                })
+            )
+        );
+    } catch (error: any) {
+        await logError({
+            process: 'handleMessagingEvent',
+            location: 'Facebook Webhook Service',
+            errorMessage: error.message,
+            context: { pageId, event },
+        });
+    }
+}
+
+async function handleFeedCommentChange(pageId: string, change: any) {
+    const value = change?.value ?? {};
+    const item = String(value?.item ?? '');
+    const verb = String(value?.verb ?? '');
+
+    if (item !== 'comment') {
+        return;
+    }
+
+    if (verb && !['add', 'edited'].includes(verb)) {
+        return;
+    }
+
+    const commenterId = String(value?.from?.id ?? '');
+    if (!commenterId || commenterId === pageId) {
+        return;
+    }
+
+    const commentId = String(value?.comment_id ?? value?.commentId ?? '');
+    const postId = String(value?.post_id ?? value?.postId ?? '');
+    let commentText = String(value?.message ?? '').trim();
+    let commenterName = String(value?.from?.name ?? '').trim();
+
+    const accounts = await getFacebookAccountsByPageId(pageId);
+    if (!accounts.length) {
+        return;
+    }
+
+    if ((!commentText || !commenterName) && commentId) {
+        const primary = accounts[0];
+        if (primary?.encryptedToken) {
+            try {
+                const token = await decrypt(primary.encryptedToken);
+                const detailedComment = await getPageCommentById(commentId, token);
+                commentText = commentText || String(detailedComment?.message ?? '').trim();
+                commenterName = commenterName || String(detailedComment?.from?.name ?? '').trim();
+            } catch {
+                // Keep payload fallback values if detail lookup fails.
+            }
+        }
+    }
+
+    if (!commentText) {
+        return;
+    }
+
+    const timestamp = value?.created_time
+        ? new Date(Number(value.created_time) * 1000)
+        : new Date();
+    const displayName = commenterName || `Facebook User ${commenterId.slice(-6)}`;
+    const inboxText = postId
+        ? `Comment on ${postId}: ${commentText}`
+        : `Comment: ${commentText}`;
+
+    await Promise.all(
+        accounts.map((account) =>
+            saveIncomingFacebookItem({
+                accountId: account.id,
+                contactId: commenterId,
+                contactName: displayName,
+                text: inboxText,
+                platformMessageId: `fb_comment:${account.id}:${commentId || `${commenterId}:${timestamp.getTime()}`}`,
+                timestamp,
+                type: 'comment',
+            })
+        )
+    );
+}
+
+async function handleChangeEvent(pageId: string, change: any) {
     try {
         console.log('📝 [Service] Processing change event:', change);
 
         const field = change?.field;
+
+        if (field === 'feed') {
+            await handleFeedCommentChange(pageId, change);
+            return;
+        }
 
         if (field === 'page_change_proposal' || field === 'page_upcoming_change') {
             const value = change?.value ?? {};

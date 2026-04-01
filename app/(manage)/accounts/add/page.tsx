@@ -12,9 +12,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, Loader2, Facebook, Instagram, Twitter, Linkedin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getFacebookAuthUrl } from '@/actions/facebook/auth';
+import { FACEBOOK_AUTH_INTENTS } from '@/actions/facebook/auth-intents';
 import { getInstagramAuthUrl } from '@/actions/instagram/auth';
 import { getLinkedInAuthUrl } from '@/actions/linkedin/auth';
 import { encrypt } from '@/lib/crypto';
@@ -24,6 +26,7 @@ import { createConnectedAccountAction } from '@/actions/db';
 
 const formSchema = z.object({
   platform: z.enum(['Facebook', 'Instagram', 'Twitter', 'LinkedIn', 'WhatsApp'], {required_error: "Please select a platform."}),
+  facebookIntents: z.array(z.enum(FACEBOOK_AUTH_INTENTS)).optional(),
   username: z.string().optional(),
   password: z.string().optional(),
   phoneNumberId: z.string().optional(),
@@ -44,6 +47,14 @@ const formSchema = z.object({
 }, {
     message: 'Phone Number ID and Access Token are required.',
     path: ['phoneNumberId'],
+}).refine(data => {
+  if (data.platform === 'Facebook') {
+    return !!data.facebookIntents && data.facebookIntents.length > 0;
+  }
+  return true;
+}, {
+  message: 'Select at least one Facebook intention.',
+  path: ['facebookIntents'],
 });
 
 
@@ -71,14 +82,16 @@ export default function AddAccountPage() {
   
   const userId = 'neupkishor';
 
-  const { control, handleSubmit, watch, formState: { errors } } = useForm<FormValues>({
+  const { control, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       platform: undefined,
+      facebookIntents: ['posts'],
     }
   });
   
   const selectedPlatform = watch('platform');
+  const selectedFacebookIntents = watch('facebookIntents') || [];
 
   const handleOAuthConnect = async () => {
     if (!selectedPlatform) return;
@@ -87,7 +100,9 @@ export default function AddAccountPage() {
 
     setIsSubmitting(true);
     try {
-      const authUrl = await platform.handler(userId);
+      const authUrl = selectedPlatform === 'Facebook'
+        ? await getFacebookAuthUrl(userId, selectedFacebookIntents)
+        : await platform.handler(userId);
       window.location.href = authUrl;
     } catch (error) {
         console.error(`Error getting ${selectedPlatform} auth URL: `, error);
@@ -202,8 +217,57 @@ export default function AddAccountPage() {
             {selectedPlatform && (
               <>
                 {isOauthFlow && (
-                    <div className="text-center p-4 border-dashed border-2 rounded-lg">
-                    <p className="text-muted-foreground mb-4">
+                    <div className="space-y-4 text-center p-4 border-dashed border-2 rounded-lg">
+                    {selectedPlatform === 'Facebook' && (
+                      <div className="space-y-3 text-left">
+                        <div>
+                          <h3 className="font-medium">What do you want to access?</h3>
+                          <p className="text-sm text-muted-foreground">
+                            We request only the Facebook permissions needed for your selected intention.
+                          </p>
+                        </div>
+                        <div className="space-y-2 rounded-md border p-3">
+                          <div className="flex items-center gap-2">
+                            <Checkbox
+                              id="fb-intent-messages"
+                              checked={selectedFacebookIntents.includes('messages')}
+                              onCheckedChange={(checked) => {
+                                const current = new Set(selectedFacebookIntents);
+                                if (checked) {
+                                  current.add('messages');
+                                } else {
+                                  current.delete('messages');
+                                }
+                                setValue('facebookIntents', Array.from(current), { shouldValidate: true });
+                              }}
+                            />
+                            <Label htmlFor="fb-intent-messages" className="cursor-pointer">Messages</Label>
+                          </div>
+                          <p className="text-xs text-muted-foreground">Read page conversations and messages.</p>
+                          <div className="flex items-center gap-2 pt-1">
+                            <Checkbox
+                              id="fb-intent-posts"
+                              checked={selectedFacebookIntents.includes('posts')}
+                              onCheckedChange={(checked) => {
+                                const current = new Set(selectedFacebookIntents);
+                                if (checked) {
+                                  current.add('posts');
+                                } else {
+                                  current.delete('posts');
+                                }
+                                setValue('facebookIntents', Array.from(current), { shouldValidate: true });
+                              }}
+                            />
+                            <Label htmlFor="fb-intent-posts" className="cursor-pointer">Posts</Label>
+                          </div>
+                          <p className="text-xs text-muted-foreground">Read posts and post comments.</p>
+                        </div>
+                        {errors.facebookIntents && (
+                          <p className="text-sm text-destructive">{errors.facebookIntents.message}</p>
+                        )}
+                      </div>
+                    )}
+                    <p className="text-muted-foreground mb-1">
                         You will be redirected to {selectedPlatform} to authorize the connection.
                     </p>
                     <Button onClick={handleOAuthConnect} disabled={isSubmitting} type="button">
