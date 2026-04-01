@@ -17,6 +17,7 @@ import { getPostAnalyticsAction } from '@/actions/facebook/post-insights';
 import { deletePostAction, getPostAction, getPostCollectionAction } from '@/actions/db';
 import { fetchPostCommentsAction, postCommentAction, postReplyAction } from '@/actions/facebook/comments';
 import { getFacebookPostVideoAction } from '@/actions/facebook/get-video';
+import { sendReplyAction } from '@/actions/inbox/sender';
 
 type Post = {
   id: string;
@@ -91,6 +92,7 @@ const PostComments = ({ postId, platform, accountId }: { postId: string; platfor
   const [replyText, setReplyText] = React.useState('');
   const [isLoading, setIsLoading] = React.useState(false);
   const [isPosting, setIsPosting] = React.useState(false);
+  const [isSendingMessageForId, setIsSendingMessageForId] = React.useState<string | null>(null);
 
   const fetchComments = async () => {
     if (!isFacebookPlatform(platform)) return;
@@ -143,6 +145,38 @@ const PostComments = ({ postId, platform, accountId }: { postId: string; platfor
       }
     } finally {
       setIsPosting(false);
+    }
+  };
+
+  const handleMessageUser = async (recipientId: string) => {
+    if (!accountId) {
+      toast({
+        title: 'Missing account',
+        description: 'This post is not linked to a connected Facebook page account.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const text = window.prompt('Message to send to this user:');
+    if (!text || !text.trim()) {
+      return;
+    }
+
+    setIsSendingMessageForId(recipientId);
+    try {
+      const result = await sendReplyAction('Facebook', accountId, recipientId, text.trim());
+      if (result.success) {
+        toast({ title: 'Message sent' });
+      } else {
+        toast({
+          title: 'Failed to send message',
+          description: result.error || 'Unable to send message to this user.',
+          variant: 'destructive',
+        });
+      }
+    } finally {
+      setIsSendingMessageForId(null);
     }
   };
 
@@ -210,13 +244,37 @@ const PostComments = ({ postId, platform, accountId }: { postId: string; platfor
                 </div>
               </div>
               <p className="text-sm whitespace-pre-wrap">{comment.message}</p>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setReplyingToId(replyingToId === comment.id ? null : comment.id)}
-              >
-                {replyingToId === comment.id ? 'Cancel Reply' : 'Reply'}
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                {comment.from?.id ? (
+                  <Button asChild variant="outline" size="sm">
+                    <Link
+                      href={`/user/${encodeURIComponent(comment.from.id)}?platform=facebook${accountId ? `&accountId=${encodeURIComponent(accountId)}` : ''}`}
+                    >
+                      Open User
+                    </Link>
+                  </Button>
+                ) : null}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => comment.from?.id && handleMessageUser(comment.from.id)}
+                  disabled={!comment.from?.id || !accountId || isSendingMessageForId === comment.from?.id}
+                >
+                  {isSendingMessageForId === comment.from?.id ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="mr-2 h-4 w-4" />
+                  )}
+                  Message User
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setReplyingToId(replyingToId === comment.id ? null : comment.id)}
+                >
+                  {replyingToId === comment.id ? 'Cancel Reply' : 'Reply as Page'}
+                </Button>
+              </div>
 
               {replyingToId === comment.id && (
                 <div className="mt-3 pt-3 border-t space-y-2">
