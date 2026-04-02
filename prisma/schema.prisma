@@ -292,6 +292,7 @@ model InstagramMessage {
   messageMid     String?  @map("message_mid")
   messageText    String?  @map("message_text") @db.Text
   numEdit        Int?     @map("num_edit")
+  reactionSummary Json?   @map("reaction_summary")
   payload        Json?
   createdAt      DateTime @default(now()) @map("created_at")
 
