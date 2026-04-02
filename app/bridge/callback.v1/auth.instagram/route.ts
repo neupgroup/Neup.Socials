@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { handleInstagramCallback } from '@/actions/instagram/callback';
 import { logError } from '@/lib/error-logging';
-import { buildUrlFromBase } from '@/lib/app-url';
+import { getAppBaseUrl, buildUrlFromBase } from '@/lib/app-url';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const appOrigin = request.nextUrl.origin;
+  const appBaseUrl = getAppBaseUrl();
   const code = searchParams.get('code');
   let state = searchParams.get('state');
   const error = searchParams.get('error');
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
       errorMessage: errorDescription || 'User denied the request or an error occurred.',
       context: { error, errorDescription },
     });
-    return NextResponse.redirect(buildUrlFromBase(appOrigin, '/accounts/add?error=instagram-denied'));
+    return NextResponse.redirect(buildUrlFromBase(appBaseUrl, '/accounts/add?error=instagram-denied'));
   }
 
   if (!code || !state) {
@@ -27,18 +27,18 @@ export async function GET(request: NextRequest) {
       location: 'GET /bridge/callback.v1/auth.instagram',
       errorMessage: 'Missing code or state parameter in callback.',
     });
-    return NextResponse.redirect(buildUrlFromBase(appOrigin, '/accounts/add?error=invalid-callback'));
+    return NextResponse.redirect(buildUrlFromBase(appBaseUrl, '/accounts/add?error=invalid-callback'));
   }
 
   state = decodeURIComponent(state);
 
-  const result = await handleInstagramCallback(code, state, appOrigin);
+  const result = await handleInstagramCallback(code, state);
 
   if (result.success) {
-    return NextResponse.redirect(buildUrlFromBase(appOrigin, '/accounts?status=success'));
+    return NextResponse.redirect(buildUrlFromBase(appBaseUrl, '/accounts?status=success'));
   }
 
   return NextResponse.redirect(
-    buildUrlFromBase(appOrigin, `/accounts/add?error=${encodeURIComponent(result.error ?? 'callback-failed')}`)
+    buildUrlFromBase(appBaseUrl, `/accounts/add?error=${encodeURIComponent(result.error ?? 'callback-failed')}`)
   );
 }

@@ -1,5 +1,3 @@
-const DEFAULT_APP_BASE_URL = 'https://neupgroup.com/socials';
-
 function normalizeBaseUrl(baseUrl: string): string {
   return baseUrl.replace(/\/+$/, '');
 }
@@ -15,7 +13,7 @@ export function buildUrlFromBase(baseUrl: string, path: string): string {
 
 export function getAppBaseUrl(): string {
   const configured = "https://neupgroup.com/socials";
-  return normalizeBaseUrl(configured || DEFAULT_APP_BASE_URL);
+  return normalizeBaseUrl(configured);
 }
 
 export function toAppUrl(path: string): string {
