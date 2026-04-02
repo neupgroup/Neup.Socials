@@ -1,6 +1,6 @@
 
 /**
- * @fileoverview Handles the OAuth callback from Instagram.
+ * @fileoverview Handles the OAuth callback from Instagram business login.
  */
 'use server';
 
@@ -15,8 +15,8 @@ import { logError } from '@/lib/error-logging';
 
 /**
  * Handles the OAuth callback from Instagram. It exchanges the authorization code
- * for a long-lived access token, fetches the user's profile, and stores the
- * information securely in Firestore.
+ * for a long-lived access token, fetches the user's professional-account
+ * profile, and stores the information securely in Postgres.
  *
  * @param code - The authorization code provided by Instagram.
  * @param state - The state parameter for CSRF validation.
@@ -50,7 +50,7 @@ export async function handleInstagramCallback(code: string, state: string) {
     await dataStore.accounts.upsertByOwnerPlatformId({
       owner: userId,
       platform: 'Instagram',
-      platformId: userProfile.id,
+      platformId: userProfile.user_id,
       data: {
         name: userProfile.username,
         username: userProfile.username,
@@ -58,6 +58,12 @@ export async function handleInstagramCallback(code: string, state: string) {
         status: 'Active',
         updatedAt: new Date(),
         lastSyncedAt: null,
+        metadata: {
+          permissions: shortLivedTokenResponse.permissions ?? null,
+          tokenType: longLivedTokenResponse.token_type,
+          expiresIn: longLivedTokenResponse.expires_in,
+          loginFlow: 'instagram_business_login',
+        },
       },
     });
 

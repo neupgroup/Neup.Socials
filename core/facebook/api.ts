@@ -11,6 +11,7 @@
  */
 'use server';
 import * as mime from 'mime-types';
+import { toAppUrl } from '@/lib/app-url';
 
 const API_VERSION = 'v25.0';
 const GRAPH_API_BASE_URL = `https://graph.facebook.com/${API_VERSION}`;
@@ -227,7 +228,7 @@ async function handleApiResponse<T>(res: Response): Promise<T> {
 export async function exchangeCodeForShortLivedToken(code: string): Promise<AccessTokenResponse> {
   const params = new URLSearchParams({
     client_id: process.env.FB_APP_ID!,
-    redirect_uri: 'https://neupgroup.com/socials/bridge/callback.v1/auth.facebook',
+    redirect_uri: toAppUrl('/bridge/callback.v1/auth.facebook'),
     client_secret: process.env.FB_APP_SECRET!,
     code,
   });

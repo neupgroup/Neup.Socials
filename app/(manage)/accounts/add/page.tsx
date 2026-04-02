@@ -197,6 +197,11 @@ export default function AddAccountPage() {
   const isOauthFlow = selectedPlatform && platformDetails[selectedPlatform]?.isOauth;
   const isWhatsAppFlow = selectedPlatform === 'WhatsApp';
   const isLegacyFlow = selectedPlatform === 'Twitter';
+  const oauthDescription = selectedPlatform === 'Instagram'
+    ? 'You will be redirected to Instagram Login for professional accounts. Meta can also show a Facebook sign-in option there if the Instagram account is linked.'
+    : selectedPlatform === 'Facebook'
+      ? 'You will be redirected to Facebook Login to authorize your Pages.'
+      : `You will be redirected to ${selectedPlatform} to authorize the connection.`;
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -317,12 +322,23 @@ export default function AddAccountPage() {
                         )}
                       </div>
                     )}
+                    {selectedPlatform === 'Instagram' && (
+                      <div className="rounded-md border bg-muted/40 p-3 text-left">
+                        <p className="text-sm font-medium">Instagram Login</p>
+                        <p className="text-sm text-muted-foreground">
+                          This flow is for Instagram professional accounts and requests business access for profile basics, publishing, comments, and messages.
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          If the account is connected to Facebook, Meta can let the user continue with Facebook directly from the Instagram login screen.
+                        </p>
+                      </div>
+                    )}
                     <p className="text-muted-foreground mb-1">
-                        You will be redirected to {selectedPlatform} to authorize the connection.
+                        {oauthDescription}
                     </p>
                     <Button onClick={handleOAuthConnect} disabled={isSubmitting} type="button">
                         {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Continue to {selectedPlatform}
+                        Continue to {selectedPlatform === 'Instagram' ? 'Instagram Login' : selectedPlatform}
                     </Button>
                     </div>
                 )}

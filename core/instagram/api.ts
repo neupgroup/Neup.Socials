@@ -1,15 +1,19 @@
 
 /**
- * @fileoverview Core functions for interacting with the Instagram Basic Display API.
+ * @fileoverview Core functions for interacting with the Instagram API with Instagram Login.
  */
 'use server';
 
-const API_BASE_URL = 'https://api.instagram.com/v1';
+import { toAppUrl } from '@/lib/app-url';
+
+const API_BASE_URL = 'https://api.instagram.com';
 const GRAPH_API_BASE_URL = 'https://graph.instagram.com';
+const GRAPH_API_VERSION = 'v25.0';
 
 type AccessTokenResponse = {
   access_token: string;
   user_id: number;
+  permissions?: string;
 };
 
 type LongLivedTokenResponse = {
@@ -19,10 +23,8 @@ type LongLivedTokenResponse = {
 }
 
 type UserProfile = {
-  id: string;
+  user_id: string;
   username: string;
-  account_type: 'BUSINESS' | 'MEDIA_CREATOR' | 'PERSONAL';
-  media_count: number;
 }
 
 type ErrorResponse = {
@@ -53,7 +55,7 @@ export async function exchangeCodeForToken(code: string): Promise<AccessTokenRes
     client_id: process.env.INSTAGRAM_APP_ID!,
     client_secret: process.env.INSTAGRAM_APP_SECRET!,
     grant_type: 'authorization_code',
-    redirect_uri: 'https://khanalcwani.com/bridge/callback.v1/auth.instagram',
+    redirect_uri: toAppUrl('/bridge/callback.v1/auth.instagram'),
     code,
   });
 
@@ -87,10 +89,10 @@ export async function exchangeForLongLivedToken(shortLivedToken: string): Promis
  */
 export async function getUserProfile(longLivedToken: string): Promise<UserProfile> {
   const params = new URLSearchParams({
-    fields: 'id,username,account_type,media_count',
+    fields: 'user_id,username',
     access_token: longLivedToken,
   });
 
-  const res = await fetch(`${GRAPH_API_BASE_URL}/me?${params.toString()}`);
+  const res = await fetch(`${GRAPH_API_BASE_URL}/${GRAPH_API_VERSION}/me?${params.toString()}`);
   return handleApiResponse<UserProfile>(res);
 }

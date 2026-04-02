@@ -16,6 +16,7 @@
 
 import { generateRandomState } from '@/lib/crypto';
 import { logError } from '@/lib/error-logging';
+import { toAppUrl } from '@/lib/app-url';
 import { FACEBOOK_AUTH_INTENTS, type FacebookAuthIntent } from './auth-intents';
 
 const FB_OAUTH_BASE_URL = 'https://www.facebook.com/v25.0/dialog/oauth';
@@ -94,7 +95,7 @@ export async function getFacebookAuthUrl(userId: string, intents?: FacebookAuthI
 
     const params = new URLSearchParams({
       client_id: process.env.FB_APP_ID!,
-      redirect_uri: 'https://neupgroup.com/socials/bridge/callback.v1/auth.facebook',
+      redirect_uri: toAppUrl('/bridge/callback.v1/auth.facebook'),
       state: encodeURIComponent(state),
       scope,
       response_type: 'code',
