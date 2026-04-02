@@ -50,12 +50,15 @@ async function handleApiResponse<T>(res: Response): Promise<T> {
 /**
  * Exchanges an authorization code for a short-lived user access token.
  */
-export async function exchangeCodeForToken(code: string): Promise<AccessTokenResponse> {
+export async function exchangeCodeForToken(
+  code: string,
+  redirectUri?: string
+): Promise<AccessTokenResponse> {
   const params = new URLSearchParams({
     client_id: process.env.INSTAGRAM_APP_ID!,
     client_secret: process.env.INSTAGRAM_APP_SECRET!,
     grant_type: 'authorization_code',
-    redirect_uri: toAppUrl('/bridge/callback.v1/auth.instagram'),
+    redirect_uri: redirectUri ?? toAppUrl('/bridge/callback.v1/auth.instagram'),
     code,
   });
 

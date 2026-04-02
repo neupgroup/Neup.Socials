@@ -6,7 +6,7 @@
 
 import { generateRandomState } from '@/lib/crypto';
 import { logError } from '@/lib/error-logging';
-import { toAppUrl } from '@/lib/app-url';
+import { buildUrlFromBase, toAppUrl } from '@/lib/app-url';
 
 const INSTAGRAM_OAUTH_BASE_URL = 'https://www.instagram.com/oauth/authorize';
 const INSTAGRAM_AUTH_SCOPES = [
@@ -26,7 +26,7 @@ const INSTAGRAM_AUTH_SCOPES = [
  * @param userId - The ID of the user initiating the request.
  * @returns The full Instagram OAuth dialog URL.
  */
-export async function getInstagramAuthUrl(userId: string): Promise<string> {
+export async function getInstagramAuthUrl(userId: string, appOrigin?: string): Promise<string> {
   try {
     const state = await generateRandomState(userId);
 
@@ -34,9 +34,13 @@ export async function getInstagramAuthUrl(userId: string): Promise<string> {
       throw new Error('Instagram App ID environment variable is not set.');
     }
 
+    const redirectUri = appOrigin?.trim()
+      ? buildUrlFromBase(appOrigin, '/bridge/callback.v1/auth.instagram')
+      : toAppUrl('/bridge/callback.v1/auth.instagram');
+
     const params = new URLSearchParams({
       client_id: process.env.INSTAGRAM_APP_ID!,
-      redirect_uri: toAppUrl('/bridge/callback.v1/auth.instagram'),
+      redirect_uri: redirectUri,
       enable_fb_login: 'true',
       response_type: 'code',
       scope: INSTAGRAM_AUTH_SCOPES,

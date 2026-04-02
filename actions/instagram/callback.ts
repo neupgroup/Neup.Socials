@@ -12,6 +12,7 @@ import {
 import { validateState, encrypt } from '@/lib/crypto';
 import { dataStore } from '@/lib/data-store';
 import { logError } from '@/lib/error-logging';
+import { buildUrlFromBase, toAppUrl } from '@/lib/app-url';
 
 /**
  * Handles the OAuth callback from Instagram. It exchanges the authorization code
@@ -22,7 +23,11 @@ import { logError } from '@/lib/error-logging';
  * @param state - The state parameter for CSRF validation.
  * @returns An object indicating success or failure.
  */
-export async function handleInstagramCallback(code: string, state: string) {
+export async function handleInstagramCallback(
+  code: string,
+  state: string,
+  appOrigin?: string
+) {
   let userId = 'anonymous';
   try {
     // 1. Validate the state parameter to prevent CSRF attacks.
@@ -32,8 +37,12 @@ export async function handleInstagramCallback(code: string, state: string) {
       throw new Error('State validation failed: No user ID present.');
     }
 
+    const redirectUri = appOrigin?.trim()
+      ? buildUrlFromBase(appOrigin, '/bridge/callback.v1/auth.instagram')
+      : toAppUrl('/bridge/callback.v1/auth.instagram');
+
     // 2. Exchange the code for a short-lived user access token.
-    const shortLivedTokenResponse = await exchangeCodeForToken(code);
+    const shortLivedTokenResponse = await exchangeCodeForToken(code, redirectUri);
     
     // 3. Exchange the short-lived token for a long-lived one.
     const longLivedTokenResponse = await exchangeForLongLivedToken(

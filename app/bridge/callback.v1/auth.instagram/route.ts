@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { handleInstagramCallback } from '@/actions/instagram/callback';
 import { logError } from '@/lib/error-logging';
-import { toAppUrl } from '@/lib/app-url';
+import { buildUrlFromBase } from '@/lib/app-url';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
+  const appOrigin = request.nextUrl.origin;
   const code = searchParams.get('code');
   let state = searchParams.get('state');
   const error = searchParams.get('error');
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest) {
       errorMessage: errorDescription || 'User denied the request or an error occurred.',
       context: { error, errorDescription },
     });
-    return NextResponse.redirect(toAppUrl('/accounts/add?error=instagram-denied'));
+    return NextResponse.redirect(buildUrlFromBase(appOrigin, '/accounts/add?error=instagram-denied'));
   }
 
   if (!code || !state) {
@@ -26,16 +27,18 @@ export async function GET(request: NextRequest) {
       location: 'GET /bridge/callback.v1/auth.instagram',
       errorMessage: 'Missing code or state parameter in callback.',
     });
-    return NextResponse.redirect(toAppUrl('/accounts/add?error=invalid-callback'));
+    return NextResponse.redirect(buildUrlFromBase(appOrigin, '/accounts/add?error=invalid-callback'));
   }
 
   state = decodeURIComponent(state);
 
-  const result = await handleInstagramCallback(code, state);
+  const result = await handleInstagramCallback(code, state, appOrigin);
 
   if (result.success) {
-    return NextResponse.redirect(toAppUrl('/accounts?status=success'));
+    return NextResponse.redirect(buildUrlFromBase(appOrigin, '/accounts?status=success'));
   }
 
-  return NextResponse.redirect(toAppUrl(`/accounts/add?error=${encodeURIComponent(result.error ?? 'callback-failed')}`));
+  return NextResponse.redirect(
+    buildUrlFromBase(appOrigin, `/accounts/add?error=${encodeURIComponent(result.error ?? 'callback-failed')}`)
+  );
 }

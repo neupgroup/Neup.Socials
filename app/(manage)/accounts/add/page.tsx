@@ -132,7 +132,9 @@ export default function AddAccountPage() {
     try {
       const authUrl = selectedPlatform === 'Facebook'
         ? await getFacebookAuthUrl(userId, selectedFacebookIntents)
-        : await platform.handler(userId);
+        : selectedPlatform === 'Instagram'
+          ? await getInstagramAuthUrl(userId, window.location.origin)
+          : await platform.handler(userId);
       window.location.href = authUrl;
     } catch (error) {
         console.error(`Error getting ${selectedPlatform} auth URL: `, error);

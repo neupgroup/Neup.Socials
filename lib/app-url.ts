@@ -9,12 +9,15 @@ function normalizePath(path: string): string {
   return path.startsWith('/') ? path : `/${path}`;
 }
 
+export function buildUrlFromBase(baseUrl: string, path: string): string {
+  return `${normalizeBaseUrl(baseUrl)}${normalizePath(path)}`;
+}
+
 export function getAppBaseUrl(): string {
   const configured = "https://neupgroup.com/socials";
   return normalizeBaseUrl(configured || DEFAULT_APP_BASE_URL);
 }
 
 export function toAppUrl(path: string): string {
-  const baseUrl = getAppBaseUrl();
-  return `${baseUrl}${normalizePath(path)}`;
+  return buildUrlFromBase(getAppBaseUrl(), path);
 }
