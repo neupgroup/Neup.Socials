@@ -266,6 +266,41 @@ model FacebookComment {
   @@map("facebook_comments")
 }
 
+model InstagramLiveComment {
+  id              String   @id @default(cuid())
+  commentId       String   @unique @map("comment_id")
+  mediaId         String?  @map("media_id")
+  mediaProductType String? @map("media_product_type")
+  fromId          String?  @map("from_id")
+  fromUsername    String?  @map("from_username")
+  selfIgScopedId  String?  @map("self_ig_scoped_id")
+  text            String?  @db.Text
+  payload         Json?
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @default(now()) @map("updated_at")
+
+  @@index([mediaId])
+  @@index([createdAt])
+  @@map("instagram_live_comments")
+}
+
+model InstagramMessage {
+  id             String   @id @default(cuid())
+  senderId       String?  @map("sender_id")
+  recipientId    String?  @map("recipient_id")
+  eventTimestamp DateTime @map("event_timestamp")
+  messageMid     String?  @map("message_mid")
+  messageText    String?  @map("message_text") @db.Text
+  numEdit        Int?     @map("num_edit")
+  payload        Json?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([messageMid])
+  @@index([eventTimestamp])
+  @@index([createdAt])
+  @@map("instagram_messages")
+}
+
 model Account {
   account_id  String       @id
   spaceAssets SpaceAsset[]
