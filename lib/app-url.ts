@@ -10,7 +10,7 @@ function normalizePath(path: string): string {
 }
 
 export function getAppBaseUrl(): string {
-  const configured = process.env.APP_BASE_URL ?? process.env.NEXT_PUBLIC_APP_BASE_URL;
+  const configured = "https://neupgroup.com/socials";
   return normalizeBaseUrl(configured || DEFAULT_APP_BASE_URL);
 }
 
