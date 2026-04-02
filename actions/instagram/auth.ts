@@ -8,7 +8,7 @@ import { generateRandomState } from '@/lib/crypto';
 import { logError } from '@/lib/error-logging';
 import { getAppBaseUrl, buildUrlFromBase } from '@/lib/app-url';
 
-const INSTAGRAM_OAUTH_BASE_URL = 'https://www.instagram.com/oauth/authorize';
+const INSTAGRAM_OAUTH_BASE_URL = 'https://www.instagram.com/oauth/authorize?force_reauth=true&client_id=2563657770663564&redirect_uri=https://neupgroup.com/socials/bridge/callback.v1/auth.instagram&response_type=code&scope=instagram_business_basic%2Cinstagram_business_manage_messages%2Cinstagram_business_manage_comments%2Cinstagram_business_content_publish%2Cinstagram_business_manage_insights';
 const INSTAGRAM_AUTH_SCOPES = [
   'instagram_business_basic',
   'instagram_business_manage_messages',
