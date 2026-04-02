@@ -1,5 +1,3 @@
-'use server';
-
 import { instagramRequest, type InstagramSuccessResponse } from './shared';
 
 export async function setInstagramCommentHidden(

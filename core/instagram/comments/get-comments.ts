@@ -1,5 +1,3 @@
-'use server';
-
 import { instagramRequest, type InstagramCommentsResponse } from './shared';
 
 const DEFAULT_COMMENT_FIELDS = 'id,text,timestamp,username,hidden,like_count,parent_id';

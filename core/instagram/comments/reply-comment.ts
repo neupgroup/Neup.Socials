@@ -1,5 +1,3 @@
-'use server';
-
 import { instagramRequest, type InstagramReplyCommentResponse } from './shared';
 
 export async function replyToInstagramComment(

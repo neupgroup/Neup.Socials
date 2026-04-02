@@ -1,5 +1,3 @@
-'use server';
-
 import {
   instagramRequest,
   type InstagramCommentRepliesResponse,
