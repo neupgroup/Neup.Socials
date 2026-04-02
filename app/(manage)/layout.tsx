@@ -16,6 +16,7 @@ import {
   Upload,
   ArrowRightLeft,
   Plus,
+  Boxes,
 } from 'lucide-react';
 import { usePathname, notFound } from 'next/navigation';
 
@@ -41,6 +42,7 @@ const navItems = [
   { href: '/inbox', icon: Inbox, label: 'Inbox' },
   { href: '/uploads', icon: Upload, label: 'Uploads' },
   { href: '/accounts', icon: Users, label: 'Accounts' },
+  { href: '/space', icon: Boxes, label: 'Spaces' },
   { href: '/switch', icon: ArrowRightLeft, label: 'Switch' },
   { href: '/settings', icon: Settings, label: 'Settings' },
   { href: '/root/errors', icon: AlertTriangle, label: 'Errors' },

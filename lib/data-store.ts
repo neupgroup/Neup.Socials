@@ -661,6 +661,68 @@ export const dataStore = {
         },
       }),
   },
+  spaces: {
+    list: async () =>
+      prisma.space.findMany({
+        include: { assets: true },
+        orderBy: [{ id: 'desc' }],
+      }),
+    getById: async (id: string) =>
+      prisma.space.findUnique({
+        where: { id },
+        include: { assets: true },
+      }),
+    create: async (data: { name: string }) =>
+      prisma.space.create({
+        data: {
+          name: data.name,
+        },
+      }),
+    update: async (id: string, data: { name?: string }) =>
+      prisma.space.update({
+        where: { id },
+        data: {
+          name: data.name,
+        },
+      }),
+    delete: async (id: string) => prisma.space.delete({ where: { id } }),
+  },
+  spaceAssets: {
+    listBySpaceId: async (spaceId: string) =>
+      prisma.spaceAsset.findMany({
+        where: { spaceId },
+        orderBy: [{ id: 'desc' }],
+      }),
+    replaceForSpace: async (
+      spaceId: string,
+      assets: Array<{ platform: string; assetId: string }>
+    ) => {
+      await prisma.$transaction([
+        prisma.spaceAsset.deleteMany({ where: { spaceId } }),
+        ...assets.map((asset) =>
+          prisma.account.upsert({
+            where: { account_id: asset.assetId },
+            update: {},
+            create: { account_id: asset.assetId },
+          })
+        ),
+        ...(assets.length
+          ? [
+              prisma.spaceAsset.createMany({
+                data: assets.map((asset) => ({
+                  spaceId,
+                  platform: asset.platform,
+                  assetId: asset.assetId,
+                })),
+                skipDuplicates: true,
+              }),
+            ]
+          : []),
+      ]);
+
+      return prisma.spaceAsset.findMany({ where: { spaceId } });
+    },
+  },
   conversations: {
     list: async ({ take = 20 }: { take?: number } = {}) =>
       prisma.conversation.findMany({
