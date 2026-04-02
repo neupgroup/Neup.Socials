@@ -4,6 +4,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Script from 'next/script';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -27,6 +28,7 @@ import { createConnectedAccountAction } from '@/actions/db';
 const formSchema = z.object({
   platform: z.enum(['Facebook', 'Instagram', 'Twitter', 'LinkedIn', 'WhatsApp'], {required_error: "Please select a platform."}),
   facebookIntents: z.array(z.enum(FACEBOOK_AUTH_INTENTS)).optional(),
+  whatsappConnectMode: z.enum(['manual', 'embedded']).optional(),
   username: z.string().optional(),
   password: z.string().optional(),
   phoneNumberId: z.string().optional(),
@@ -41,11 +43,14 @@ const formSchema = z.object({
     path: ['username'],
 }).refine(data => {
     if (data.platform === 'WhatsApp') {
-        return !!data.phoneNumberId && !!data.accessToken;
+    if (data.whatsappConnectMode === 'embedded') {
+      return true;
+    }
+    return !!data.phoneNumberId && !!data.accessToken;
     }
     return true;
 }, {
-    message: 'Phone Number ID and Access Token are required.',
+  message: 'Phone Number ID and Access Token are required for manual mode.',
     path: ['phoneNumberId'],
 }).refine(data => {
   if (data.platform === 'Facebook') {
@@ -79,6 +84,7 @@ export default function AddAccountPage() {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const router = useRouter();
   const { toast } = useToast();
+  const embeddedSignupUrl = 'https://business.facebook.com/messaging/whatsapp/onboard/?app_id=1460023928746399&config_id=1316777340482161&extras=%7B%22featureType%22%3A%22whatsapp_business_app_onboarding%22%2C%22sessionInfoVersion%22%3A%223%22%2C%22version%22%3A%22v3%22%2C%22features%22%3A[%7B%22name%22%3A%22marketing_messages_lite%22%7D%2C%7B%22name%22%3A%22app_only_install%22%7D]%7D';
   
   const userId = 'neupkishor';
 
@@ -87,11 +93,35 @@ export default function AddAccountPage() {
     defaultValues: {
       platform: undefined,
       facebookIntents: ['posts'],
+      whatsappConnectMode: 'manual',
     }
   });
   
   const selectedPlatform = watch('platform');
   const selectedFacebookIntents = watch('facebookIntents') || [];
+  const whatsappConnectMode = watch('whatsappConnectMode') || 'manual';
+
+  React.useEffect(() => {
+    if (selectedPlatform !== 'WhatsApp') return;
+
+    const win = window as Window & { fbAsyncInit?: () => void; FB?: { init: (config: Record<string, unknown>) => void } };
+    win.fbAsyncInit = function() {
+      if (!win.FB) return;
+      win.FB.init({
+        appId: '1460023928746399',
+        autoLogAppEvents: true,
+        xfbml: true,
+        version: 'v25.0',
+      });
+    };
+  }, [selectedPlatform]);
+
+  const handleWhatsAppEmbeddedSignup = () => {
+    const popup = window.open(embeddedSignupUrl, '_blank', 'noopener,noreferrer');
+    if (!popup) {
+      window.location.href = embeddedSignupUrl;
+    }
+  };
 
   const handleOAuthConnect = async () => {
     if (!selectedPlatform) return;
@@ -119,6 +149,12 @@ export default function AddAccountPage() {
     setIsSubmitting(true);
     try {
       if (data.platform === 'WhatsApp') {
+        if (data.whatsappConnectMode === 'embedded') {
+          handleWhatsAppEmbeddedSignup();
+          setIsSubmitting(false);
+          return;
+        }
+
         const accountNameResult = await getWhatsAppAccountName(data.phoneNumberId!, data.accessToken!);
         
         if (!accountNameResult.verified_name) {
@@ -164,6 +200,20 @@ export default function AddAccountPage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
+      {isWhatsAppFlow && (
+        <>
+          <div id="fb-root" />
+          <Script
+            id="facebook-jssdk"
+            strategy="afterInteractive"
+            src="https://connect.facebook.net/en_US/sdk.js"
+            async
+            defer
+            crossOrigin="anonymous"
+          />
+        </>
+      )}
+
       <div className="flex items-center gap-4">
         <Button asChild variant="outline" size="icon">
           <Link href="/accounts">
@@ -279,6 +329,38 @@ export default function AddAccountPage() {
                 
                 {isWhatsAppFlow && (
                     <div className="space-y-6">
+                        <div className="space-y-2">
+                            <Label htmlFor="whatsappConnectMode">Connection Method</Label>
+                            <Controller
+                              name="whatsappConnectMode"
+                              control={control}
+                              render={({ field }) => (
+                                <Select onValueChange={field.onChange} defaultValue={field.value ?? 'manual'}>
+                                  <SelectTrigger id="whatsappConnectMode">
+                                    <SelectValue placeholder="Select connection method..." />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="manual">Manual (Phone Number ID + Access Token)</SelectItem>
+                                    <SelectItem value="embedded">Embedded Signup (Meta)</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              )}
+                            />
+                        </div>
+
+                        {whatsappConnectMode === 'embedded' && (
+                          <div className="space-y-3 rounded-md border p-4">
+                            <p className="text-sm text-muted-foreground">
+                              Use Meta Embedded Signup to connect WhatsApp Business in a guided flow.
+                            </p>
+                            <Button type="button" onClick={handleWhatsAppEmbeddedSignup}>
+                              Continue with Embedded Signup
+                            </Button>
+                          </div>
+                        )}
+
+                        {whatsappConnectMode === 'manual' && (
+                          <>
                          <div className="space-y-2">
                             <Label htmlFor="phoneNumberId">Phone Number ID</Label>
                             <Controller name="phoneNumberId" control={control} render={({ field }) => <Input id="phoneNumberId" {...field} placeholder="From Meta Developer Dashboard" />} />
@@ -289,6 +371,8 @@ export default function AddAccountPage() {
                             <Controller name="accessToken" control={control} render={({ field }) => <Input id="accessToken" type="password" {...field} placeholder="Permanent API Access Token" />} />
                             {errors.accessToken && <p className="text-sm text-destructive">{errors.accessToken.message}</p>}
                         </div>
+                          </>
+                        )}
                     </div>
                 )}
 
@@ -309,9 +393,9 @@ export default function AddAccountPage() {
 
                 {(isWhatsAppFlow || isLegacyFlow) && (
                     <div className="flex justify-end pt-4">
-                        <Button type="submit" disabled={isSubmitting}>
+                    <Button type="submit" disabled={isSubmitting || (isWhatsAppFlow && whatsappConnectMode === 'embedded')}>
                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Connect {selectedPlatform}
+                      Connect {selectedPlatform}
                         </Button>
                     </div>
                 )}
