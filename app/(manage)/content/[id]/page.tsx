@@ -18,6 +18,7 @@ import { deletePostAction, getPostAction, getPostCollectionAction } from '@/acti
 import { fetchPostCommentsAction, postCommentAction, postReplyAction } from '@/actions/facebook/comments';
 import { getFacebookPostVideoAction } from '@/actions/facebook/get-video';
 import { sendReplyAction } from '@/actions/inbox/sender';
+import { InstagramPostModeration } from '@/components/instagram-post-moderation';
 
 type Post = {
   id: string;
@@ -33,6 +34,9 @@ type Post = {
 
 const isFacebookPlatform = (platform: string | null | undefined) =>
   (platform ?? '').toLowerCase() === 'facebook';
+
+const isInstagramPlatform = (platform: string | null | undefined) =>
+  (platform ?? '').toLowerCase() === 'instagram';
 
 const analyticsFetcher = (postId: string) => getPostAnalyticsAction(postId);
 
@@ -311,8 +315,16 @@ const FacebookPostVideo = ({ postId, platform }: { postId: string; platform: str
   );
 
   React.useEffect(() => {
-    if (window.FB) {
-      window.FB.XFBML.parse();
+    const facebookSdk = (window as Window & {
+      FB?: {
+        XFBML?: {
+          parse: () => void;
+        };
+      };
+    }).FB;
+
+    if (facebookSdk?.XFBML) {
+      facebookSdk.XFBML.parse();
     }
   }, [data]);
 
@@ -532,6 +544,20 @@ export default function ViewPostPage() {
             <CardContent>
                 <PostComments postId={post.id} platform={post.platform} accountId={post.accountId} />
             </CardContent>
+        </Card>
+      )}
+
+      {isInstagramPlatform(post.platform) && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Comments & Moderation</CardTitle>
+            <CardDescription>
+              Manage Instagram comments, replies, private replies, and commenting controls for this post.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <InstagramPostModeration postId={post.id} />
+          </CardContent>
         </Card>
       )}
 
