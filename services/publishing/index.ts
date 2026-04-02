@@ -5,6 +5,7 @@ import { dataStore } from '@/lib/data-store';
 import { decrypt } from '@/lib/crypto';
 import { logError } from '../error-logging';
 import { publishToPage as publishToFacebookPage } from '../../core/facebook/api';
+import { publishToInstagramAccount } from '../../core/instagram/post-content';
 import { publishToLinkedIn } from '../../core/linkedin/api';
 
 /**
@@ -57,6 +58,15 @@ export async function publishContent(postCollectionId: string) {
           platformPostId = response.post_id || response.id;
           postLink = `https://www.facebook.com/${platformPostId}`;
           console.log(`Successfully published to Facebook page: ${account.name} (${pageId}). Post ID: ${platformPostId}`);
+        } else if (account.platform === 'Instagram') {
+          response = await publishToInstagramAccount(
+            pageId,
+            token,
+            collectionData.content,
+            collectionData.mediaUrls,
+          );
+          platformPostId = response.id;
+          console.log(`Successfully published to Instagram account: ${account.name} (${pageId}). Media ID: ${platformPostId}`);
         } else if (account.platform === 'LinkedIn') {
             const authorUrn = `urn:li:person:${pageId}`;
             response = await publishToLinkedIn(token, authorUrn, collectionData.content, collectionData.mediaUrls);
