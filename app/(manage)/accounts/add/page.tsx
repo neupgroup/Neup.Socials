@@ -14,7 +14,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, Loader2, Facebook, Instagram, Twitter, Linkedin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getFacebookAuthUrl } from '@/actions/facebook/auth';
@@ -22,6 +21,7 @@ import { FACEBOOK_AUTH_INTENTS } from '@/actions/facebook/auth-intents';
 import { getInstagramAuthUrl } from '@/actions/instagram/auth';
 import { getLinkedInAuthUrl } from '@/actions/linkedin/auth';
 import { encrypt } from '@/lib/crypto';
+import { toAppUrl } from '@/lib/app-url';
 import { getWhatsAppAccountName } from '@/core/whatsapp/api';
 import { createConnectedAccountAction } from '@/actions/db';
 import { addPreverifiedWhatsAppNumberAction, exchangeWhatsAppAccessTokenAction } from '@/actions/whatsapp';
@@ -30,7 +30,7 @@ import { addPreverifiedWhatsAppNumberAction, exchangeWhatsAppAccessTokenAction }
 const formSchema = z.object({
   platform: z.enum(['Facebook', 'Instagram', 'Twitter', 'LinkedIn', 'WhatsApp'], {required_error: "Please select a platform."}),
   facebookIntents: z.array(z.enum(FACEBOOK_AUTH_INTENTS)).optional(),
-  whatsappConnectMode: z.enum(['manual', 'embedded']).optional(),
+  whatsappConnectMode: z.enum(['manual', 'embedded', 'preverified']).optional(),
   username: z.string().optional(),
   password: z.string().optional(),
   phoneNumberId: z.string().optional(),
@@ -45,7 +45,7 @@ const formSchema = z.object({
     path: ['username'],
 }).refine(data => {
     if (data.platform === 'WhatsApp') {
-    if (data.whatsappConnectMode === 'embedded') {
+    if (data.whatsappConnectMode === 'embedded' || data.whatsappConnectMode === 'preverified') {
       return true;
     }
     return !!data.phoneNumberId && !!data.accessToken;
@@ -85,10 +85,12 @@ const platformDetails = {
 export default function AddAccountPage() {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isPreverifiedSubmitting, setIsPreverifiedSubmitting] = React.useState(false);
-  const [isExchangeSubmitting, setIsExchangeSubmitting] = React.useState(false);
+  const [isEmbeddedSubmitting, setIsEmbeddedSubmitting] = React.useState(false);
   const router = useRouter();
   const { toast } = useToast();
   const embeddedSignupUrl = 'https://business.facebook.com/messaging/whatsapp/onboard/?app_id=1460023928746399&config_id=1316777340482161&extras=%7B%22featureType%22%3A%22whatsapp_business_app_onboarding%22%2C%22sessionInfoVersion%22%3A%223%22%2C%22version%22%3A%22v3%22%2C%22features%22%3A[%7B%22name%22%3A%22marketing_messages_lite%22%7D%2C%7B%22name%22%3A%22app_only_install%22%7D]%7D';
+  const embeddedSignupConfigId = '1316777340482161';
+  const embeddedSignupRedirectUri = toAppUrl('/bridge/callback.v1/auth.facebook');
   
   const userId = 'neupkishor';
 
@@ -107,12 +109,10 @@ export default function AddAccountPage() {
   const [preverifiedWabaId, setPreverifiedWabaId] = React.useState('');
   const [preverifiedPhoneNumber, setPreverifiedPhoneNumber] = React.useState('');
   const [preverifiedAccessToken, setPreverifiedAccessToken] = React.useState('');
-  const [preverifiedResponse, setPreverifiedResponse] = React.useState('');
-  const [embeddedSessionResponse, setEmbeddedSessionResponse] = React.useState('');
-  const [embeddedSessionOrigin, setEmbeddedSessionOrigin] = React.useState('');
-  const [exchangeCode, setExchangeCode] = React.useState('');
-  const [exchangeRedirectUri, setExchangeRedirectUri] = React.useState('');
-  const [exchangeResponse, setExchangeResponse] = React.useState('');
+  const [embeddedSignupWabaId, setEmbeddedSignupWabaId] = React.useState('');
+  const [embeddedSignupPhoneNumberId, setEmbeddedSignupPhoneNumberId] = React.useState('');
+  const [embeddedSignupCode, setEmbeddedSignupCode] = React.useState('');
+  const embeddedSignupInFlight = React.useRef(false);
 
   React.useEffect(() => {
     if (selectedPlatform !== 'WhatsApp') return;
@@ -130,29 +130,144 @@ export default function AddAccountPage() {
   }, [selectedPlatform]);
 
   React.useEffect(() => {
-    if (selectedPlatform !== 'WhatsApp') return;
+    if (selectedPlatform !== 'WhatsApp' || whatsappConnectMode !== 'embedded') {
+      setEmbeddedSignupWabaId('');
+      setEmbeddedSignupPhoneNumberId('');
+      setEmbeddedSignupCode('');
+      embeddedSignupInFlight.current = false;
+      setIsEmbeddedSubmitting(false);
+    }
+  }, [selectedPlatform, whatsappConnectMode]);
+
+  React.useEffect(() => {
+    if (selectedPlatform !== 'WhatsApp' || whatsappConnectMode !== 'embedded') return;
 
     const handler = (event: MessageEvent) => {
-      if (!event.origin.includes('facebook.com')) return;
+      const allowedOrigins = ['https://www.facebook.com', 'https://web.facebook.com'];
+      if (!allowedOrigins.includes(event.origin)) return;
 
-      let payload = event.data;
+      let payload: any = event.data;
       if (typeof payload === 'string') {
         try {
           payload = JSON.parse(payload);
         } catch {
-          payload = { message: payload };
+          return;
         }
       }
 
-      setEmbeddedSessionOrigin(event.origin);
-      setEmbeddedSessionResponse(JSON.stringify(payload, null, 2));
+      if (!payload || payload.type !== 'WA_EMBEDDED_SIGNUP') return;
+
+      const data = payload.data || payload;
+      const wabaId = data.waba_id || data.wabaId || data.whatsapp_business_account_id || '';
+      const phoneNumberId =
+        data.phone_number_id ||
+        data.phoneNumberId ||
+        (Array.isArray(data.phone_number_ids) ? data.phone_number_ids[0] : '') ||
+        '';
+
+      if (wabaId) setEmbeddedSignupWabaId(String(wabaId));
+      if (phoneNumberId) setEmbeddedSignupPhoneNumberId(String(phoneNumberId));
     };
 
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
-  }, [selectedPlatform]);
+  }, [selectedPlatform, whatsappConnectMode]);
+
+
+  const finalizeEmbeddedSignup = React.useCallback(async (code: string, phoneNumberId: string, wabaId?: string) => {
+    if (embeddedSignupInFlight.current) return;
+    embeddedSignupInFlight.current = true;
+    setIsEmbeddedSubmitting(true);
+
+    try {
+      const tokenResult = await exchangeWhatsAppAccessTokenAction({
+        code,
+        redirectUri: embeddedSignupRedirectUri,
+      });
+
+      if (!tokenResult.success) {
+        throw new Error(tokenResult.error || 'Failed to exchange authorization code.');
+      }
+
+      const accessToken = (tokenResult.data as { access_token?: string })?.access_token;
+      if (!accessToken) {
+        throw new Error('No access token returned from Meta.');
+      }
+
+      const accountNameResult = await getWhatsAppAccountName(phoneNumberId, accessToken);
+      if (!accountNameResult.verified_name) {
+        throw new Error('Could not fetch display name for this Phone Number ID.');
+      }
+
+      const encryptedAccessToken = await encrypt(accessToken);
+
+      await createConnectedAccountAction({
+        platform: 'WhatsApp',
+        platformId: phoneNumberId,
+        name: accountNameResult.verified_name,
+        username: phoneNumberId,
+        nameStatus: accountNameResult.name_status,
+        encryptedToken: encryptedAccessToken,
+        status: 'Active',
+        owner: userId,
+        metadata: wabaId ? { wabaId, embeddedSignup: true } : { embeddedSignup: true },
+      });
+
+      toast({ title: 'WhatsApp account connected successfully!' });
+      router.push('/accounts');
+    } catch (error: any) {
+      toast({
+        title: 'Embedded signup failed',
+        description: error?.message || 'Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      embeddedSignupInFlight.current = false;
+      setIsEmbeddedSubmitting(false);
+    }
+  }, [embeddedSignupRedirectUri, router, toast, userId]);
+
+  React.useEffect(() => {
+    if (whatsappConnectMode !== 'embedded') return;
+    if (!embeddedSignupCode || !embeddedSignupPhoneNumberId) return;
+    void finalizeEmbeddedSignup(embeddedSignupCode, embeddedSignupPhoneNumberId, embeddedSignupWabaId || undefined);
+  }, [embeddedSignupCode, embeddedSignupPhoneNumberId, embeddedSignupWabaId, finalizeEmbeddedSignup, whatsappConnectMode]);
 
   const handleWhatsAppEmbeddedSignup = () => {
+    const win = window as Window & { FB?: { login: (cb: (response: any) => void, opts: Record<string, unknown>) => void } };
+
+    if (win.FB?.login) {
+      win.FB.login(
+        (response: any) => {
+          const code = response?.authResponse?.code;
+          if (!code) {
+            setIsEmbeddedSubmitting(false);
+            toast({
+              title: 'Embedded signup cancelled',
+              description: 'No authorization code was returned.',
+              variant: 'destructive',
+            });
+            return;
+          }
+
+          setEmbeddedSignupCode(code);
+        },
+        {
+          config_id: embeddedSignupConfigId,
+          response_type: 'code',
+          override_default_response_type: true,
+          extras: {
+            version: 'v4',
+            setup: {},
+            featureType: 'whatsapp_business_app_onboarding',
+            features: [{ name: 'app_only_install' }],
+            sessionInfoVersion: 3,
+          },
+        }
+      );
+      return;
+    }
+
     const popup = window.open(embeddedSignupUrl, '_blank', 'noopener,noreferrer');
     if (!popup) {
       window.location.href = embeddedSignupUrl;
@@ -161,8 +276,6 @@ export default function AddAccountPage() {
 
   const handlePreverifiedNumberAdd = async () => {
     setIsPreverifiedSubmitting(true);
-    setPreverifiedResponse('');
-
     try {
       const result = await addPreverifiedWhatsAppNumberAction({
         businessAccountId: preverifiedWabaId.trim(),
@@ -174,10 +287,8 @@ export default function AddAccountPage() {
         throw new Error(result.error || 'Failed to add preverified number.');
       }
 
-      setPreverifiedResponse(JSON.stringify(result.data ?? result, null, 2));
       toast({ title: 'Phone number added to WhatsApp Business Account.' });
     } catch (error: any) {
-      setPreverifiedResponse(JSON.stringify({ error: error?.message || 'Request failed.' }, null, 2));
       toast({
         title: 'Failed to add preverified number',
         description: error?.message || 'Please verify the inputs and try again.',
@@ -188,33 +299,6 @@ export default function AddAccountPage() {
     }
   };
 
-  const handleExchangeToken = async () => {
-    setIsExchangeSubmitting(true);
-    setExchangeResponse('');
-
-    try {
-      const result = await exchangeWhatsAppAccessTokenAction({
-        code: exchangeCode.trim(),
-        redirectUri: exchangeRedirectUri.trim(),
-      });
-
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to exchange authorization code.');
-      }
-
-      setExchangeResponse(JSON.stringify(result.data ?? result, null, 2));
-      toast({ title: 'Authorization code exchanged successfully.' });
-    } catch (error: any) {
-      setExchangeResponse(JSON.stringify({ error: error?.message || 'Request failed.' }, null, 2));
-      toast({
-        title: 'Token exchange failed',
-        description: error?.message || 'Please verify the inputs and try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsExchangeSubmitting(false);
-    }
-  };
 
   const handleOAuthConnect = async () => {
     if (!selectedPlatform) return;
@@ -453,159 +537,73 @@ export default function AddAccountPage() {
                                   <SelectContent>
                                     <SelectItem value="manual">Manual (Phone Number ID + Access Token)</SelectItem>
                                     <SelectItem value="embedded">Embedded Signup (Meta)</SelectItem>
+                                    <SelectItem value="preverified">Preverified Number Addition</SelectItem>
                                   </SelectContent>
                                 </Select>
                               )}
                             />
                         </div>
 
-                        <div className="space-y-3 rounded-md border p-4">
-                          <div className="space-y-1">
-                            <p className="text-sm font-medium">Preverified Number Addition</p>
-                            <p className="text-sm text-muted-foreground">
-                              Add a preverified phone number to an existing WhatsApp Business Account. The server will use
-                              the system user token unless you provide a token below.
-                            </p>
-                          </div>
-                          <div className="grid gap-3 md:grid-cols-2">
-                            <div className="space-y-2">
-                              <Label htmlFor="preverifiedWabaId">WhatsApp Business Account ID</Label>
-                              <Input
-                                id="preverifiedWabaId"
-                                value={preverifiedWabaId}
-                                onChange={(event) => setPreverifiedWabaId(event.target.value)}
-                                placeholder="571433372435331"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="preverifiedPhoneNumber">Phone Number</Label>
-                              <Input
-                                id="preverifiedPhoneNumber"
-                                value={preverifiedPhoneNumber}
-                                onChange={(event) => setPreverifiedPhoneNumber(event.target.value)}
-                                placeholder="9779840710507"
-                              />
-                            </div>
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="preverifiedAccessToken">Access Token (optional)</Label>
-                            <Input
-                              id="preverifiedAccessToken"
-                              type="password"
-                              value={preverifiedAccessToken}
-                              onChange={(event) => setPreverifiedAccessToken(event.target.value)}
-                              placeholder="Use system user token from server if empty"
-                              autoComplete="new-password"
-                            />
-                          </div>
-                          <div className="flex flex-wrap items-center gap-3">
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              onClick={handlePreverifiedNumberAdd}
-                              disabled={isPreverifiedSubmitting}
-                            >
-                              {isPreverifiedSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                              Add Preverified Number
-                            </Button>
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Response</Label>
-                            <Textarea
-                              readOnly
-                              value={preverifiedResponse}
-                              placeholder="Response will appear here after the request completes."
-                              className="min-h-[120px] font-mono text-xs"
-                            />
-                          </div>
-                        </div>
-
-                        {whatsappConnectMode === 'embedded' && (
+                        {whatsappConnectMode === 'preverified' && (
                           <div className="space-y-3 rounded-md border p-4">
                             <div className="space-y-1">
-                              <p className="text-sm font-medium">Embedded Signup</p>
+                              <p className="text-sm font-medium">Preverified Number Addition</p>
                               <p className="text-sm text-muted-foreground">
-                                Launch Embedded Signup to create or select a WhatsApp Business Account, add a phone number,
-                                verify it, and share it back with this app.
+                                Add a preverified phone number to an existing WhatsApp Business Account. The server will use
+                                the system user token unless you provide a token below.
                               </p>
                             </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="embeddedSignupUrl">Meta-hosted Embedded Signup landing page URI</Label>
-                              <Input id="embeddedSignupUrl" value={embeddedSignupUrl} readOnly />
+                            <div className="grid gap-3 md:grid-cols-2">
+                              <div className="space-y-2">
+                                <Label htmlFor="preverifiedWabaId">WhatsApp Business Account ID</Label>
+                                <Input
+                                  id="preverifiedWabaId"
+                                  value={preverifiedWabaId}
+                                  onChange={(event) => setPreverifiedWabaId(event.target.value)}
+                                  placeholder="571433372435331"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="preverifiedPhoneNumber">Phone Number</Label>
+                                <Input
+                                  id="preverifiedPhoneNumber"
+                                  value={preverifiedPhoneNumber}
+                                  onChange={(event) => setPreverifiedPhoneNumber(event.target.value)}
+                                  placeholder="9779840710507"
+                                />
+                              </div>
                             </div>
-                            <Button type="button" onClick={handleWhatsAppEmbeddedSignup}>
-                              Continue with Embedded Signup
-                            </Button>
                             <div className="space-y-2">
-                              <Label>Session Logging Response</Label>
-                              <Textarea
-                                readOnly
-                                value={embeddedSessionResponse}
-                                placeholder='[
-  {
-    "data": {
-      "current_step": "ASSET_CREATION"
-    },
-    "type": "WA_EMBEDDED_SIGNUP",
-    "event": "CANCEL"
-  }
-]'
-                                className="min-h-[160px] font-mono text-xs"
+                              <Label htmlFor="preverifiedAccessToken">Access Token (optional)</Label>
+                              <Input
+                                id="preverifiedAccessToken"
+                                type="password"
+                                value={preverifiedAccessToken}
+                                onChange={(event) => setPreverifiedAccessToken(event.target.value)}
+                                placeholder="Use system user token from server if empty"
+                                autoComplete="new-password"
                               />
-                              {embeddedSessionOrigin && (
-                                <p className="text-xs text-muted-foreground">
-                                  Last message origin: {embeddedSessionOrigin}
-                                </p>
-                              )}
                             </div>
-                            <div className="space-y-3 rounded-md border border-dashed p-3">
-                              <div className="space-y-1">
-                                <p className="text-sm font-medium">Exchange Token</p>
-                                <p className="text-sm text-muted-foreground">
-                                  Exchange the authorization code from the redirect URL for an access token using a
-                                  server-to-server call. App secrets never leave the server.
-                                </p>
-                              </div>
-                              <div className="space-y-2">
-                                <Label htmlFor="exchangeCode">Authorization Code</Label>
-                                <Input
-                                  id="exchangeCode"
-                                  value={exchangeCode}
-                                  onChange={(event) => setExchangeCode(event.target.value)}
-                                  placeholder="Paste the code from the redirect URL"
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <Label htmlFor="exchangeRedirectUri">Redirect URI</Label>
-                                <Input
-                                  id="exchangeRedirectUri"
-                                  value={exchangeRedirectUri}
-                                  onChange={(event) => setExchangeRedirectUri(event.target.value)}
-                                  placeholder="https://developers.facebook.com/.../oauth/callback"
-                                />
-                              </div>
+                            <div className="flex flex-wrap items-center gap-3">
                               <Button
                                 type="button"
                                 variant="secondary"
-                                onClick={handleExchangeToken}
-                                disabled={isExchangeSubmitting}
+                                onClick={handlePreverifiedNumberAdd}
+                                disabled={isPreverifiedSubmitting}
                               >
-                                {isExchangeSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Exchange Token
+                                {isPreverifiedSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Add Preverified Number
                               </Button>
-                              <div className="space-y-2">
-                                <Label>Response</Label>
-                                <Textarea
-                                  readOnly
-                                  value={exchangeResponse}
-                                  placeholder="Access token response will appear here."
-                                  className="min-h-[120px] font-mono text-xs"
-                                />
-                              </div>
-                              <p className="text-xs text-muted-foreground">
-                                Never include app secrets or long-lived tokens in client-side code or build artifacts.
-                              </p>
                             </div>
+                          </div>
+                        )}
+
+                        {whatsappConnectMode === 'embedded' && (
+                          <div className="space-y-3 rounded-md border p-4">
+                            <Button type="button" onClick={handleWhatsAppEmbeddedSignup} disabled={isEmbeddedSubmitting}>
+                              {isEmbeddedSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                              Continue with Embedded Signup
+                            </Button>
                           </div>
                         )}
 
@@ -641,7 +639,7 @@ export default function AddAccountPage() {
                     </div>
                 )}
 
-                {(isWhatsAppFlow || isLegacyFlow) && (
+                {(isLegacyFlow || (isWhatsAppFlow && whatsappConnectMode === 'manual')) && (
                     <div className="flex justify-end pt-4">
                     <Button type="submit" disabled={isSubmitting || (isWhatsAppFlow && whatsappConnectMode === 'embedded')}>
                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
