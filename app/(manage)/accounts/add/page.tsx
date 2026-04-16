@@ -88,8 +88,8 @@ export default function AddAccountPage() {
   const [isEmbeddedSubmitting, setIsEmbeddedSubmitting] = React.useState(false);
   const router = useRouter();
   const { toast } = useToast();
-  const embeddedSignupUrl = 'https://business.facebook.com/messaging/whatsapp/onboard/?app_id=1460023928746399&config_id=1316777340482161&extras=%7B%22featureType%22%3A%22whatsapp_business_app_onboarding%22%2C%22sessionInfoVersion%22%3A%223%22%2C%22version%22%3A%22v3%22%2C%22features%22%3A[%7B%22name%22%3A%22marketing_messages_lite%22%7D%2C%7B%22name%22%3A%22app_only_install%22%7D]%7D';
-  const embeddedSignupConfigId = '1316777340482161';
+  const embeddedSignupUrl = 'https://business.facebook.com/messaging/whatsapp/onboard/?app_id=1460023928746399&config_id=26765881109731729&extras=%7B%22setup%22%3A%7B%7D%2C%22featureType%22%3A%22whatsapp_business_app_onboarding%22%2C%22version%22%3A%22v3%22%2C%22features%22%3A[]%7D';
+  const embeddedSignupConfigId = '26765881109731729';
   const embeddedSignupRedirectUri = toAppUrl('/bridge/callback.v1/auth.facebook');
   
   const userId = 'neupkishor';
