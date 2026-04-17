@@ -28,7 +28,7 @@ import {
   addPreverifiedWhatsAppNumberAction,
   exchangeWhatsAppAccessTokenAction,
   listPreverifiedWhatsAppNumbersAction,
-} from '@/services/whatsapp';
+} from '@/services/whatsapp/embedded-signup';
 
 
 const formSchema = z.object({

@@ -1,6 +1,6 @@
 
 import { NextResponse } from 'next/server';
-import { processWhatsAppWebhook } from '../../../../services/inbox/whatsapp';
+import { processWhatsAppWebhook } from '@/services/whatsapp/webhook';
 import { logError } from '@/core/lib/error-logging';
 
 export async function POST(request: Request) {
