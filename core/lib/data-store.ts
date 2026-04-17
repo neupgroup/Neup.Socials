@@ -846,6 +846,23 @@ export const dataStore = {
         },
       }),
   },
+  systemConfig: {
+    getByKey: async (key: string) =>
+      prisma.systemConfig.findUnique({
+        where: { key },
+      }),
+    upsert: async (data: { key: string; value?: string | null }) =>
+      prisma.systemConfig.upsert({
+        where: { key: data.key },
+        create: {
+          key: data.key,
+          value: data.value ?? null,
+        },
+        update: {
+          value: data.value ?? null,
+        },
+      }),
+  },
   identityUnified: {
     create: async (data: {
       name: string;
