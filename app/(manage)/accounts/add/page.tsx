@@ -22,7 +22,7 @@ import { getInstagramAuthUrl } from '@/services/instagram/auth';
 import { getLinkedInAuthUrl } from '@/services/linkedin/auth';
 import { encrypt } from '@/core/lib/crypto';
 import { toAppUrl } from '@/core/lib/app-url';
-import { getWhatsAppAccountName } from '@/services/whatsapp/api';
+import { getWhatsAppAccountName } from '@/services/whatsapp/api.get-account-name';
 import { createConnectedAccountAction } from '@/services/db';
 import {
   addPreverifiedWhatsAppNumberAction,
@@ -92,8 +92,17 @@ export default function AddAccountPage() {
   const [isEmbeddedSubmitting, setIsEmbeddedSubmitting] = React.useState(false);
   const router = useRouter();
   const { toast } = useToast();
-  const embeddedSignupUrl = 'https://business.facebook.com/messaging/whatsapp/onboard/?app_id=1460023928746399&config_id=26765881109731729&extras=%7B%22setup%22%3A%7B%7D%2C%22featureType%22%3A%22whatsapp_business_app_onboarding%22%2C%22version%22%3A%22v3%22%2C%22features%22%3A[]%7D';
-  const embeddedSignupConfigId = '26765881109731729';
+  const [embeddedSignupUrl, setEmbeddedSignupUrl] = React.useState<string | null>(null);
+  const [embeddedSignupConfigId, setEmbeddedSignupConfigId] = React.useState<string>('');
+  const [embeddedSignupBusinessId, setEmbeddedSignupBusinessId] = React.useState('');
+  const [embeddedSignupAssetIds, setEmbeddedSignupAssetIds] = React.useState<{
+    adAccountIds?: string[];
+    pageIds?: string[];
+    datasetIds?: string[];
+    catalogIds?: string[];
+    igAccountIds?: string[];
+    wabaIds?: string[];
+  } | null>(null);
   const embeddedSignupRedirectUri = toAppUrl('/bridge/callback.v1/auth.facebook');
   
   const userId = 'neupkishor';
@@ -136,10 +145,49 @@ export default function AddAccountPage() {
   }, [selectedPlatform]);
 
   React.useEffect(() => {
+    if (selectedPlatform !== 'WhatsApp' || whatsappConnectMode !== 'embedded') return;
+
+    let isActive = true;
+
+    const loadEmbeddedSignupUrl = async () => {
+      try {
+        const response = await fetch('/api/whatsapp/embedded-signup', { cache: 'no-store' });
+        if (!response.ok) {
+          throw new Error('Failed to load embedded signup URL.');
+        }
+        const payload = (await response.json()) as { url?: string | null; configId?: string | null };
+        if (!isActive) return;
+
+        const url = payload.url ?? null;
+        setEmbeddedSignupUrl(url);
+
+        setEmbeddedSignupConfigId(payload.configId ?? '');
+      } catch (error: any) {
+        if (!isActive) return;
+        setEmbeddedSignupUrl(null);
+        setEmbeddedSignupConfigId('');
+        toast({
+          title: 'Embedded signup unavailable',
+          description: error?.message || 'Could not load the embedded signup URL.',
+          variant: 'destructive',
+        });
+      }
+    };
+
+    void loadEmbeddedSignupUrl();
+
+    return () => {
+      isActive = false;
+    };
+  }, [selectedPlatform, toast, whatsappConnectMode]);
+
+  React.useEffect(() => {
     if (selectedPlatform !== 'WhatsApp' || whatsappConnectMode !== 'embedded') {
       setEmbeddedSignupWabaId('');
       setEmbeddedSignupPhoneNumberId('');
       setEmbeddedSignupCode('');
+      setEmbeddedSignupBusinessId('');
+      setEmbeddedSignupAssetIds(null);
       setEmbeddedPreverifiedIds([]);
       embeddedSignupInFlight.current = false;
       embeddedPreverifiedLoaded.current = false;
@@ -175,8 +223,7 @@ export default function AddAccountPage() {
     if (selectedPlatform !== 'WhatsApp' || whatsappConnectMode !== 'embedded') return;
 
     const handler = (event: MessageEvent) => {
-      const allowedOrigins = ['https://www.facebook.com', 'https://web.facebook.com'];
-      if (!allowedOrigins.includes(event.origin)) return;
+      if (!event.origin.endsWith('facebook.com')) return;
 
       let payload: any = event.data;
       if (typeof payload === 'string') {
@@ -189,16 +236,58 @@ export default function AddAccountPage() {
 
       if (!payload || payload.type !== 'WA_EMBEDDED_SIGNUP') return;
 
+      const eventType = payload.event;
       const data = payload.data || payload;
+
+      if (eventType === 'CANCEL') {
+        const currentStep = data?.current_step;
+        const errorMessage = data?.error_message;
+        const errorCode = data?.error_code;
+        const description = errorMessage
+          ? `${errorMessage}${errorCode ? ` (code ${errorCode})` : ''}`
+          : currentStep
+            ? `Flow exited at ${currentStep}.`
+            : 'The embedded signup flow was cancelled.';
+
+        toast({
+          title: 'Embedded signup cancelled',
+          description,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      if (eventType === 'ERROR') {
+        const errorMessage = data?.error_message || 'Embedded signup reported an error.';
+        const errorCode = data?.error_code;
+        toast({
+          title: 'Embedded signup error',
+          description: errorCode ? `${errorMessage} (code ${errorCode})` : errorMessage,
+          variant: 'destructive',
+        });
+        return;
+      }
       const wabaId = data.waba_id || data.wabaId || data.whatsapp_business_account_id || '';
       const phoneNumberId =
         data.phone_number_id ||
         data.phoneNumberId ||
         (Array.isArray(data.phone_number_ids) ? data.phone_number_ids[0] : '') ||
         '';
+      const businessId = data.business_id || '';
 
       if (wabaId) setEmbeddedSignupWabaId(String(wabaId));
       if (phoneNumberId) setEmbeddedSignupPhoneNumberId(String(phoneNumberId));
+      if (businessId) setEmbeddedSignupBusinessId(String(businessId));
+
+      const assetIds = {
+        adAccountIds: Array.isArray(data.ad_account_ids) ? data.ad_account_ids : undefined,
+        pageIds: Array.isArray(data.page_ids) ? data.page_ids : undefined,
+        datasetIds: Array.isArray(data.dataset_ids) ? data.dataset_ids : undefined,
+        catalogIds: Array.isArray(data.catalog_ids) ? data.catalog_ids : undefined,
+        igAccountIds: Array.isArray(data.ig_account_ids) ? data.ig_account_ids : undefined,
+        wabaIds: Array.isArray(data.waba_ids) ? data.waba_ids : undefined,
+      };
+      setEmbeddedSignupAssetIds(assetIds);
     };
 
     window.addEventListener('message', handler);
@@ -242,7 +331,12 @@ export default function AddAccountPage() {
         encryptedToken: encryptedAccessToken,
         status: 'Active',
         owner: userId,
-        metadata: wabaId ? { wabaId, embeddedSignup: true } : { embeddedSignup: true },
+        metadata: {
+          embeddedSignup: true,
+          wabaId,
+          businessId: embeddedSignupBusinessId || undefined,
+          assets: embeddedSignupAssetIds || undefined,
+        },
       });
 
       toast({ title: 'WhatsApp account connected successfully!' });
@@ -257,7 +351,7 @@ export default function AddAccountPage() {
       embeddedSignupInFlight.current = false;
       setIsEmbeddedSubmitting(false);
     }
-  }, [embeddedSignupRedirectUri, router, toast, userId]);
+  }, [embeddedSignupAssetIds, embeddedSignupBusinessId, embeddedSignupRedirectUri, router, toast, userId]);
 
   React.useEffect(() => {
     if (whatsappConnectMode !== 'embedded') return;
@@ -269,6 +363,14 @@ export default function AddAccountPage() {
     const win = window as Window & { FB?: { login: (cb: (response: any) => void, opts: Record<string, unknown>) => void } };
 
     if (win.FB?.login) {
+      if (!embeddedSignupConfigId) {
+        toast({
+          title: 'Embedded signup unavailable',
+          description: 'Missing embedded signup configuration ID.',
+          variant: 'destructive',
+        });
+        return;
+      }
       win.FB.login(
         (response: any) => {
           const code = response?.authResponse?.code;
@@ -302,9 +404,17 @@ export default function AddAccountPage() {
       return;
     }
 
-    const popup = window.open(embeddedSignupUrl, '_blank', 'noopener,noreferrer');
-    if (!popup) {
-      window.location.href = embeddedSignupUrl;
+    if (embeddedSignupUrl) {
+      const popup = window.open(embeddedSignupUrl, '_blank', 'noopener,noreferrer');
+      if (!popup) {
+        window.location.href = embeddedSignupUrl;
+      }
+    } else {
+      toast({
+        title: 'Embedded signup unavailable',
+        description: 'No embedded signup URL is configured.',
+        variant: 'destructive',
+      });
     }
   };
 
