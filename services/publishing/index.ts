@@ -1,8 +1,8 @@
 
 'use server';
 
-import { dataStore } from '@/lib/data-store';
-import { decrypt } from '@/lib/crypto';
+import { dataStore } from '@/core/lib/data-store';
+import { decrypt } from '@/core/lib/crypto';
 import { logError } from '../error-logging';
 import { publishToPage as publishToFacebookPage } from '../../services/facebook/api';
 import { publishToInstagramAccount } from '../../services/instagram/post-content';

@@ -1,10 +1,10 @@
 
 'use server';
 
-import { dataStore } from '@/lib/data-store';
-import { decrypt } from '@/lib/crypto';
+import { dataStore } from '@/core/lib/data-store';
+import { decrypt } from '@/core/lib/crypto';
 import { getLinkedInPosts } from '@/services/linkedin/api';
-import { logError } from '@/lib/error-logging';
+import { logError } from '@/core/lib/error-logging';
 
 type SyncResult = {
   success: boolean;

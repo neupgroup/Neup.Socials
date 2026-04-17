@@ -9,10 +9,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, ArrowLeft, Users, ThumbsUp, Share2, ExternalLink, Twitter, Facebook, Linkedin, Instagram, RefreshCw, Heart, Laugh, Angry, Droplet, Annoyed, History } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/core/hooks/use-toast';
 import { getPageInsightsAction } from '@/services/facebook/insights';
 import { format } from 'date-fns';
-import { logError } from '@/lib/error-logging';
+import { logError } from '@/core/lib/error-logging';
 import { syncPostsAction as syncFacebookPostsAction } from '@/services/facebook/sync-posts';
 import { syncLinkedInPostsAction } from '@/services/linkedin/sync-posts';
 import { getAccountAction, listPostsAction } from '@/services/db';

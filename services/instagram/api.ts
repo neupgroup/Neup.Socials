@@ -4,7 +4,7 @@
  */
 'use server';
 
-import { toAppUrl } from '@/lib/app-url';
+import { toAppUrl } from '@/core/lib/app-url';
 
 const API_BASE_URL = 'https://api.instagram.com';
 const GRAPH_API_BASE_URL = 'https://graph.instagram.com';

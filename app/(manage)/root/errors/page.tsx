@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, AlertTriangle, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { clearAllErrorsAction } from '@/services/error-log-actions';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/core/hooks/use-toast';
 import { listErrorsAction } from '@/services/db';
 import {
   AlertDialog,

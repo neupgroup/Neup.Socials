@@ -2,7 +2,7 @@
 
 import * as mime from 'mime-types';
 
-import { getAppBaseUrl } from '@/lib/app-url';
+import { getAppBaseUrl } from '@/core/lib/app-url';
 
 const INSTAGRAM_GRAPH_API_BASE_URL = 'https://graph.instagram.com/v25.0';
 

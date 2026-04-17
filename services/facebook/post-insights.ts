@@ -3,8 +3,8 @@
  */
 'use server';
 
-import { dataStore } from '@/lib/data-store';
-import { decrypt } from '@/lib/crypto';
+import { dataStore } from '@/core/lib/data-store';
+import { decrypt } from '@/core/lib/crypto';
 import { getPagePostInsights } from '@/services/facebook/api';
 
 const isFacebookPlatform = (platform: string | null | undefined) =>

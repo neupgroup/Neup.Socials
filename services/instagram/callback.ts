@@ -9,10 +9,10 @@ import {
   exchangeForLongLivedToken,
   getUserProfile,
 } from '../../services/instagram/api';
-import { validateState, encrypt } from '@/lib/crypto';
-import { dataStore } from '@/lib/data-store';
-import { logError } from '@/lib/error-logging';
-import { getAppBaseUrl, buildUrlFromBase } from '@/lib/app-url';
+import { validateState, encrypt } from '@/core/lib/crypto';
+import { dataStore } from '@/core/lib/data-store';
+import { logError } from '@/core/lib/error-logging';
+import { getAppBaseUrl, buildUrlFromBase } from '@/core/lib/app-url';
 
 /**
  * Handles the OAuth callback from Instagram. It exchanges the authorization code

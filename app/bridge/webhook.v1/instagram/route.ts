@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { logError } from '@/lib/error-logging';
+import { logError } from '@/core/lib/error-logging';
 import { processInstagramWebhook } from '@/services/inbox/instagram';
 
 const ENDPOINT = '/bridge/webhook.v1/instagram';

@@ -11,7 +11,7 @@
  */
 'use server';
 import * as mime from 'mime-types';
-import { toAppUrl } from '@/lib/app-url';
+import { toAppUrl } from '@/core/lib/app-url';
 
 const API_VERSION = 'v25.0';
 const GRAPH_API_BASE_URL = `https://graph.facebook.com/${API_VERSION}`;

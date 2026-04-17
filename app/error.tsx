@@ -4,7 +4,7 @@ import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
-import { logError } from '@/lib/error-logging';
+import { logError } from '@/core/lib/error-logging';
 
 export default function GlobalError({
   error,

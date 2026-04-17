@@ -1,8 +1,8 @@
 'use server';
 
-import { dataStore } from '@/lib/data-store';
-import { decrypt } from '@/lib/crypto';
-import { logError } from '@/lib/error-logging';
+import { dataStore } from '@/core/lib/data-store';
+import { decrypt } from '@/core/lib/crypto';
+import { logError } from '@/core/lib/error-logging';
 import { getPostComments, postCommentOnPost, postReplyToComment } from '@/services/facebook/api';
 
 const isFacebookPlatform = (platform: string | null | undefined) =>

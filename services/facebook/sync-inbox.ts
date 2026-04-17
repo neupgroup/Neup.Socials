@@ -1,8 +1,8 @@
 'use server';
 
-import { decrypt } from '@/lib/crypto';
-import { dataStore } from '@/lib/data-store';
-import { logError } from '@/lib/error-logging';
+import { decrypt } from '@/core/lib/crypto';
+import { dataStore } from '@/core/lib/data-store';
+import { logError } from '@/core/lib/error-logging';
 import { getPageConversationsWithMessages } from '@/services/facebook/messages';
 import { getPagePostComments } from '@/services/facebook/comments';
 import { getPageScopedProfile } from '@/services/facebook/comments';

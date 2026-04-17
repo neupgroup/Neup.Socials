@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, isSameDay } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { cn } from '@/core/lib/utils';
 import { AIContentAssistant } from '@/components/ai-content-assistant';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';

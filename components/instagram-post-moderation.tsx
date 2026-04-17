@@ -7,7 +7,7 @@ import { Loader2, MessageSquare, RefreshCw, Send, EyeOff, Eye, Trash2 } from 'lu
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/core/hooks/use-toast';
 import {
   deleteInstagramCommentAction,
   fetchInstagramCommentRepliesAction,

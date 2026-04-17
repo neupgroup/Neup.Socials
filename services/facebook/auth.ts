@@ -14,9 +14,9 @@
  */
 'use server';
 
-import { generateRandomState } from '@/lib/crypto';
-import { logError } from '@/lib/error-logging';
-import { toAppUrl } from '@/lib/app-url';
+import { generateRandomState } from '@/core/lib/crypto';
+import { logError } from '@/core/lib/error-logging';
+import { toAppUrl } from '@/core/lib/app-url';
 import { FACEBOOK_AUTH_INTENTS, type FacebookAuthIntent } from './auth-intents';
 
 const FB_OAUTH_BASE_URL = 'https://www.facebook.com/v25.0/dialog/oauth';

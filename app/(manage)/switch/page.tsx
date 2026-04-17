@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { format, formatDistanceToNow } from 'date-fns';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/core/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { syncPostsAction as syncFacebookPostsAction } from '@/services/facebook/sync-posts';
 import { syncLinkedInPostsAction } from '@/services/linkedin/sync-posts';

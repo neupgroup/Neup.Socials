@@ -7,7 +7,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { listFacebookInboxFeedAction, type FacebookInboxItem } from '@/services/facebook/inbox';
 import { sendReplyAction } from '@/services/inbox/sender';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/core/hooks/use-toast';
 
 export default function InboxPage() {
   const [facebookItems, setFacebookItems] = React.useState<FacebookInboxItem[]>([]);

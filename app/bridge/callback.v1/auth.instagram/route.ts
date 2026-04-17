@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { handleInstagramCallback } from '@/services/instagram/callback';
-import { logError } from '@/lib/error-logging';
-import { getAppBaseUrl, buildUrlFromBase } from '@/lib/app-url';
+import { logError } from '@/core/lib/error-logging';
+import { getAppBaseUrl, buildUrlFromBase } from '@/core/lib/app-url';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);

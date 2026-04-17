@@ -15,13 +15,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, Loader2, Facebook, Instagram, Twitter, Linkedin } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/core/hooks/use-toast';
 import { getFacebookAuthUrl } from '@/services/facebook/auth';
 import { FACEBOOK_AUTH_INTENTS } from '@/services/facebook/auth-intents';
 import { getInstagramAuthUrl } from '@/services/instagram/auth';
 import { getLinkedInAuthUrl } from '@/services/linkedin/auth';
-import { encrypt } from '@/lib/crypto';
-import { toAppUrl } from '@/lib/app-url';
+import { encrypt } from '@/core/lib/crypto';
+import { toAppUrl } from '@/core/lib/app-url';
 import { getWhatsAppAccountName } from '@/services/whatsapp/api';
 import { createConnectedAccountAction } from '@/services/db';
 import {

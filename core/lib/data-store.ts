@@ -2,7 +2,7 @@ import 'server-only';
 
 import { Prisma } from '@prisma/client';
 
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/core/lib/prisma';
 
 const containsFilter = (value?: string) => {
   if (!value?.trim()) {

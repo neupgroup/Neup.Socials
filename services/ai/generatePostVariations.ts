@@ -1,6 +1,6 @@
 'use server';
 
-import { generatePostVariations, GeneratePostVariationsInput, GeneratePostVariationsOutput } from '@/ai/flows/generate-post-variations';
+import { generatePostVariations, GeneratePostVariationsInput, GeneratePostVariationsOutput } from '@/core/ai/flows/generate-post-variations';
 
 export async function generatePostVariationsAction(
   input: GeneratePostVariationsInput

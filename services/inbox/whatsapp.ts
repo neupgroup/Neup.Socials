@@ -1,8 +1,8 @@
 
 'use server';
 
-import { dataStore } from '@/lib/data-store';
-import { logError } from '@/lib/error-logging';
+import { dataStore } from '@/core/lib/data-store';
+import { logError } from '@/core/lib/error-logging';
 
 /**
  * Processes the incoming webhook payload from WhatsApp.

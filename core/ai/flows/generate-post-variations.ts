@@ -8,7 +8,7 @@
  * - GeneratePostVariationsOutput - The return type for the generatePostVariations function.
  */
 
-import {ai} from '@/ai/genkit';
+import {ai} from '@/core/ai/genkit';
 import {z} from 'genkit';
 
 const GeneratePostVariationsInputSchema = z.object({

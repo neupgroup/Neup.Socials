@@ -4,7 +4,7 @@
  */
 'use server';
 
-import { logError } from '@/lib/error-logging';
+import { logError } from '@/core/lib/error-logging';
 
 const API_BASE_URL = 'https://api.linkedin.com/v2';
 const REST_API_BASE_URL = 'https://api.linkedin.com/rest';

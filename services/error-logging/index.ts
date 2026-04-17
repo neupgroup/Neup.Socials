@@ -4,7 +4,7 @@
  * @fileoverview A centralized service for logging application errors to Firestore.
  */
 
-import { dataStore } from '@/lib/data-store';
+import { dataStore } from '@/core/lib/data-store';
 
 export type ErrorLog = {
   timestamp: any;

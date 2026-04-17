@@ -32,7 +32,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Toaster } from "@/components/ui/toaster";
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { cn } from '@/lib/utils';
+import { cn } from '@/core/lib/utils';
 
 const navItems = [
   { href: '/', icon: LayoutGrid, label: 'Dashboard' },

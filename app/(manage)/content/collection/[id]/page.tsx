@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Trash, ArrowLeft, Loader2, Repeat, Link2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/core/hooks/use-toast';
 import { format } from 'date-fns';
 import { repostAction } from '@/services/content/repost';
 import { PublicationStatus } from '@/components/publication-status';

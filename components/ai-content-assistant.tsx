@@ -10,8 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sparkles, Clipboard, Copy, Loader2 } from 'lucide-react';
-import { generatePostVariationsAction } from '@/services/ai/generatePostVariations';
-import { useToast } from '../hooks/use-toast';
+import { generatePostVariationsAction } from '@/core/ai/flows/generatePostVariations';
+import { useToast } from '@/core/hooks/use-toast';
 
 const formSchema = z.object({
   initialPostIdea: z.string().min(10, 'Please enter a post idea of at least 10 characters.'),

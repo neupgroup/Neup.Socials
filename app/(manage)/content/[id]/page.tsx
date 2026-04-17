@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, ArrowLeft, Edit, Trash2, ExternalLink, ThumbsUp, MessageSquare, Share2, Send, RefreshCw } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/core/hooks/use-toast';
 import { format } from 'date-fns';
 import { Textarea } from '@/components/ui/textarea';
 import { getPostAnalyticsAction } from '@/services/facebook/post-insights';

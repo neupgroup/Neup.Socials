@@ -12,9 +12,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Input } from '@/components/ui/input';
 import { Calendar as CalendarIcon, Clock, Send, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { cn } from '@/core/lib/utils';
 import { useRouter, useParams } from 'next/navigation';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/core/hooks/use-toast';
 import { publishPostAction } from '@/services/content/publish';
 import { getPostCollectionAction, updatePostCollectionAction } from '@/services/db';
 

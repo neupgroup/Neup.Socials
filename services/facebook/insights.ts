@@ -3,11 +3,11 @@
  */
 'use server';
 
-import { dataStore } from '@/lib/data-store';
-import { decrypt } from '@/lib/crypto';
+import { dataStore } from '@/core/lib/data-store';
+import { decrypt } from '@/core/lib/crypto';
 import { getPageInsights, InsightValue, PageInsightsQueryContext } from '@/services/facebook/api';
 import { subDays, format } from 'date-fns';
-import { logError } from '@/lib/error-logging';
+import { logError } from '@/core/lib/error-logging';
 
 type ConnectedAccount = {
   id: string;

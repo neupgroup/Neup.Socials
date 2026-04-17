@@ -1,8 +1,8 @@
 'use server';
 
-import { dataStore } from '@/lib/data-store';
-import { decrypt } from '@/lib/crypto';
-import { logError } from '@/lib/error-logging';
+import { dataStore } from '@/core/lib/data-store';
+import { decrypt } from '@/core/lib/crypto';
+import { logError } from '@/core/lib/error-logging';
 import { getInstagramMediaComments } from '@/services/instagram/comments/get-comments';
 import { getInstagramCommentReplies } from '@/services/instagram/comments/get-comment-replies';
 import { replyToInstagramComment } from '@/services/instagram/comments/reply-comment';

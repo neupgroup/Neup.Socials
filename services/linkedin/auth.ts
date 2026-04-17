@@ -4,8 +4,8 @@
  */
 'use server';
 
-import { generateRandomState } from '@/lib/crypto';
-import { logError } from '@/lib/error-logging';
+import { generateRandomState } from '@/core/lib/crypto';
+import { logError } from '@/core/lib/error-logging';
 
 const LINKEDIN_OAUTH_BASE_URL = 'https://www.linkedin.com/oauth/v2/authorization';
 

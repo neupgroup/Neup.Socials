@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { processFacebookMessagesWebhook } from '@/services/inbox/facebook';
 import { verifyWebhookRequest } from '@/app/bridge/webhook.v1/_helpers';
-import { logError } from '@/lib/error-logging';
+import { logError } from '@/core/lib/error-logging';
 
 const ENDPOINT = '/bridge/webhook.v1/facebook/messages';
 
