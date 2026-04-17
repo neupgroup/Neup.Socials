@@ -1,11 +1,7 @@
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  getWhatsAppEmbeddedSignupLink,
-  updateWhatsAppEmbeddedSignupLinkAction,
-} from '@/services/system-config';
+import { getWhatsAppEmbeddedSignupLink } from '@/services/system-config';
 
 export default async function WhatsAppSettingsPage() {
   const embeddedSignupLink = await getWhatsAppEmbeddedSignupLink();
@@ -24,21 +20,18 @@ export default async function WhatsAppSettingsPage() {
             This link is used to launch the embedded signup flow.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <form action={updateWhatsAppEmbeddedSignupLinkAction} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="embedded-signup-link">WhatsApp embedded signup link</Label>
-              <Input
-                id="embedded-signup-link"
-                name="embeddedSignupLink"
-                type="url"
-                required
-                defaultValue={embeddedSignupLink ?? ''}
-                placeholder="https://www.facebook.com/v20.0/dialog/oauth?client_id=..."
-              />
-            </div>
-            <Button type="submit">Save</Button>
-          </form>
+        <CardContent className="space-y-2">
+          <Label htmlFor="embedded-signup-link">WhatsApp embedded signup link</Label>
+          <Input
+            id="embedded-signup-link"
+            type="url"
+            readOnly
+            value={embeddedSignupLink ?? ''}
+            placeholder="https://www.facebook.com/v20.0/dialog/oauth?client_id=..."
+          />
+          <p className="text-sm text-muted-foreground">
+            Update WHATSAPP_EMBEDED_SIGNUP_URL in .env to change this value.
+          </p>
         </CardContent>
       </Card>
     </div>
