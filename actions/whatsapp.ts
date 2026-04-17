@@ -10,6 +10,10 @@ type ActionResult = {
 
 const GRAPH_BASE_URL = 'https://graph.facebook.com/v25.0';
 
+function resolveWhatsAppToken(accessToken?: string) {
+  return accessToken || process.env.WHATSAPP_SYSTEM_USER_TOKEN;
+}
+
 function toErrorMessage(error: unknown) {
   if (error instanceof Error) {
     return error.message;
@@ -30,7 +34,7 @@ export async function addPreverifiedWhatsAppNumberAction({
     return { success: false, error: 'Business Account ID and phone number are required.' };
   }
 
-  const token = accessToken || process.env.WHATSAPP_SYSTEM_USER_TOKEN;
+  const token = resolveWhatsAppToken(accessToken);
   if (!token) {
     return { success: false, error: 'Missing WhatsApp system user token in environment.' };
   }
@@ -115,6 +119,173 @@ export async function exchangeWhatsAppAccessTokenAction({
       process: 'exchangeWhatsAppAccessTokenAction',
       location: 'WhatsApp Actions',
       errorMessage: toErrorMessage(error),
+    });
+
+    return { success: false, error: toErrorMessage(error) };
+  }
+}
+
+export async function requestPreverifiedWhatsAppNumberCodeAction({
+  preverifiedId,
+  codeMethod,
+  language,
+  accessToken,
+}: {
+  preverifiedId: string;
+  codeMethod: 'SMS' | 'VOICE';
+  language?: string;
+  accessToken?: string;
+}): Promise<ActionResult> {
+  if (!preverifiedId || !codeMethod) {
+    return { success: false, error: 'Pre-verified ID and code method are required.' };
+  }
+
+  const token = resolveWhatsAppToken(accessToken);
+  if (!token) {
+    return { success: false, error: 'Missing WhatsApp system user token in environment.' };
+  }
+
+  const params = new URLSearchParams({
+    code_method: codeMethod,
+  });
+
+  if (language) {
+    params.set('language', language);
+  }
+
+  try {
+    const response = await fetch(`${GRAPH_BASE_URL}/${preverifiedId}/request_code?${params.toString()}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: (data as { error?: { message?: string } })?.error?.message || 'Failed to request verification code.',
+        data,
+      };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    await logError({
+      process: 'requestPreverifiedWhatsAppNumberCodeAction',
+      location: 'WhatsApp Actions',
+      errorMessage: toErrorMessage(error),
+      context: { preverifiedId },
+    });
+
+    return { success: false, error: toErrorMessage(error) };
+  }
+}
+
+export async function verifyPreverifiedWhatsAppNumberCodeAction({
+  preverifiedId,
+  code,
+  accessToken,
+}: {
+  preverifiedId: string;
+  code: string;
+  accessToken?: string;
+}): Promise<ActionResult> {
+  if (!preverifiedId || !code) {
+    return { success: false, error: 'Pre-verified ID and verification code are required.' };
+  }
+
+  const token = resolveWhatsAppToken(accessToken);
+  if (!token) {
+    return { success: false, error: 'Missing WhatsApp system user token in environment.' };
+  }
+
+  const params = new URLSearchParams({ code });
+
+  try {
+    const response = await fetch(`${GRAPH_BASE_URL}/${preverifiedId}/verify_code?${params.toString()}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: (data as { error?: { message?: string } })?.error?.message || 'Failed to verify pre-verified number.',
+        data,
+      };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    await logError({
+      process: 'verifyPreverifiedWhatsAppNumberCodeAction',
+      location: 'WhatsApp Actions',
+      errorMessage: toErrorMessage(error),
+      context: { preverifiedId },
+    });
+
+    return { success: false, error: toErrorMessage(error) };
+  }
+}
+
+export async function listPreverifiedWhatsAppNumbersAction({
+  businessId,
+  status,
+  accessToken,
+}: {
+  businessId?: string;
+  status?: string;
+  accessToken?: string;
+}): Promise<ActionResult> {
+  const resolvedBusinessId = businessId || process.env.WHATSAPP_BUSINESS_ID;
+  if (!resolvedBusinessId) {
+    return { success: false, error: 'Missing WhatsApp business ID in environment.' };
+  }
+
+  const token = resolveWhatsAppToken(accessToken);
+  if (!token) {
+    return { success: false, error: 'Missing WhatsApp system user token in environment.' };
+  }
+
+  const params = new URLSearchParams();
+  if (status) {
+    params.set('code_verification_status', status);
+  }
+
+  try {
+    const response = await fetch(`${GRAPH_BASE_URL}/${resolvedBusinessId}/preverified_numbers?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: (data as { error?: { message?: string } })?.error?.message || 'Failed to load pre-verified numbers.',
+        data,
+      };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    await logError({
+      process: 'listPreverifiedWhatsAppNumbersAction',
+      location: 'WhatsApp Actions',
+      errorMessage: toErrorMessage(error),
+      context: { businessId: resolvedBusinessId },
     });
 
     return { success: false, error: toErrorMessage(error) };

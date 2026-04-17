@@ -24,7 +24,11 @@ import { encrypt } from '@/lib/crypto';
 import { toAppUrl } from '@/lib/app-url';
 import { getWhatsAppAccountName } from '@/core/whatsapp/api';
 import { createConnectedAccountAction } from '@/actions/db';
-import { addPreverifiedWhatsAppNumberAction, exchangeWhatsAppAccessTokenAction } from '@/actions/whatsapp';
+import {
+  addPreverifiedWhatsAppNumberAction,
+  exchangeWhatsAppAccessTokenAction,
+  listPreverifiedWhatsAppNumbersAction,
+} from '@/actions/whatsapp';
 
 
 const formSchema = z.object({
@@ -112,7 +116,9 @@ export default function AddAccountPage() {
   const [embeddedSignupWabaId, setEmbeddedSignupWabaId] = React.useState('');
   const [embeddedSignupPhoneNumberId, setEmbeddedSignupPhoneNumberId] = React.useState('');
   const [embeddedSignupCode, setEmbeddedSignupCode] = React.useState('');
+  const [embeddedPreverifiedIds, setEmbeddedPreverifiedIds] = React.useState<string[]>([]);
   const embeddedSignupInFlight = React.useRef(false);
+  const embeddedPreverifiedLoaded = React.useRef(false);
 
   React.useEffect(() => {
     if (selectedPlatform !== 'WhatsApp') return;
@@ -134,9 +140,35 @@ export default function AddAccountPage() {
       setEmbeddedSignupWabaId('');
       setEmbeddedSignupPhoneNumberId('');
       setEmbeddedSignupCode('');
+      setEmbeddedPreverifiedIds([]);
       embeddedSignupInFlight.current = false;
+      embeddedPreverifiedLoaded.current = false;
       setIsEmbeddedSubmitting(false);
     }
+  }, [selectedPlatform, whatsappConnectMode]);
+
+  React.useEffect(() => {
+    if (selectedPlatform !== 'WhatsApp' || whatsappConnectMode !== 'embedded') return;
+    if (embeddedPreverifiedLoaded.current) return;
+
+    embeddedPreverifiedLoaded.current = true;
+
+    const loadIds = async () => {
+      const result = await listPreverifiedWhatsAppNumbersAction({ status: 'VERIFIED' });
+      if (!result.success) {
+        return;
+      }
+
+      const ids = (result.data as { data?: Array<{ id?: string }> })?.data
+        ?.map((item) => item.id)
+        .filter((id): id is string => Boolean(id)) ?? [];
+
+      if (ids.length > 0) {
+        setEmbeddedPreverifiedIds(ids);
+      }
+    };
+
+    void loadIds();
   }, [selectedPlatform, whatsappConnectMode]);
 
   React.useEffect(() => {
@@ -258,7 +290,9 @@ export default function AddAccountPage() {
           override_default_response_type: true,
           extras: {
             version: 'v4',
-            setup: {},
+            setup: embeddedPreverifiedIds.length > 0
+              ? { preVerifiedPhone: { ids: embeddedPreverifiedIds } }
+              : {},
             featureType: 'whatsapp_business_app_onboarding',
             features: [{ name: 'app_only_install' }],
             sessionInfoVersion: 3,
