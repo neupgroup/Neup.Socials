@@ -291,3 +291,35 @@ export async function listPreverifiedWhatsAppNumbersAction({
     return { success: false, error: toErrorMessage(error) };
   }
 }
+
+export async function logWhatsAppEmbeddedSignupErrorAction(data: {
+  eventType: string;
+  errorMessage?: string | null;
+  errorCode?: string | number | null;
+  currentStep?: string | null;
+  sessionId?: string | null;
+  timestamp?: string | number | null;
+  businessId?: string | null;
+  wabaId?: string | null;
+  phoneNumberId?: string | null;
+}) {
+  const errorMessage =
+    data.errorMessage ||
+    (data.currentStep ? `Embedded signup exited at ${data.currentStep}.` : 'Embedded signup error reported.');
+
+  await logError({
+    process: 'whatsapp-embedded-signup',
+    location: 'Embedded Signup',
+    errorMessage,
+    context: {
+      eventType: data.eventType,
+      errorCode: data.errorCode ?? undefined,
+      currentStep: data.currentStep ?? undefined,
+      sessionId: data.sessionId ?? undefined,
+      timestamp: data.timestamp ?? undefined,
+      businessId: data.businessId ?? undefined,
+      wabaId: data.wabaId ?? undefined,
+      phoneNumberId: data.phoneNumberId ?? undefined,
+    },
+  });
+}

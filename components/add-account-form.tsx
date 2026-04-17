@@ -27,6 +27,7 @@ import {
   addPreverifiedWhatsAppNumberAction,
   exchangeWhatsAppAccessTokenAction,
   listPreverifiedWhatsAppNumbersAction,
+  logWhatsAppEmbeddedSignupErrorAction,
 } from '@/services/whatsapp/embedded-signup';
 
 const formSchema = z.object({
@@ -91,6 +92,7 @@ export function AddAccountForm({ embeddedSignupUrl, embeddedSignupConfigId }: Ad
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isPreverifiedSubmitting, setIsPreverifiedSubmitting] = React.useState(false);
   const [isEmbeddedSubmitting, setIsEmbeddedSubmitting] = React.useState(false);
+  const [isEmbeddedProcessing, setIsEmbeddedProcessing] = React.useState(false);
   const router = useRouter();
   const { toast } = useToast();
   const embeddedSignupConfig = embeddedSignupConfigId ?? '';
@@ -155,6 +157,7 @@ export function AddAccountForm({ embeddedSignupUrl, embeddedSignupConfigId }: Ad
       embeddedSignupInFlight.current = false;
       embeddedPreverifiedLoaded.current = false;
       setIsEmbeddedSubmitting(false);
+      setIsEmbeddedProcessing(false);
     }
   }, [selectedPlatform, whatsappConnectMode]);
 
@@ -206,6 +209,19 @@ export function AddAccountForm({ embeddedSignupUrl, embeddedSignupConfigId }: Ad
         const currentStep = data?.current_step;
         const errorMessage = data?.error_message;
         const errorCode = data?.error_code;
+        if (errorMessage || errorCode) {
+          void logWhatsAppEmbeddedSignupErrorAction({
+            eventType,
+            errorMessage,
+            errorCode,
+            currentStep,
+            sessionId: data?.session_id ?? null,
+            timestamp: data?.timestamp ?? null,
+            businessId: data?.business_id ?? null,
+            wabaId: data?.waba_id ?? null,
+            phoneNumberId: data?.phone_number_id ?? null,
+          });
+        }
         const description = errorMessage
           ? `${errorMessage}${errorCode ? ` (code ${errorCode})` : ''}`
           : currentStep
@@ -217,17 +233,30 @@ export function AddAccountForm({ embeddedSignupUrl, embeddedSignupConfigId }: Ad
           description,
           variant: 'destructive',
         });
+        setIsEmbeddedProcessing(false);
         return;
       }
 
       if (eventType === 'ERROR') {
         const errorMessage = data?.error_message || 'Embedded signup reported an error.';
         const errorCode = data?.error_code;
+        void logWhatsAppEmbeddedSignupErrorAction({
+          eventType,
+          errorMessage,
+          errorCode,
+          currentStep: data?.current_step ?? null,
+          sessionId: data?.session_id ?? null,
+          timestamp: data?.timestamp ?? null,
+          businessId: data?.business_id ?? null,
+          wabaId: data?.waba_id ?? null,
+          phoneNumberId: data?.phone_number_id ?? null,
+        });
         toast({
           title: 'Embedded signup error',
           description: errorCode ? `${errorMessage} (code ${errorCode})` : errorMessage,
           variant: 'destructive',
         });
+        setIsEmbeddedProcessing(false);
         return;
       }
 
@@ -262,6 +291,7 @@ export function AddAccountForm({ embeddedSignupUrl, embeddedSignupConfigId }: Ad
     if (embeddedSignupInFlight.current) return;
     embeddedSignupInFlight.current = true;
     setIsEmbeddedSubmitting(true);
+    setIsEmbeddedProcessing(true);
 
     try {
       const tokenResult = await exchangeWhatsAppAccessTokenAction({
@@ -313,6 +343,7 @@ export function AddAccountForm({ embeddedSignupUrl, embeddedSignupConfigId }: Ad
     } finally {
       embeddedSignupInFlight.current = false;
       setIsEmbeddedSubmitting(false);
+      setIsEmbeddedProcessing(false);
     }
   }, [embeddedSignupAssetIds, embeddedSignupBusinessId, embeddedSignupRedirectUri, router, toast, userId]);
 
@@ -347,6 +378,7 @@ export function AddAccountForm({ embeddedSignupUrl, embeddedSignupConfigId }: Ad
             return;
           }
 
+          setIsEmbeddedProcessing(true);
           setEmbeddedSignupCode(code);
         },
         {
@@ -487,6 +519,8 @@ export function AddAccountForm({ embeddedSignupUrl, embeddedSignupConfigId }: Ad
     : selectedPlatform === 'Facebook'
       ? 'You will be redirected to Facebook Login to authorize your Pages.'
       : `You will be redirected to ${selectedPlatform} to authorize the connection.`;
+  const isEmbeddedFlowActive = isWhatsAppFlow && whatsappConnectMode === 'embedded';
+  const isFormLocked = isEmbeddedFlowActive && isEmbeddedProcessing;
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -533,7 +567,7 @@ export function AddAccountForm({ embeddedSignupUrl, embeddedSignupConfigId }: Ad
                 name="platform"
                 control={control}
                 render={({ field }) => (
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isFormLocked}>
                     <SelectTrigger id="platform">
                       <SelectValue placeholder="Select a platform..." />
                     </SelectTrigger>
@@ -636,7 +670,7 @@ export function AddAccountForm({ embeddedSignupUrl, embeddedSignupConfigId }: Ad
                         name="whatsappConnectMode"
                         control={control}
                         render={({ field }) => (
-                          <Select onValueChange={field.onChange} defaultValue={field.value ?? 'manual'}>
+                          <Select onValueChange={field.onChange} defaultValue={field.value ?? 'manual'} disabled={isFormLocked}>
                             <SelectTrigger id="whatsappConnectMode">
                               <SelectValue placeholder="Select connection method..." />
                             </SelectTrigger>
@@ -706,6 +740,12 @@ export function AddAccountForm({ embeddedSignupUrl, embeddedSignupConfigId }: Ad
 
                     {whatsappConnectMode === 'embedded' && (
                       <div className="space-y-3 rounded-md border p-4">
+                        {isEmbeddedProcessing && (
+                          <div className="flex items-center gap-2 rounded-md border border-dashed px-3 py-2 text-sm text-muted-foreground">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Processing embedded signup response...
+                          </div>
+                        )}
                         <Button type="button" onClick={handleWhatsAppEmbeddedSignup} disabled={isEmbeddedSubmitting}>
                           {isEmbeddedSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                           Continue with Embedded Signup
