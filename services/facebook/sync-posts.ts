@@ -3,7 +3,7 @@
 
 import { dataStore } from '@/lib/data-store';
 import { decrypt } from '@/lib/crypto';
-import { getPosts } from '@/core/facebook/api';
+import { getPosts } from '@/services/facebook/api';
 import { logError } from '@/lib/error-logging';
 import { subDays } from 'date-fns';
 

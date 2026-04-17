@@ -4,9 +4,9 @@
 import { dataStore } from '@/lib/data-store';
 import { decrypt } from '@/lib/crypto';
 import { logError } from '../error-logging';
-import { publishToPage as publishToFacebookPage } from '../../core/facebook/api';
-import { publishToInstagramAccount } from '../../core/instagram/post-content';
-import { publishToLinkedIn } from '../../core/linkedin/api';
+import { publishToPage as publishToFacebookPage } from '../../services/facebook/api';
+import { publishToInstagramAccount } from '../../services/instagram/post-content';
+import { publishToLinkedIn } from '../../services/linkedin/api';
 
 /**
  * Publishes a post collection to all its selected social media accounts.

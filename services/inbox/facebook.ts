@@ -4,8 +4,8 @@
 import { dataStore } from '@/lib/data-store';
 import { logError } from '@/lib/error-logging';
 import { decrypt } from '@/lib/crypto';
-import { getPageCommentById } from '@/core/facebook/comments';
-import { getPageScopedProfile } from '@/core/facebook/comments';
+import { getPageCommentById } from '@/services/facebook/comments';
+import { getPageScopedProfile } from '@/services/facebook/comments';
 
 /**
  * Processes the incoming webhook payload from Facebook.

@@ -3,7 +3,7 @@
 import { dataStore } from '@/lib/data-store';
 import { decrypt } from '@/lib/crypto';
 import { logError } from '@/lib/error-logging';
-import { getPostComments, postCommentOnPost, postReplyToComment } from '@/core/facebook/api';
+import { getPostComments, postCommentOnPost, postReplyToComment } from '@/services/facebook/api';
 
 const isFacebookPlatform = (platform: string | null | undefined) =>
   (platform ?? '').toLowerCase() === 'facebook';

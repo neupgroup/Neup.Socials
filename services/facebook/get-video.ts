@@ -6,7 +6,7 @@ import { logError } from '@/lib/error-logging';
 import {
   getWatchableVideoFromPost,
   type FacebookWatchableVideo,
-} from '@/core/facebook/getVideo';
+} from '@/services/facebook/getVideo';
 
 const isFacebookPlatform = (platform: string | null | undefined) =>
   (platform ?? '').toLowerCase() === 'facebook';

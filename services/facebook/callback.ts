@@ -32,7 +32,7 @@ import {
   exchangeForLongLivedToken,
   getUserPages,
   subscribeAppToPageWebhooks,
-} from '../../core/facebook/api';
+} from '../../services/facebook/api';
 import { FACEBOOK_AUTH_INTENTS, type FacebookAuthIntent } from './auth-intents';
 import { validateState, encrypt } from '@/lib/crypto';
 import { dataStore } from '@/lib/data-store';

@@ -4,7 +4,7 @@
  */
 'use server';
 
-import { exchangeCodeForToken, getUserProfile } from '@/core/linkedin/api';
+import { exchangeCodeForToken, getUserProfile } from '@/services/linkedin/api';
 import { validateState, encrypt } from '@/lib/crypto';
 import { dataStore } from '@/lib/data-store';
 import { logError } from '@/lib/error-logging';

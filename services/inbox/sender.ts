@@ -1,8 +1,8 @@
 'use server';
 
 import { logError } from "@/lib/error-logging";
-import { sendTextMessage as sendWhatsAppMessage } from "../../core/whatsapp/api";
-import { sendPageTextMessage as sendFacebookPageMessage } from "@/core/facebook/messages";
+import { sendTextMessage as sendWhatsAppMessage } from "../../services/whatsapp/api";
+import { sendPageTextMessage as sendFacebookPageMessage } from "@/services/facebook/messages";
 import { dataStore } from "@/lib/data-store";
 import { decrypt } from "@/lib/crypto";
 

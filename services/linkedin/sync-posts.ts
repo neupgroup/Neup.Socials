@@ -3,7 +3,7 @@
 
 import { dataStore } from '@/lib/data-store';
 import { decrypt } from '@/lib/crypto';
-import { getLinkedInPosts } from '@/core/linkedin/api';
+import { getLinkedInPosts } from '@/services/linkedin/api';
 import { logError } from '@/lib/error-logging';
 
 type SyncResult = {

@@ -12,7 +12,7 @@ import {
 	respondToPageChangeProposal,
 	updatePageDetails,
 	updatePageSetting,
-} from '@/core/facebook/api';
+} from '@/services/facebook/api';
 
 type JsonScalar = string | number | boolean | null;
 type JsonValue = JsonScalar | JsonValue[] | { [key: string]: JsonValue };

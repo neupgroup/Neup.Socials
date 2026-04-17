@@ -5,7 +5,7 @@
 
 import { dataStore } from '@/lib/data-store';
 import { decrypt } from '@/lib/crypto';
-import { getPageInsights, InsightValue, PageInsightsQueryContext } from '@/core/facebook/api';
+import { getPageInsights, InsightValue, PageInsightsQueryContext } from '@/services/facebook/api';
 import { subDays, format } from 'date-fns';
 import { logError } from '@/lib/error-logging';
 

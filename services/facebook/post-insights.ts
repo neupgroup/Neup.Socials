@@ -5,7 +5,7 @@
 
 import { dataStore } from '@/lib/data-store';
 import { decrypt } from '@/lib/crypto';
-import { getPagePostInsights } from '@/core/facebook/api';
+import { getPagePostInsights } from '@/services/facebook/api';
 
 const isFacebookPlatform = (platform: string | null | undefined) =>
   (platform ?? '').toLowerCase() === 'facebook';

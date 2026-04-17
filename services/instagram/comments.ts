@@ -3,14 +3,14 @@
 import { dataStore } from '@/lib/data-store';
 import { decrypt } from '@/lib/crypto';
 import { logError } from '@/lib/error-logging';
-import { getInstagramMediaComments } from '@/core/instagram/comments/get-comments';
-import { getInstagramCommentReplies } from '@/core/instagram/comments/get-comment-replies';
-import { replyToInstagramComment } from '@/core/instagram/comments/reply-comment';
-import { setInstagramCommentHidden } from '@/core/instagram/comments/hide-comment';
-import { deleteInstagramComment } from '@/core/instagram/comments/delete-comment';
-import { setInstagramMediaCommentsEnabled } from '@/core/instagram/comments/disable-enable-comment';
-import { instagramRequest } from '@/core/instagram/comments/shared';
-import { sendInstagramPrivateReply } from '@/core/instagram/private-reply';
+import { getInstagramMediaComments } from '@/services/instagram/comments/get-comments';
+import { getInstagramCommentReplies } from '@/services/instagram/comments/get-comment-replies';
+import { replyToInstagramComment } from '@/services/instagram/comments/reply-comment';
+import { setInstagramCommentHidden } from '@/services/instagram/comments/hide-comment';
+import { deleteInstagramComment } from '@/services/instagram/comments/delete-comment';
+import { setInstagramMediaCommentsEnabled } from '@/services/instagram/comments/disable-enable-comment';
+import { instagramRequest } from '@/services/instagram/comments/shared';
+import { sendInstagramPrivateReply } from '@/services/instagram/private-reply';
 
 const isInstagramPlatform = (platform: string | null | undefined) =>
   (platform ?? '').toLowerCase() === 'instagram';

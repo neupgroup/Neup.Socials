@@ -8,7 +8,7 @@ import {
   exchangeCodeForToken,
   exchangeForLongLivedToken,
   getUserProfile,
-} from '../../core/instagram/api';
+} from '../../services/instagram/api';
 import { validateState, encrypt } from '@/lib/crypto';
 import { dataStore } from '@/lib/data-store';
 import { logError } from '@/lib/error-logging';

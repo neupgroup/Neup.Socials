@@ -22,7 +22,7 @@ import { getInstagramAuthUrl } from '@/services/instagram/auth';
 import { getLinkedInAuthUrl } from '@/services/linkedin/auth';
 import { encrypt } from '@/lib/crypto';
 import { toAppUrl } from '@/lib/app-url';
-import { getWhatsAppAccountName } from '@/core/whatsapp/api';
+import { getWhatsAppAccountName } from '@/services/whatsapp/api';
 import { createConnectedAccountAction } from '@/services/db';
 import {
   addPreverifiedWhatsAppNumberAction,
