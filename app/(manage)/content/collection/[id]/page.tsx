@@ -11,14 +11,14 @@ import { Badge } from '@/components/ui/badge';
 import { Edit, Trash, ArrowLeft, Loader2, Repeat, Link2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-import { repostAction } from '@/actions/content/repost';
+import { repostAction } from '@/services/content/repost';
 import { PublicationStatus } from '@/components/publication-status';
 import {
   cancelScheduledPostCollectionAction,
   deletePostCollectionAction,
   getPostCollectionAction,
   getPostCollectionPostsAction,
-} from '@/actions/db';
+} from '@/services/db';
 
 type PostCollection = {
   id: string;

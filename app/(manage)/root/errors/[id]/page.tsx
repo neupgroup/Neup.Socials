@@ -9,9 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Loader2, ArrowLeft, Trash2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { deleteErrorAction } from '@/actions/error-log-actions';
+import { deleteErrorAction } from '@/services/error-log-actions';
 import { format } from 'date-fns';
-import { getErrorAction } from '@/actions/db';
+import { getErrorAction } from '@/services/db';
 import {
   AlertDialog,
   AlertDialogAction,

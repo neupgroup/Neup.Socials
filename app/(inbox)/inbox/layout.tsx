@@ -48,7 +48,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { formatDistanceToNow } from 'date-fns';
-import { listConversationsAction } from '@/actions/db';
+import { listConversationsAction } from '@/services/db';
 
 const inboxNavItems = [
     { href: '/inbox', icon: MessageSquare, label: 'All Messages', count: 24 },

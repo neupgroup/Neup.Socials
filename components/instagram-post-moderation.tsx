@@ -18,7 +18,7 @@ import {
   setInstagramCommentsEnabledAction,
   type InstagramModerationComment,
   type InstagramModerationReply,
-} from '@/actions/instagram/comments';
+} from '@/services/instagram/comments';
 
 type InstagramPostModerationProps = {
   postId: string;

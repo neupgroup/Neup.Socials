@@ -10,8 +10,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { updateWhatsAppTokenAction } from '@/actions/accounts';
-import { getAccountAction } from '@/actions/db';
+import { updateWhatsAppTokenAction } from '@/services/accounts';
+import { getAccountAction } from '@/services/db';
 
 type FormData = {
   accessToken: string;

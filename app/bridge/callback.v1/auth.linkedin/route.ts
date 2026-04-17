@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { handleLinkedInCallback } from '@/actions/linkedin/callback';
+import { handleLinkedInCallback } from '@/services/linkedin/callback';
 import { logError } from '@/lib/error-logging';
 import { toAppUrl } from '@/lib/app-url';
 

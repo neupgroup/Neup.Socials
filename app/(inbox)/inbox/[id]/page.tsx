@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Send, Loader2, Twitter, Facebook, Linkedin, MoreVertical, Phone, Video, Info } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { sendReplyAction } from '@/actions/inbox/sender';
+import { sendReplyAction } from '@/services/inbox/sender';
 import { useToast } from '@/hooks/use-toast';
 import {
     DropdownMenu,
@@ -19,7 +19,7 @@ import {
     getConversationAction,
     listConversationMessagesAction,
     recordOutgoingMessageAction,
-} from '@/actions/db';
+} from '@/services/db';
 
 type Message = {
     id: string;

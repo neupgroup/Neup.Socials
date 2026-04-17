@@ -16,19 +16,19 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, Loader2, Facebook, Instagram, Twitter, Linkedin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getFacebookAuthUrl } from '@/actions/facebook/auth';
-import { FACEBOOK_AUTH_INTENTS } from '@/actions/facebook/auth-intents';
-import { getInstagramAuthUrl } from '@/actions/instagram/auth';
-import { getLinkedInAuthUrl } from '@/actions/linkedin/auth';
+import { getFacebookAuthUrl } from '@/services/facebook/auth';
+import { FACEBOOK_AUTH_INTENTS } from '@/services/facebook/auth-intents';
+import { getInstagramAuthUrl } from '@/services/instagram/auth';
+import { getLinkedInAuthUrl } from '@/services/linkedin/auth';
 import { encrypt } from '@/lib/crypto';
 import { toAppUrl } from '@/lib/app-url';
 import { getWhatsAppAccountName } from '@/core/whatsapp/api';
-import { createConnectedAccountAction } from '@/actions/db';
+import { createConnectedAccountAction } from '@/services/db';
 import {
   addPreverifiedWhatsAppNumberAction,
   exchangeWhatsAppAccessTokenAction,
   listPreverifiedWhatsAppNumbersAction,
-} from '@/actions/whatsapp';
+} from '@/services/whatsapp';
 
 
 const formSchema = z.object({

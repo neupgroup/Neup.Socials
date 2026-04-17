@@ -11,7 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-import { getPostCollectionAction } from '@/actions/db';
+import { getPostCollectionAction } from '@/services/db';
 
 type PostCollection = {
   id: string;

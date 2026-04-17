@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Users, ThumbsUp, MessageCircle, ArrowUp, ArrowDown, Share2, MousePointerClick, AlertCircle } from 'lucide-react';
 import { Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
-import { getConnectedAccounts, getPageInsightsAction } from '@/actions/facebook/insights';
+import { getConnectedAccounts, getPageInsightsAction } from '@/services/facebook/insights';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';

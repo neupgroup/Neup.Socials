@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader2, ArrowLeft, Edit, File, Video, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getPostCollectionsByMediaUrlAction, getUploadAction } from '@/actions/db';
+import { getPostCollectionsByMediaUrlAction, getUploadAction } from '@/services/db';
 
 type UploadRecord = {
   id: string;

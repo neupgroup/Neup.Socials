@@ -10,12 +10,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { UploadCloud, ArrowLeft, Loader2, Image as ImageIcon, Search, CheckCircle, Facebook } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { recordUpload, UploadRecord } from '@/actions/uploads/recordUpload';
+import { recordUpload, UploadRecord } from '@/services/uploads/recordUpload';
 import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getPostCollectionAction, listAllUploadsAction, updatePostCollectionAction } from '@/actions/db';
+import { getPostCollectionAction, listAllUploadsAction, updatePostCollectionAction } from '@/services/db';
 
 const UPLOAD_ENDPOINT = 'https://neupgroup.com/usercontent/bridge/api/upload.php';
 

@@ -13,11 +13,11 @@ import { Loader2, ArrowLeft, Edit, Trash2, ExternalLink, ThumbsUp, MessageSquare
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { Textarea } from '@/components/ui/textarea';
-import { getPostAnalyticsAction } from '@/actions/facebook/post-insights';
-import { deletePostAction, getPostAction, getPostCollectionAction } from '@/actions/db';
-import { fetchPostCommentsAction, postCommentAction, postReplyAction } from '@/actions/facebook/comments';
-import { getFacebookPostVideoAction } from '@/actions/facebook/get-video';
-import { sendReplyAction } from '@/actions/inbox/sender';
+import { getPostAnalyticsAction } from '@/services/facebook/post-insights';
+import { deletePostAction, getPostAction, getPostCollectionAction } from '@/services/db';
+import { fetchPostCommentsAction, postCommentAction, postReplyAction } from '@/services/facebook/comments';
+import { getFacebookPostVideoAction } from '@/services/facebook/get-video';
+import { sendReplyAction } from '@/services/inbox/sender';
 import { InstagramPostModeration } from '@/components/instagram-post-moderation';
 
 type Post = {

@@ -9,9 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Loader2, AlertTriangle, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { clearAllErrorsAction } from '@/actions/error-log-actions';
+import { clearAllErrorsAction } from '@/services/error-log-actions';
 import { useToast } from '@/hooks/use-toast';
-import { listErrorsAction } from '@/actions/db';
+import { listErrorsAction } from '@/services/db';
 import {
   AlertDialog,
   AlertDialogAction,

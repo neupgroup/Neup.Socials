@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { handleFacebookCallback } from '@/actions/facebook/callback';
+import { handleFacebookCallback } from '@/services/facebook/callback';
 import { logError } from '@/lib/error-logging';
 import { toAppUrl } from '@/lib/app-url';
 

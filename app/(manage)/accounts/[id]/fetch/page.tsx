@@ -11,9 +11,9 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { Loader2, ArrowLeft, History, CheckCircle, XCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { syncPostsAction } from '@/actions/facebook/sync-posts';
-import { syncFacebookCommentsAction, syncFacebookMessagesAction } from '@/actions/facebook/sync-inbox';
-import { listSyncLogsAction } from '@/actions/db';
+import { syncPostsAction } from '@/services/facebook/sync-posts';
+import { syncFacebookCommentsAction, syncFacebookMessagesAction } from '@/services/facebook/sync-inbox';
+import { listSyncLogsAction } from '@/services/db';
 
 type SyncLog = {
     id: string;

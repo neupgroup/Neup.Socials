@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
-import { listUploadsAction } from '@/actions/db';
+import { listUploadsAction } from '@/services/db';
 
 type UploadRecord = {
   id: string;

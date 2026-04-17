@@ -15,8 +15,8 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useRouter, useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { publishPostAction } from '@/actions/content/publish';
-import { getPostCollectionAction, updatePostCollectionAction } from '@/actions/db';
+import { publishPostAction } from '@/services/content/publish';
+import { getPostCollectionAction, updatePostCollectionAction } from '@/services/db';
 
 export default function EditSchedulePage() {
   const params = useParams();

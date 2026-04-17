@@ -10,12 +10,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Loader2, ArrowLeft, Users, ThumbsUp, Share2, ExternalLink, Twitter, Facebook, Linkedin, Instagram, RefreshCw, Heart, Laugh, Angry, Droplet, Annoyed, History } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getPageInsightsAction } from '@/actions/facebook/insights';
+import { getPageInsightsAction } from '@/services/facebook/insights';
 import { format } from 'date-fns';
 import { logError } from '@/lib/error-logging';
-import { syncPostsAction as syncFacebookPostsAction } from '@/actions/facebook/sync-posts';
-import { syncLinkedInPostsAction } from '@/actions/linkedin/sync-posts';
-import { getAccountAction, listPostsAction } from '@/actions/db';
+import { syncPostsAction as syncFacebookPostsAction } from '@/services/facebook/sync-posts';
+import { syncLinkedInPostsAction } from '@/services/linkedin/sync-posts';
+import { getAccountAction, listPostsAction } from '@/services/db';
 
 type Account = {
   id: string;

@@ -5,8 +5,8 @@ import { useParams, useSearchParams } from 'next/navigation';
 import { formatDistanceToNow } from 'date-fns';
 import { Loader2 } from 'lucide-react';
 
-import { getFacebookUserProfileAction, type FacebookUserProfile } from '@/actions/facebook/user';
-import { sendReplyAction } from '@/actions/inbox/sender';
+import { getFacebookUserProfileAction, type FacebookUserProfile } from '@/services/facebook/user';
+import { sendReplyAction } from '@/services/inbox/sender';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 

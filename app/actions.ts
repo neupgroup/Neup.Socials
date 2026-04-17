@@ -1,2 +1,2 @@
-// This file is deprecated. Actions have been moved to the /src/actions directory.
+// This file is deprecated. Server actions live under /services now.
 'use server';

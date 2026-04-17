@@ -15,8 +15,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { listPostsAction } from '@/actions/db';
-import { refreshPostAnalyticsAction } from '@/actions/facebook/post-insights';
+import { listPostsAction } from '@/services/db';
+import { refreshPostAnalyticsAction } from '@/services/facebook/post-insights';
 
 type Post = {
   id: string;

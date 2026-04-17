@@ -17,9 +17,9 @@ import {
 import { format, formatDistanceToNow } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
-import { syncPostsAction as syncFacebookPostsAction } from '@/actions/facebook/sync-posts';
-import { syncLinkedInPostsAction } from '@/actions/linkedin/sync-posts';
-import { listAccountsAction } from '@/actions/db';
+import { syncPostsAction as syncFacebookPostsAction } from '@/services/facebook/sync-posts';
+import { syncLinkedInPostsAction } from '@/services/linkedin/sync-posts';
+import { listAccountsAction } from '@/services/db';
 
 type Account = {
   id: string;

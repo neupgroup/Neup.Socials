@@ -4,8 +4,8 @@ import * as React from 'react';
 import Link from 'next/link';
 import { MessageSquare, Inbox, Loader2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { listFacebookInboxFeedAction, type FacebookInboxItem } from '@/actions/facebook/inbox';
-import { sendReplyAction } from '@/actions/inbox/sender';
+import { listFacebookInboxFeedAction, type FacebookInboxItem } from '@/services/facebook/inbox';
+import { sendReplyAction } from '@/services/inbox/sender';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 

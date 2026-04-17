@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { handleInstagramCallback } from '@/actions/instagram/callback';
+import { handleInstagramCallback } from '@/services/instagram/callback';
 import { logError } from '@/lib/error-logging';
 import { getAppBaseUrl, buildUrlFromBase } from '@/lib/app-url';
 
