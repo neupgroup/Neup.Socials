@@ -10,6 +10,7 @@ import {
   Users,
   MessageSquareText,
   PlusSquare,
+  FileText,
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
@@ -40,7 +41,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 const navItems = [
   { href: '/analytics', icon: LayoutGrid, label: 'Analytics' },
   { href: '/schedule', icon: Calendar, label: 'Schedule' },
-  { href: '/feed', icon: PlusSquare, label: 'Content' },
+  { href: '/feed', icon: PlusSquare, label: 'Feed' },
+  { href: '/content', icon: FileText, label: 'Content' },
   { href: '/inbox', icon: Inbox, label: 'Inbox' },
   { href: '/accounts', icon: Users, label: 'Accounts' },
   { href: '/settings', icon: Settings, label: 'Settings' },

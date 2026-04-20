@@ -207,7 +207,7 @@ export default function ContentDashboardPage() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Content Feed</h1>
+          <h1 className="text-3xl font-bold">Feed</h1>
           <p className="text-muted-foreground">A unified feed of all your published posts.</p>
         </div>
       </div>
@@ -215,7 +215,7 @@ export default function ContentDashboardPage() {
       <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input 
-              placeholder="Search content..." 
+              placeholder="Search feed..." 
               className="pl-10"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
