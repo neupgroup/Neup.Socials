@@ -35,6 +35,7 @@ export async function getPostAnalyticsAction(postId: string): Promise<GetPostAna
     if (!postData) {
       throw new Error('Post not found in data store.');
     }
+
     const { platformPostId, accountId } = postData;
 
     if (!platformPostId || !accountId) {
@@ -101,15 +102,27 @@ export async function getPostAnalyticsAction(postId: string): Promise<GetPostAna
         }
     }
 
+    const analytics: PostAnalytics = {
+      likes: totalLikes,
+      comments: totalComments,
+      shares: totalShares,
+      ...(totalViews !== undefined ? { views: totalViews } : {}),
+    };
+
+    const previousAnalytics =
+      postData.analytics && typeof postData.analytics === 'object' ? (postData.analytics as Record<string, unknown>) : {};
+
+    await dataStore.posts.update(postId, {
+      analytics: {
+        ...previousAnalytics,
+        ...analytics,
+        refreshedAt: new Date().toISOString(),
+      },
+    });
 
     return {
       success: true,
-      analytics: {
-        likes: totalLikes,
-        comments: totalComments,
-        shares: totalShares,
-        views: totalViews,
-      },
+      analytics,
     };
 
   } catch (error: any) {
@@ -121,20 +134,5 @@ export async function getPostAnalyticsAction(postId: string): Promise<GetPostAna
 }
 
 export async function refreshPostAnalyticsAction(postId: string): Promise<GetPostAnalyticsResult> {
-  const result = await getPostAnalyticsAction(postId);
-  if (!result.success || !result.analytics) {
-    return result;
-  }
-
-  await dataStore.posts.update(postId, {
-    analytics: {
-      likes: result.analytics.likes,
-      comments: result.analytics.comments,
-      shares: result.analytics.shares,
-      ...(result.analytics.views !== undefined ? { views: result.analytics.views } : {}),
-      refreshedAt: new Date().toISOString(),
-    },
-  });
-
-  return result;
+  return getPostAnalyticsAction(postId);
 }

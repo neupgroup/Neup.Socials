@@ -1094,6 +1094,194 @@ export const dataStore = {
         take,
       }),
   },
+  postComments: {
+    /**
+     * NOTE: This module is used by server actions that run in production.
+     * We intentionally avoid relying on `prisma.postComment` delegate here because
+     * Prisma client generation can get out-of-sync in some environments, which
+     * would make `prisma.postComment` undefined at runtime.
+     */
+    upsertByCommentId: async (data: {
+      commentId: string;
+      postId: string;
+      platform: string;
+      commentedOn: Date;
+      commenterId?: string | null;
+      commenterName?: string | null;
+      commentText?: string | null;
+      /**
+       * Optional "seen at" timestamp used for building a snapshot of currently
+       * visible comments while keeping deleted comments in the database.
+       */
+      seenAt?: Date;
+    }) => {
+      const createdAt = new Date();
+      const updatedAt = data.seenAt ?? createdAt;
+
+      await prisma.$executeRaw(
+        Prisma.sql`
+          INSERT INTO post_comments (
+            comment_id,
+            post_id,
+            platform,
+            commented_on,
+            commenter_id,
+            commenter_name,
+            comment_text,
+            created_at,
+            updated_at
+          ) VALUES (
+            ${data.commentId},
+            ${data.postId},
+            ${data.platform},
+            ${data.commentedOn},
+            ${data.commenterId ?? null},
+            ${data.commenterName ?? null},
+            ${data.commentText ?? null},
+            ${createdAt},
+            ${updatedAt}
+          )
+          ON CONFLICT (comment_id) DO UPDATE SET
+            post_id = EXCLUDED.post_id,
+            platform = EXCLUDED.platform,
+            commented_on = EXCLUDED.commented_on,
+            commenter_id = EXCLUDED.commenter_id,
+            commenter_name = EXCLUDED.commenter_name,
+            comment_text = EXCLUDED.comment_text,
+            updated_at = EXCLUDED.updated_at
+        `
+      );
+    },
+    listByPostId: async ({
+      postId,
+      take = 200,
+    }: {
+      postId: string;
+      take?: number;
+    }) => {
+      type PostCommentRow = {
+        id: string;
+        commentId: string;
+        postId: string;
+        platform: string;
+        commentedOn: Date;
+        commenterId: string | null;
+        commenterName: string | null;
+        commentText: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+      };
+
+      return prisma.$queryRaw<PostCommentRow[]>(
+        Prisma.sql`
+          SELECT
+            id,
+            comment_id AS "commentId",
+            post_id AS "postId",
+            platform,
+            commented_on AS "commentedOn",
+            commenter_id AS "commenterId",
+            commenter_name AS "commenterName",
+            comment_text AS "commentText",
+            created_at AS "createdAt",
+            updated_at AS "updatedAt"
+          FROM post_comments
+          WHERE post_id = ${postId}
+          ORDER BY commented_on DESC, id DESC
+          LIMIT ${take}
+        `
+      );
+    },
+    getByCommentId: async (commentId: string) => {
+      type PostCommentRow = {
+        id: string;
+        commentId: string;
+        postId: string;
+        platform: string;
+        commentedOn: Date;
+        commenterId: string | null;
+        commenterName: string | null;
+        commentText: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+      };
+
+      const rows = await prisma.$queryRaw<PostCommentRow[]>(
+        Prisma.sql`
+          SELECT
+            id,
+            comment_id AS "commentId",
+            post_id AS "postId",
+            platform,
+            commented_on AS "commentedOn",
+            commenter_id AS "commenterId",
+            commenter_name AS "commenterName",
+            comment_text AS "commentText",
+            created_at AS "createdAt",
+            updated_at AS "updatedAt"
+          FROM post_comments
+          WHERE comment_id = ${commentId}
+          LIMIT 1
+        `
+      );
+
+      return rows[0] ?? null;
+    },
+    listRecent: async ({
+      platform,
+      since,
+      take = 300,
+    }: {
+      platform?: string;
+      since?: Date;
+      take?: number;
+    } = {}) =>
+      prisma.$queryRaw<
+        Array<{
+          id: string;
+          commentId: string;
+          postId: string;
+          platform: string;
+          commentedOn: Date;
+          commenterId: string | null;
+          commenterName: string | null;
+          commentText: string | null;
+          createdAt: Date;
+          updatedAt: Date;
+        }>
+      >(
+        (() => {
+          const conditions: Prisma.Sql[] = [];
+          if (platform) {
+            conditions.push(Prisma.sql`platform = ${platform}`);
+          }
+          if (since) {
+            conditions.push(Prisma.sql`commented_on >= ${since}`);
+          }
+
+          const where =
+            conditions.length > 0 ? Prisma.sql`WHERE ${Prisma.join(conditions, ' AND ')}` : Prisma.empty;
+
+          return Prisma.sql`
+            SELECT
+              id,
+              comment_id AS "commentId",
+              post_id AS "postId",
+              platform,
+              commented_on AS "commentedOn",
+              commenter_id AS "commenterId",
+              commenter_name AS "commenterName",
+              comment_text AS "commentText",
+              created_at AS "createdAt",
+              updated_at AS "updatedAt"
+            FROM post_comments
+            ${where}
+            ORDER BY commented_on DESC, id DESC
+            LIMIT ${take}
+          `;
+        })()
+      ),
+  },
   facebookComments: {
     findExisting: async (data: {
       psid: string;

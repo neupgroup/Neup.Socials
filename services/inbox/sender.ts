@@ -5,6 +5,7 @@ import { sendTextMessage as sendWhatsAppMessage } from '@/services/whatsapp/api.
 import { sendPageTextMessage as sendFacebookPageMessage } from "@/services/facebook/messages";
 import { dataStore } from "@/core/lib/data-store";
 import { decrypt } from "@/core/lib/crypto";
+import { recordOutgoingMessageAction } from "@/services/db";
 
 type SendMessageResult = {
     success: boolean;
@@ -19,9 +20,17 @@ type SendMessageResult = {
  * @param channelId The ID of the connected account document that this message should be sent from.
  * @param recipientId The platform-specific ID of the recipient.
  * @param message The text message to send.
+ * @param commentId Optional platform ID of the comment if this is a private reply to a comment.
  * @returns A result object indicating success or failure.
  */
-export async function sendReplyAction(platform: string, channelId: string, recipientId: string, message: string): Promise<SendMessageResult> {
+export async function sendReplyAction(
+    platform: string,
+    channelId: string,
+    recipientId: string,
+    message: string,
+    contactName?: string,
+    commentId?: string
+): Promise<SendMessageResult> {
     try {
         if (platform === 'WhatsApp') {
             if (!channelId) {
@@ -61,7 +70,24 @@ export async function sendReplyAction(platform: string, channelId: string, recip
 
             const pageToken = await decrypt(accountData.encryptedToken);
             const pageId = accountData.platformId;
-            const result = await sendFacebookPageMessage(pageId, pageToken, recipientId, message);
+
+            let result;
+            if (commentId) {
+                // Use the private replies endpoint if we have a comment ID
+                const { sendFacebookPrivateReply } = await import('@/services/facebook/api');
+                result = await sendFacebookPrivateReply(commentId, pageToken, message);
+            } else {
+                // Fallback to standard Messaging API
+                result = await sendFacebookPageMessage(pageId, pageToken, recipientId, message);
+            }
+
+            await recordOutgoingMessageAction({
+                channelId,
+                contactId: recipientId,
+                contactName: contactName || `Facebook User ${recipientId.slice(-6)}`,
+                platform: 'Facebook',
+                text: message,
+            });
 
             return { success: true, messageId: result.messageId };
         } else {
@@ -73,7 +99,7 @@ export async function sendReplyAction(platform: string, channelId: string, recip
             process: 'sendReplyAction',
             location: 'Inbox Sender Action',
             errorMessage: error.message,
-            context: { platform, channelId, recipientId },
+            context: { platform, channelId, recipientId, commentId },
         });
         return { success: false, error: error.message };
     }

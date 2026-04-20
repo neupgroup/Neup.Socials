@@ -30,18 +30,18 @@ model ConnectedAccount {
 }
 
 model Post {
-  id             String    @id @default(cuid())
+  id               String   @id @default(cuid())
   postCollectionId String?
-  accountId      String?
-  platform       String?
-  platformPostId String?
-  message        String?   @db.Text
-  postLink       String?
-  createdBy      String?
-  createdOn      DateTime  @default(now())
-  analytics      Json?
-  logs           String[]  @default([])
-  mediaUrls      String[]  @default([])
+  accountId        String?
+  platform         String?
+  platformPostId   String?
+  message          String?
+  postLink         String?
+  createdBy        String?
+  createdOn        DateTime @default(now())
+  analytics        Json?
+  logs             String[] @default([])
+  mediaUrls        String[] @default([])
 
   @@index([accountId, createdOn])
   @@index([postCollectionId])
@@ -51,7 +51,7 @@ model Post {
 
 model PostCollection {
   id                       String    @id @default(cuid())
-  content                  String    @db.Text
+  content                  String
   mediaUrls                String[]  @default([])
   status                   String
   author                   String?
@@ -70,7 +70,7 @@ model PostCollection {
 }
 
 model Upload {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   contentName String?
   fileName    String
   fileSize    Int
@@ -79,7 +79,7 @@ model Upload {
   filePath    String
   platform    String
   contentId   String
-  uploadedOn  DateTime  @default(now())
+  uploadedOn  DateTime @default(now())
 
   @@index([uploadedOn])
   @@index([fileName])
@@ -87,14 +87,14 @@ model Upload {
 }
 
 model ErrorLog {
-  id           String    @id @default(cuid())
+  id           String   @id @default(cuid())
   process      String?
   location     String?
   errorMessage String?
   user         String?
   context      Json?
-  timestamp    DateTime  @default(now())
-  count        Int       @default(1)
+  timestamp    DateTime @default(now())
+  count        Int      @default(1)
   source       String?
   message      String?
   stack        String?
@@ -106,10 +106,10 @@ model ErrorLog {
 }
 
 model SyncLog {
-  id           String    @id @default(cuid())
+  id           String   @id @default(cuid())
   accountId    String
   status       String
-  syncedAt     DateTime  @default(now())
+  syncedAt     DateTime @default(now())
   postsSynced  Int?
   errorMessage String?
   range        Json?
@@ -120,14 +120,14 @@ model SyncLog {
 }
 
 model SyncLogEntry {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   type       String
   platform   String
-  forProfile String   @map("for_profile")
+  forProfile String    @map("for_profile")
   sinceTime  DateTime? @map("since_time")
   toTime     DateTime? @map("to_time")
-  moreInfo   Json?    @map("moreinfo")
-  createdOn  DateTime @default(now()) @map("created_on")
+  moreInfo   Json?     @map("moreinfo")
+  createdOn  DateTime  @default(now()) @map("created_on")
 
   @@index([platform, forProfile, createdOn])
   @@index([type, createdOn])
@@ -147,8 +147,8 @@ model SpaceAsset {
   spaceId  String  @map("space_id")
   platform String
   assetId  String  @map("asset_id")
-  space    Space   @relation(fields: [spaceId], references: [id], onDelete: Cascade)
   account  Account @relation(fields: [assetId], references: [account_id], onDelete: Cascade)
+  space    Space   @relation(fields: [spaceId], references: [id], onDelete: Cascade)
 
   @@unique([spaceId, platform, assetId])
   @@index([spaceId])
@@ -174,13 +174,13 @@ model Conversation {
 }
 
 model ConversationMessage {
-  id                String    @id @default(cuid())
+  id                String   @id @default(cuid())
   conversationId    String
-  platformMessageId String?   @unique
+  platformMessageId String?  @unique
   text              String
   sender            String
-  timestamp         DateTime  @default(now())
-  type              String    @default("text")
+  timestamp         DateTime @default(now())
+  type              String   @default("text")
   callEvent         String?
 
   @@index([conversationId, timestamp])
@@ -188,11 +188,11 @@ model ConversationMessage {
 }
 
 model SystemAlert {
-  id        String    @id @default(cuid())
+  id        String   @id @default(cuid())
   type      String
   platform  String
   payload   Json?
-  timestamp DateTime  @default(now())
+  timestamp DateTime @default(now())
 
   @@index([timestamp])
   @@map("system_alerts")
@@ -201,7 +201,7 @@ model SystemAlert {
 model SystemConfig {
   id        String   @id @default(cuid())
   key       String   @unique
-  value     String?  @db.Text
+  value     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -227,12 +227,12 @@ model Comment {
   id                String    @id @default(cuid())
   by                String
   onProfile         String    @map("on_profile")
-  comment           String    @db.Text
+  comment           String
   on                DateTime
   platform          String
   platformCommentId String?   @unique @map("platform_comment_id")
   postId            String?   @map("post_id")
-  postMessage       String?   @map("post_message") @db.Text
+  postMessage       String?   @map("post_message")
   permalinkUrl      String?   @map("permalink_url")
   createdAt         DateTime  @default(now()) @map("created_at")
   commentor         Commentor @relation(fields: [by], references: [id], onDelete: Cascade)
@@ -257,7 +257,7 @@ model IdentityPlatform {
   platUserId String          @map("platuserid")
   platform   String
   unifiedId  String          @map("unified_id")
-  unified    IdentityUnified  @relation(fields: [unifiedId], references: [id], onDelete: Cascade)
+  unified    IdentityUnified @relation(fields: [unifiedId], references: [id], onDelete: Cascade)
 
   @@unique([platform, platUserId])
   @@index([unifiedId])
@@ -266,28 +266,45 @@ model IdentityPlatform {
 }
 
 model FacebookComment {
-  id          String           @id @default(cuid())
+  id          String   @id @default(cuid())
   psid        String
-  comment     String           @db.Text
-  commentedOn DateTime         @map("commented_on")
-  moreInfo    Json?            @map("moreinfo")
+  comment     String   @db.Text
+  commentedOn DateTime @map("commented_on")
+  moreInfo    Json?    @map("moreinfo")
 
   @@index([psid, commentedOn])
   @@map("facebook_comments")
 }
 
+model PostComment {
+  id             String   @id @default(cuid())
+  commentId      String   @unique @map("comment_id")
+  postId         String   @map("post_id")
+  platform       String
+  commentedOn    DateTime @map("commented_on")
+  commenterId    String?  @map("commenter_id")
+  commenterName  String?  @map("commenter_name")
+  commentText    String?  @db.Text @map("comment_text")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@index([postId, commentedOn])
+  @@index([platform, commentedOn])
+  @@map("post_comments")
+}
+
 model InstagramLiveComment {
-  id              String   @id @default(cuid())
-  commentId       String   @unique @map("comment_id")
-  mediaId         String?  @map("media_id")
-  mediaProductType String? @map("media_product_type")
-  fromId          String?  @map("from_id")
-  fromUsername    String?  @map("from_username")
-  selfIgScopedId  String?  @map("self_ig_scoped_id")
-  text            String?  @db.Text
-  payload         Json?
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @default(now()) @map("updated_at")
+  id               String   @id @default(cuid())
+  commentId        String   @unique @map("comment_id")
+  mediaId          String?  @map("media_id")
+  mediaProductType String?  @map("media_product_type")
+  fromId           String?  @map("from_id")
+  fromUsername     String?  @map("from_username")
+  selfIgScopedId   String?  @map("self_ig_scoped_id")
+  text             String?
+  payload          Json?
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @default(now()) @map("updated_at")
 
   @@index([mediaId])
   @@index([createdAt])
@@ -295,16 +312,16 @@ model InstagramLiveComment {
 }
 
 model InstagramMessage {
-  id             String   @id @default(cuid())
-  senderId       String?  @map("sender_id")
-  recipientId    String?  @map("recipient_id")
-  eventTimestamp DateTime @map("event_timestamp")
-  messageMid     String?  @map("message_mid")
-  messageText    String?  @map("message_text") @db.Text
-  numEdit        Int?     @map("num_edit")
-  reactionSummary Json?   @map("reaction_summary")
-  payload        Json?
-  createdAt      DateTime @default(now()) @map("created_at")
+  id              String   @id @default(cuid())
+  senderId        String?  @map("sender_id")
+  recipientId     String?  @map("recipient_id")
+  eventTimestamp  DateTime @map("event_timestamp")
+  messageMid      String?  @map("message_mid")
+  messageText     String?  @map("message_text")
+  numEdit         Int?     @map("num_edit")
+  payload         Json?
+  createdAt       DateTime @default(now()) @map("created_at")
+  reactionSummary Json?    @map("reaction_summary")
 
   @@index([messageMid])
   @@index([eventTimestamp])

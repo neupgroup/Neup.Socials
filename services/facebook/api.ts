@@ -744,3 +744,32 @@ export async function postReplyToComment(
 
   return handleApiResponse<PostCommentResponse>(res);
 }
+/**
+ * Posts a private reply to a comment on a Facebook Page.
+ * @param commentId The ID of the comment to reply to.
+ * @param pageToken The Page Access Token.
+ * @param message The reply text.
+ */
+export async function sendFacebookPrivateReply(
+  commentId: string,
+  pageToken: string,
+  message: string
+): Promise<{ messageId: string }> {
+  const params = new URLSearchParams({
+    access_token: pageToken,
+    message,
+  });
+
+  const res = await fetch(`${GRAPH_API_BASE_URL}/${commentId}/private_replies`, {
+    method: 'POST',
+    body: params,
+  });
+
+  const payload = await handleApiResponse<{ id?: string }>(res);
+  const messageId = String(payload.id ?? '').trim();
+  if (!messageId) {
+    throw new Error('No message ID returned from Facebook private reply API.');
+  }
+
+  return { messageId };
+}

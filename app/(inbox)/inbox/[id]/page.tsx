@@ -138,23 +138,27 @@ export default function ConversationPage() {
         setSending(false);
 
         if (result.success && result.messageId && conversation) {
-            const saved = await recordOutgoingMessageAction({
-                conversationId,
-                channelId: conversation.channelId,
-                contactId: conversation.contactId,
-                contactName: conversation.contactName,
-                platform: conversation.platform,
-                text: currentReply,
-                avatar: conversation.avatar,
-            });
-            if (saved.conversation) {
-                setConversation(saved.conversation as Conversation);
-            }
-            if (saved.message) {
-                setMessages((prev) => [
-                    ...prev.filter((message) => message.id !== tempId),
-                    saved.message as Message,
-                ]);
+            if (conversation.platform !== 'Facebook') {
+                const saved = await recordOutgoingMessageAction({
+                    conversationId,
+                    channelId: conversation.channelId,
+                    contactId: conversation.contactId,
+                    contactName: conversation.contactName,
+                    platform: conversation.platform,
+                    text: currentReply,
+                    avatar: conversation.avatar,
+                });
+                if (saved.conversation) {
+                    setConversation(saved.conversation as Conversation);
+                }
+                if (saved.message) {
+                    setMessages((prev) => [
+                        ...prev.filter((message) => message.id !== tempId),
+                        saved.message as Message,
+                    ]);
+                }
+            } else {
+                setMessages((prev) => prev.filter((message) => message.id !== tempId));
             }
         } else {
             toast({

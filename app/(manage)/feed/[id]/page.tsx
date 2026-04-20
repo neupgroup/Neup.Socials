@@ -90,6 +90,7 @@ const PostAnalytics = ({ postId }: { postId: string }) => {
 };
 
 const PostComments = ({ postId, platform, accountId }: { postId: string; platform: string | null; accountId?: string | null }) => {
+  const router = useRouter();
   const { toast } = useToast();
   const [comments, setComments] = React.useState<Comment[]>([]);
   const [newComment, setNewComment] = React.useState('');
@@ -97,13 +98,12 @@ const PostComments = ({ postId, platform, accountId }: { postId: string; platfor
   const [replyText, setReplyText] = React.useState('');
   const [isLoading, setIsLoading] = React.useState(false);
   const [isPosting, setIsPosting] = React.useState(false);
-  const [isSendingMessageForId, setIsSendingMessageForId] = React.useState<string | null>(null);
 
-  const fetchComments = async () => {
+  const fetchComments = async (refresh = false) => {
     if (!isFacebookPlatform(platform)) return;
     setIsLoading(true);
     try {
-      const result = await fetchPostCommentsAction(postId);
+      const result = await fetchPostCommentsAction(postId, { refresh });
       if (result.success && result.comments) {
         setComments(result.comments);
       } else {
@@ -153,7 +153,7 @@ const PostComments = ({ postId, platform, accountId }: { postId: string; platfor
     }
   };
 
-  const handleMessageUser = async (recipientId: string) => {
+  const handleMessageUser = async (commentId: string) => {
     if (!accountId) {
       toast({
         title: 'Missing account',
@@ -163,26 +163,7 @@ const PostComments = ({ postId, platform, accountId }: { postId: string; platfor
       return;
     }
 
-    const text = window.prompt('Message to send to this user:');
-    if (!text || !text.trim()) {
-      return;
-    }
-
-    setIsSendingMessageForId(recipientId);
-    try {
-      const result = await sendReplyAction('Facebook', accountId, recipientId, text.trim());
-      if (result.success) {
-        toast({ title: 'Message sent' });
-      } else {
-        toast({
-          title: 'Failed to send message',
-          description: result.error || 'Unable to send message to this user.',
-          variant: 'destructive',
-        });
-      }
-    } finally {
-      setIsSendingMessageForId(null);
-    }
+    router.push(`/inbox?type=facebookComment&post=${encodeURIComponent(postId)}&comment=${encodeURIComponent(commentId)}`);
   };
 
   if (!isFacebookPlatform(platform)) {
@@ -196,7 +177,7 @@ const PostComments = ({ postId, platform, accountId }: { postId: string; platfor
         <Button
           variant="outline"
           size="sm"
-          onClick={fetchComments}
+          onClick={() => fetchComments(true)}
           disabled={isLoading}
         >
           <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -262,14 +243,10 @@ const PostComments = ({ postId, platform, accountId }: { postId: string; platfor
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => comment.from?.id && handleMessageUser(comment.from.id)}
-                  disabled={!comment.from?.id || !accountId || isSendingMessageForId === comment.from?.id}
+                  onClick={() => comment.from?.id && handleMessageUser(comment.id)}
+                  disabled={!comment.from?.id || !accountId}
                 >
-                  {isSendingMessageForId === comment.from?.id ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <Send className="mr-2 h-4 w-4" />
-                  )}
+                  <Send className="mr-2 h-4 w-4" />
                   Message User
                 </Button>
                 <Button
