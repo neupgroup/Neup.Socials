@@ -26,7 +26,6 @@ import { createConnectedAccountAction } from '@/services/db';
 import {
   addPreverifiedWhatsAppNumberAction,
   exchangeWhatsAppAccessTokenAction,
-  listPreverifiedWhatsAppNumbersAction,
   logWhatsAppEmbeddedSignupErrorAction,
 } from '@/services/whatsapp/embedded-signup';
 
@@ -71,7 +70,6 @@ type FormValues = z.infer<typeof formSchema>;
 
 type AddAccountFormProps = {
   embeddedSignupUrl: string | null;
-  embeddedSignupConfigId: string | null;
 };
 
 const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -88,14 +86,13 @@ const platformDetails = {
   WhatsApp: { icon: <WhatsAppIcon className="h-5 w-5 text-green-500" />, isOauth: false },
 };
 
-export function AddAccountForm({ embeddedSignupUrl, embeddedSignupConfigId }: AddAccountFormProps) {
+export function AddAccountForm({ embeddedSignupUrl }: AddAccountFormProps) {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isPreverifiedSubmitting, setIsPreverifiedSubmitting] = React.useState(false);
   const [isEmbeddedSubmitting, setIsEmbeddedSubmitting] = React.useState(false);
   const [isEmbeddedProcessing, setIsEmbeddedProcessing] = React.useState(false);
   const router = useRouter();
   const { toast } = useToast();
-  const embeddedSignupConfig = embeddedSignupConfigId ?? '';
   const embeddedSignupRedirectUri = toAppUrl('/bridge/callback.v1/auth.facebook');
 
   const userId = 'neupkishor';
@@ -105,7 +102,7 @@ export function AddAccountForm({ embeddedSignupUrl, embeddedSignupConfigId }: Ad
     defaultValues: {
       platform: undefined,
       facebookIntents: ['posts'],
-      whatsappConnectMode: 'manual',
+      whatsappConnectMode: 'embedded',
     },
   });
 
@@ -127,9 +124,7 @@ export function AddAccountForm({ embeddedSignupUrl, embeddedSignupConfigId }: Ad
     igAccountIds?: string[];
     wabaIds?: string[];
   } | null>(null);
-  const [embeddedPreverifiedIds, setEmbeddedPreverifiedIds] = React.useState<string[]>([]);
   const embeddedSignupInFlight = React.useRef(false);
-  const embeddedPreverifiedLoaded = React.useRef(false);
 
   React.useEffect(() => {
     if (selectedPlatform !== 'WhatsApp') return;
@@ -153,36 +148,10 @@ export function AddAccountForm({ embeddedSignupUrl, embeddedSignupConfigId }: Ad
       setEmbeddedSignupCode('');
       setEmbeddedSignupBusinessId('');
       setEmbeddedSignupAssetIds(null);
-      setEmbeddedPreverifiedIds([]);
       embeddedSignupInFlight.current = false;
-      embeddedPreverifiedLoaded.current = false;
       setIsEmbeddedSubmitting(false);
       setIsEmbeddedProcessing(false);
     }
-  }, [selectedPlatform, whatsappConnectMode]);
-
-  React.useEffect(() => {
-    if (selectedPlatform !== 'WhatsApp' || whatsappConnectMode !== 'embedded') return;
-    if (embeddedPreverifiedLoaded.current) return;
-
-    embeddedPreverifiedLoaded.current = true;
-
-    const loadIds = async () => {
-      const result = await listPreverifiedWhatsAppNumbersAction({ status: 'VERIFIED' });
-      if (!result.success) {
-        return;
-      }
-
-      const ids = (result.data as { data?: Array<{ id?: string }> })?.data
-        ?.map((item) => item.id)
-        .filter((id): id is string => Boolean(id)) ?? [];
-
-      if (ids.length > 0) {
-        setEmbeddedPreverifiedIds(ids);
-      }
-    };
-
-    void loadIds();
   }, [selectedPlatform, whatsappConnectMode]);
 
   React.useEffect(() => {
@@ -354,63 +323,23 @@ export function AddAccountForm({ embeddedSignupUrl, embeddedSignupConfigId }: Ad
   }, [embeddedSignupCode, embeddedSignupPhoneNumberId, embeddedSignupWabaId, finalizeEmbeddedSignup, whatsappConnectMode]);
 
   const handleWhatsAppEmbeddedSignup = () => {
-    const win = window as Window & { FB?: { login: (cb: (response: any) => void, opts: Record<string, unknown>) => void } };
-
-    if (win.FB?.login) {
-      if (!embeddedSignupConfig) {
-        toast({
-          title: 'Embedded signup unavailable',
-          description: 'Missing embedded signup configuration ID.',
-          variant: 'destructive',
-        });
-        return;
-      }
-      win.FB.login(
-        (response: any) => {
-          const code = response?.authResponse?.code;
-          if (!code) {
-            setIsEmbeddedSubmitting(false);
-            toast({
-              title: 'Embedded signup cancelled',
-              description: 'No authorization code was returned.',
-              variant: 'destructive',
-            });
-            return;
-          }
-
-          setIsEmbeddedProcessing(true);
-          setEmbeddedSignupCode(code);
-        },
-        {
-          config_id: embeddedSignupConfig,
-          response_type: 'code',
-          override_default_response_type: true,
-          extras: {
-            version: 'v4',
-            setup: embeddedPreverifiedIds.length > 0
-              ? { preVerifiedPhone: { ids: embeddedPreverifiedIds } }
-              : {},
-            featureType: 'whatsapp_business_app_onboarding',
-            features: [{ name: 'app_only_install' }],
-            sessionInfoVersion: 3,
-          },
-        }
-      );
-      return;
-    }
-
     if (embeddedSignupUrl) {
       const popup = window.open(embeddedSignupUrl, '_blank', 'noopener,noreferrer');
       if (!popup) {
-        window.location.href = embeddedSignupUrl;
+        toast({
+          title: 'Popup blocked',
+          description: 'Please allow popups to continue with embedded signup.',
+          variant: 'destructive',
+        });
       }
-    } else {
-      toast({
-        title: 'Embedded signup unavailable',
-        description: 'No embedded signup URL is configured.',
-        variant: 'destructive',
-      });
+      return;
     }
+
+    toast({
+      title: 'Embedded signup unavailable',
+      description: 'No embedded signup URL is configured.',
+      variant: 'destructive',
+    });
   };
 
   const handlePreverifiedNumberAdd = async () => {

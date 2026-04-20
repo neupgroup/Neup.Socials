@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -14,7 +14,7 @@ import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { createPostCollectionDraftAction, listAllUploadsAction } from '@/services/db';
+import { createPostCollectionDraftAction, listAllUploadsAction, listUploadsAction } from '@/services/db';
 
 const UPLOAD_ENDPOINT = 'https://neupgroup.com/usercontent/bridge/api/upload.php';
 
@@ -27,7 +27,10 @@ export default function CreatePostPage() {
   const [uploadProgress, setUploadProgress] = React.useState<number | null>(null);
   const [uploads, setUploads] = React.useState<Upload[]>([]);
   const [loadingUploads, setLoadingUploads] = React.useState(true);
-  const [searchTerm, setSearchTerm] = React.useState('');
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const initialQuery = searchParams.get('query') ?? '';
+  const [searchTerm, setSearchTerm] = React.useState(initialQuery);
   const [ctaType, setCtaType] = React.useState<string>('NONE');
   const [ctaLink, setCtaLink] = React.useState<string>('');
   
@@ -37,18 +40,49 @@ export default function CreatePostPage() {
   const userId = 'neupkishor'; // This should be replaced with actual logged-in user
 
   React.useEffect(() => {
-    setLoadingUploads(true);
-    listAllUploadsAction()
-      .then((fetchedUploads) => {
-        setUploads(fetchedUploads as Upload[]);
-        setLoadingUploads(false);
-      })
-      .catch((error) => {
-        console.error("Error fetching uploads: ", error);
-        toast({ title: 'Could not load media library', variant: 'destructive'});
-        setLoadingUploads(false);
-      });
-  }, [toast]);
+    const nextQuery = searchParams.get('query') ?? '';
+    if (nextQuery !== searchTerm) {
+      setSearchTerm(nextQuery);
+    }
+  }, [searchParams, searchTerm]);
+
+  React.useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    const trimmed = searchTerm.trim();
+
+    if (trimmed) {
+      params.set('query', trimmed);
+    } else {
+      params.delete('query');
+    }
+
+    const queryString = params.toString();
+    const nextUrl = queryString ? `${pathname}?${queryString}` : pathname;
+    router.replace(nextUrl, { scroll: false });
+  }, [searchParams, searchTerm, pathname, router]);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoadingUploads(true);
+
+      const loader = searchTerm.trim()
+        ? listUploadsAction({ search: searchTerm.trim(), skip: 0 }).then((result) => result.items)
+        : listAllUploadsAction();
+
+      loader
+        .then((fetchedUploads) => {
+          setUploads(fetchedUploads as Upload[]);
+          setLoadingUploads(false);
+        })
+        .catch((error) => {
+          console.error("Error fetching uploads: ", error);
+          toast({ title: 'Could not load media library', variant: 'destructive'});
+          setLoadingUploads(false);
+        });
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm, toast]);
   
   const uploadFile = (file: File, postCollectionId: string): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -190,10 +224,6 @@ export default function CreatePostPage() {
     router.push('/content');
   };
 
-  const filteredUploads = uploads.filter(upload => 
-    upload.fileName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   return (
     <div className="max-w-3xl mx-auto space-y-6">
        <div>
@@ -246,7 +276,7 @@ export default function CreatePostPage() {
                 {loadingUploads ? (
                     Array.from({length: 7}).map((_, i) => <div key={i} className="aspect-square w-full rounded-md bg-muted animate-pulse" />)
                 ) : (
-                    filteredUploads.slice(0, 7).map(upload => (
+                    uploads.slice(0, 7).map(upload => (
                         <button 
                             key={upload.id} 
                             onClick={() => handleMediaToggle(upload.filePath)}

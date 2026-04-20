@@ -15,7 +15,7 @@ import { format } from 'date-fns';
 import { Textarea } from '@/components/ui/textarea';
 import { getPostAnalyticsAction } from '@/services/facebook/post-insights';
 import { deletePostAction, getPostAction, getPostCollectionAction } from '@/services/db';
-import { fetchPostCommentsAction, postCommentAction, postReplyAction } from '@/services/facebook/comments';
+import { fetchPostCommentsAction, postCommentAction, postReplyAction } from '@/services/facebook/comments-actions';
 import { getFacebookPostVideoAction } from '@/services/facebook/get-video';
 import { sendReplyAction } from '@/services/inbox/sender';
 import { InstagramPostModeration } from '@/components/instagram-post-moderation';

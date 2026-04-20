@@ -30,44 +30,56 @@ export const dataStore = {
     list: async ({
       owner,
       search,
+      searchFilter,
       skip = 0,
       take = 10,
     }: {
       owner?: string;
       search?: string;
+      searchFilter?: Record<string, unknown>;
       skip?: number;
       take?: number;
     }) =>
       prisma.connectedAccount.findMany({
         where: {
           ...(owner ? { owner } : {}),
-          ...(search?.trim()
-            ? {
-                OR: [
-                  { name: containsFilter(search) },
-                  { username: containsFilter(search) },
-                  { platform: containsFilter(search) },
-                ],
-              }
-            : {}),
+          ...(searchFilter ??
+            (search?.trim()
+              ? {
+                  OR: [
+                    { name: containsFilter(search) },
+                    { username: containsFilter(search) },
+                    { platform: containsFilter(search) },
+                  ],
+                }
+              : {})),
         },
         orderBy: [{ connectedOn: 'desc' }, { id: 'desc' }],
         skip,
         take,
       }),
-    count: async ({ owner, search }: { owner?: string; search?: string }) =>
+    count: async ({
+      owner,
+      search,
+      searchFilter,
+    }: {
+      owner?: string;
+      search?: string;
+      searchFilter?: Record<string, unknown>;
+    }) =>
       prisma.connectedAccount.count({
         where: {
           ...(owner ? { owner } : {}),
-          ...(search?.trim()
-            ? {
-                OR: [
-                  { name: containsFilter(search) },
-                  { username: containsFilter(search) },
-                  { platform: containsFilter(search) },
-                ],
-              }
-            : {}),
+          ...(searchFilter ??
+            (search?.trim()
+              ? {
+                  OR: [
+                    { name: containsFilter(search) },
+                    { username: containsFilter(search) },
+                    { platform: containsFilter(search) },
+                  ],
+                }
+              : {})),
         },
       }),
     getById: async (id: string) => prisma.connectedAccount.findUnique({ where: { id } }),
@@ -253,11 +265,13 @@ export const dataStore = {
   posts: {
     list: async ({
       search,
+      searchFilter,
       accountId,
       skip = 0,
       take = 15,
     }: {
       search?: string;
+      searchFilter?: Record<string, unknown>;
       accountId?: string;
       skip?: number;
       take?: number;
@@ -265,17 +279,25 @@ export const dataStore = {
       prisma.post.findMany({
         where: {
           ...(accountId ? { accountId } : {}),
-          ...(search?.trim() ? { message: containsFilter(search) } : {}),
+          ...(searchFilter ?? (search?.trim() ? { message: containsFilter(search) } : {})),
         },
         orderBy: [{ createdOn: 'desc' }, { id: 'desc' }],
         skip,
         take,
       }),
-    count: async ({ search, accountId }: { search?: string; accountId?: string }) =>
+    count: async ({
+      search,
+      searchFilter,
+      accountId,
+    }: {
+      search?: string;
+      searchFilter?: Record<string, unknown>;
+      accountId?: string;
+    }) =>
       prisma.post.count({
         where: {
           ...(accountId ? { accountId } : {}),
-          ...(search?.trim() ? { message: containsFilter(search) } : {}),
+          ...(searchFilter ?? (search?.trim() ? { message: containsFilter(search) } : {})),
         },
       }),
     getById: async (id: string) => prisma.post.findUnique({ where: { id } }),
@@ -482,36 +504,48 @@ export const dataStore = {
   uploads: {
     list: async ({
       search,
+      searchFilter,
       skip = 0,
       take = 10,
     }: {
       search?: string;
+      searchFilter?: Record<string, unknown>;
       skip?: number;
       take?: number;
     }) =>
       prisma.upload.findMany({
-        where: search?.trim()
-          ? {
-              OR: [
-                { fileName: containsFilter(search) },
-                { contentName: containsFilter(search) },
-              ],
-            }
-          : undefined,
+        where:
+          searchFilter ??
+          (search?.trim()
+            ? {
+                OR: [
+                  { fileName: containsFilter(search) },
+                  { contentName: containsFilter(search) },
+                ],
+              }
+            : undefined),
         orderBy: [{ uploadedOn: 'desc' }, { id: 'desc' }],
         skip,
         take,
       }),
-    count: async ({ search }: { search?: string }) =>
+    count: async ({
+      search,
+      searchFilter,
+    }: {
+      search?: string;
+      searchFilter?: Record<string, unknown>;
+    }) =>
       prisma.upload.count({
-        where: search?.trim()
-          ? {
-              OR: [
-                { fileName: containsFilter(search) },
-                { contentName: containsFilter(search) },
-              ],
-            }
-          : undefined,
+        where:
+          searchFilter ??
+          (search?.trim()
+            ? {
+                OR: [
+                  { fileName: containsFilter(search) },
+                  { contentName: containsFilter(search) },
+                ],
+              }
+            : undefined),
       }),
     listForLibrary: async () =>
       prisma.upload.findMany({

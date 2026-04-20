@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { PlusCircle, Loader2, Search, Twitter, Facebook, Linkedin, Instagram, MoreHorizontal, ThumbsUp, MessageSquare, Share2, Repeat2, Eye } from 'lucide-react';
@@ -93,9 +93,43 @@ export default function ContentDashboardPage() {
   const [loading, setLoading] = React.useState(true);
   const [loadingMore, setLoadingMore] = React.useState(false);
   const [hasMore, setHasMore] = React.useState(true);
-  const [searchTerm, setSearchTerm] = React.useState('');
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const queryFromUrl = searchParams.get('query') ?? '';
+  const [searchTerm, setSearchTerm] = React.useState(queryFromUrl);
   
   const router = useRouter();
+
+  React.useEffect(() => {
+    if (queryFromUrl !== searchTerm) {
+      setSearchTerm(queryFromUrl);
+    }
+  }, [queryFromUrl]);
+
+  React.useEffect(() => {
+    const trimmed = searchTerm.trim();
+    const urlQuery = queryFromUrl.trim();
+
+    if (trimmed === urlQuery) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString());
+
+      if (trimmed) {
+        params.set('query', trimmed);
+      } else {
+        params.delete('query');
+      }
+
+      const queryString = params.toString();
+      const nextUrl = queryString ? `${pathname}?${queryString}` : pathname;
+      router.replace(nextUrl, { scroll: false });
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm, queryFromUrl, searchParams, pathname, router]);
 
   const fetchPosts = React.useCallback(async (loadMore = false, search = '') => {
     if (!loadMore) setLoading(true);

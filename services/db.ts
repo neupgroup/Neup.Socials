@@ -1,6 +1,7 @@
 'use server';
 
 import { dataStore } from '@/core/lib/data-store';
+import { buildTextSearchWhere } from '@/services/searches/text-search';
 
 const PAGE_SIZE = {
   accounts: 10,
@@ -81,9 +82,16 @@ export async function listAccountsAction({
   search?: string;
   skip?: number;
 }) {
+  const searchBuild = buildTextSearchWhere(search, ['name', 'username', 'platform']);
   const [accounts, total] = await Promise.all([
-    dataStore.accounts.list({ owner, search, skip, take: PAGE_SIZE.accounts }),
-    dataStore.accounts.count({ owner, search }),
+    dataStore.accounts.list({
+      owner,
+      search,
+      searchFilter: searchBuild.where,
+      skip,
+      take: PAGE_SIZE.accounts,
+    }),
+    dataStore.accounts.count({ owner, search, searchFilter: searchBuild.where }),
   ]);
 
   return {
@@ -131,9 +139,16 @@ export async function listPostsAction({
   accountId?: string;
   skip?: number;
 }) {
+  const searchBuild = buildTextSearchWhere(search, ['message']);
   const [posts, total] = await Promise.all([
-    dataStore.posts.list({ search, accountId, skip, take: PAGE_SIZE.posts }),
-    dataStore.posts.count({ search, accountId }),
+    dataStore.posts.list({
+      search,
+      searchFilter: searchBuild.where,
+      accountId,
+      skip,
+      take: PAGE_SIZE.posts,
+    }),
+    dataStore.posts.count({ search, searchFilter: searchBuild.where, accountId }),
   ]);
 
   return {
@@ -226,9 +241,15 @@ export async function listUploadsAction({
   search?: string;
   skip?: number;
 }) {
+  const searchBuild = buildTextSearchWhere(search, ['fileName', 'contentName']);
   const [uploads, total] = await Promise.all([
-    dataStore.uploads.list({ search, skip, take: PAGE_SIZE.uploads }),
-    dataStore.uploads.count({ search }),
+    dataStore.uploads.list({
+      search,
+      searchFilter: searchBuild.where,
+      skip,
+      take: PAGE_SIZE.uploads,
+    }),
+    dataStore.uploads.count({ search, searchFilter: searchBuild.where }),
   ]);
 
   return {
