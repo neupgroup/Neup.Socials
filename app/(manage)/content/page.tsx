@@ -21,10 +21,12 @@ import { refreshPostAnalyticsAction } from '@/services/facebook/post-insights';
 type Post = {
   id: string;
   message: string | null;
+  accountId: string | null;
   platform: string | null;
   createdOn: string | null;
   postLink: string | null;
   postCollectionId: string | null;
+  accountName?: string | null;
   analytics?: Record<string, unknown> | null;
 };
 
@@ -96,6 +98,7 @@ export default function ContentDashboardPage() {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const queryFromUrl = searchParams.get('query') ?? '';
+  const accountIdFromUrl = searchParams.get('accountId') ?? '';
   const [searchTerm, setSearchTerm] = React.useState(queryFromUrl);
   
   const router = useRouter();
@@ -131,13 +134,13 @@ export default function ContentDashboardPage() {
     return () => clearTimeout(timer);
   }, [searchTerm, queryFromUrl, searchParams, pathname, router]);
 
-  const fetchPosts = React.useCallback(async (loadMore = false, search = '') => {
+  const fetchPosts = React.useCallback(async (loadMore = false, search = '', accountId?: string) => {
     if (!loadMore) setLoading(true);
     else setLoadingMore(true);
 
     try {
       const skip = loadMore ? posts.length : 0;
-      const result = await listPostsAction({ search, skip });
+      const result = await listPostsAction({ search, skip, accountId: accountId || undefined });
       setHasMore(result.hasMore);
       setPosts(loadMore ? [...posts, ...result.items] : result.items);
     } catch (error) {
@@ -150,23 +153,29 @@ export default function ContentDashboardPage() {
 
   React.useEffect(() => {
     const debouncedSearch = setTimeout(() => {
-      fetchPosts(false, searchTerm);
+      fetchPosts(false, searchTerm, accountIdFromUrl);
     }, 500);
 
     return () => clearTimeout(debouncedSearch);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchTerm]);
+  }, [searchTerm, accountIdFromUrl]);
 
-
-  const handleCardClick = (id: string) => {
-    router.push(`/content/${id}`);
-  };
 
   const handleShowMore = () => {
       if(hasMore) {
-          fetchPosts(true, searchTerm);
+          fetchPosts(true, searchTerm, accountIdFromUrl);
       }
   }
+
+  const handleAccountFilter = (event: React.SyntheticEvent, accountId?: string | null) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!accountId) return;
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('accountId', accountId);
+    const queryString = params.toString();
+    router.push(queryString ? `${pathname}?${queryString}` : pathname);
+  };
 
   const handleRefreshStats = async (postId: string) => {
     try {
@@ -233,19 +242,20 @@ export default function ContentDashboardPage() {
       ) : (
         <div className="grid grid-cols-1 gap-4">
              <Card
-                key="add-new-post"
-                className="hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary"
-                onClick={() => router.push('/content/create')}
+              key="add-new-post"
+              className="hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary"
             >
+              <Link href="/content/create" className="block">
                 <CardContent className="p-4 flex items-center justify-center text-center h-full min-h-[110px]">
-                    <div className="flex items-center gap-4">
-                        <PlusCircle className="h-8 w-8 text-muted-foreground" />
-                        <div>
-                            <h3 className="font-bold text-lg">Create New Post</h3>
-                            <p className="text-sm text-muted-foreground">Draft a new post collection for your channels.</p>
-                        </div>
+                  <div className="flex items-center gap-4">
+                    <PlusCircle className="h-8 w-8 text-muted-foreground" />
+                    <div>
+                      <h3 className="font-bold text-lg">Create New Post</h3>
+                      <p className="text-sm text-muted-foreground">Draft a new post collection for your channels.</p>
                     </div>
+                  </div>
                 </CardContent>
+              </Link>
             </Card>
 
             {posts.length === 0 ? (
@@ -256,16 +266,32 @@ export default function ContentDashboardPage() {
                 </Card>
             ) : (
                 posts.map((post) => (
-                    <Card key={post.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleCardClick(post.id)}>
+                    <Card key={post.id} className="hover:shadow-md transition-shadow">
                         <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                            <div className="flex items-center gap-4 flex-1 overflow-hidden">
+                            <Link href={`/content/${post.id}`} className="flex items-center gap-4 flex-1 overflow-hidden">
                                 <div className="bg-muted p-3 rounded-full">
                                     <PlatformIcon platform={post.platform ?? ''} />
                                 </div>
                                 <div className="overflow-hidden">
                                     <p className="font-medium truncate">{post.message}</p>
                                     <p className="text-sm text-muted-foreground">
-                                        Published {post.createdOn ? formatDistanceToNow(new Date(post.createdOn), { addSuffix: true }) : 'on an unknown date'}
+                                        <span
+                                          role="button"
+                                          tabIndex={0}
+                                          className="font-medium text-foreground hover:underline"
+                                          onClick={(event) => handleAccountFilter(event, post.accountId)}
+                                          onKeyDown={(event) => {
+                                            if (event.key === 'Enter' || event.key === ' ') {
+                                              handleAccountFilter(event, post.accountId);
+                                            }
+                                          }}
+                                        >
+                                          by {post.accountName || 'Unknown account'}
+                                        </span>
+                                        , Published{' '}
+                                        {post.createdOn
+                                          ? formatDistanceToNow(new Date(post.createdOn), { addSuffix: true })
+                                          : 'on an unknown date'}
                                     </p>
                                     {(() => {
                                       const stats = getBasicStats(post.analytics);
@@ -287,8 +313,8 @@ export default function ContentDashboardPage() {
                                         </div>
                                       );
                                     })()}
-                                </div>
-                            </div>
+                                  </div>
+                                </Link>
                             
                             <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto">
                                  <DropdownMenu>

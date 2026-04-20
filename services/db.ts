@@ -151,8 +151,26 @@ export async function listPostsAction({
     dataStore.posts.count({ search, searchFilter: searchBuild.where, accountId }),
   ]);
 
+  const accountIds = Array.from(
+    new Set(posts.map((post) => post.accountId).filter(Boolean) as string[])
+  );
+  const accounts = accountIds.length ? await dataStore.accounts.getByIds(accountIds) : [];
+  const accountById = new Map(accounts.map((account) => [account.id, account]));
+
   return {
-    items: posts.map((post) => serializePost(post)!),
+    items: posts.map((post) => {
+      const account = post.accountId ? accountById.get(post.accountId) : undefined;
+      const accountName =
+        account?.name?.trim() ||
+        account?.username?.trim() ||
+        post.createdBy?.trim() ||
+        'Unknown account';
+
+      return {
+        ...serializePost(post)!,
+        accountName,
+      };
+    }),
     hasMore: skip + posts.length < total,
   };
 }
