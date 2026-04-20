@@ -12,6 +12,30 @@ const contentTypes = [
     icon: BookOpen,
   },
   {
+    title: 'Blogs',
+    description: 'Long-form posts with a clear narrative and structure.',
+    slug: 'blogs',
+    icon: BookOpen,
+  },
+  {
+    title: 'Articles',
+    description: 'Publish detailed, informative reads for your audience.',
+    slug: 'articles',
+    icon: Newspaper,
+  },
+  {
+    title: 'Tips and Tricks',
+    description: 'Quick, actionable advice your audience can apply today.',
+    slug: 'tips-and-tricks',
+    icon: Sparkles,
+  },
+  {
+    title: 'Success Stories',
+    description: 'Highlight wins, case studies, and customer outcomes.',
+    slug: 'success-stories',
+    icon: ShieldCheck,
+  },
+  {
     title: 'Inspirational / Motivational Content',
     description: 'Share wins, lessons, or encouragement to uplift your audience.',
     slug: 'inspirational',
