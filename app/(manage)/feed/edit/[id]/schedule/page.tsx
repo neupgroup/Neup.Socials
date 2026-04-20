@@ -15,7 +15,7 @@ import { format } from 'date-fns';
 import { cn } from '@/core/lib/utils';
 import { useRouter, useParams } from 'next/navigation';
 import { useToast } from '@/core/hooks/use-toast';
-import { publishPostAction } from '@/services/content/publish';
+import { publishPostAction } from '@/services/feed/publish';
 import { getPostCollectionAction, updatePostCollectionAction } from '@/services/db';
 
 export default function EditSchedulePage() {
@@ -42,7 +42,7 @@ export default function EditSchedulePage() {
         }
       } else {
         toast({ title: 'Post Collection not found', variant: 'destructive' });
-        router.push('/content');
+        router.push('/feed');
       }
       setIsLoading(false);
     };
@@ -78,7 +78,7 @@ export default function EditSchedulePage() {
         title: `Post ${scheduleOption === 'now' ? 'Published' : 'Scheduled'}!`,
         description: `Your post has been successfully ${scheduleOption === 'now' ? 'sent for publishing' : 'scheduled'}.`,
       });
-      router.push(`/content/collection/${id}`);
+      router.push(`/feed/collection/${id}`);
 
     } catch (error: any) {
       console.error("Error scheduling/publishing post: ", error);
@@ -163,7 +163,7 @@ export default function EditSchedulePage() {
       
        <div className="flex justify-between">
          <Button asChild variant="outline" disabled={isSaving}>
-          <Link href={`/content/edit/${id}/platforms`}>Previous: Select Platforms</Link>
+          <Link href={`/feed/edit/${id}/platforms`}>Previous: Select Platforms</Link>
         </Button>
         <Button onClick={handleSchedule} disabled={isSaving}>
           {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}

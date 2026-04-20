@@ -167,7 +167,7 @@ export default function ViewUploadPage() {
                                     <TableCell>{post.status}</TableCell>
                                     <TableCell className="text-right">
                                         <Button asChild variant="ghost" size="sm">
-                                            <Link href={`/content/collection/${post.id}`}>View Post</Link>
+                                            <Link href={`/feed/collection/${post.id}`}>View Post</Link>
                                         </Button>
                                     </TableCell>
                                 </TableRow>

@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Edit, Trash, ArrowLeft, Loader2, Repeat, Link2 } from 'lucide-react';
 import { useToast } from '@/core/hooks/use-toast';
 import { format } from 'date-fns';
-import { repostAction } from '@/services/content/repost';
+import { repostAction } from '@/services/feed/repost';
 import { PublicationStatus } from '@/components/publication-status';
 import {
   cancelScheduledPostCollectionAction,
@@ -74,7 +74,7 @@ export default function ViewContentCollectionPage() {
 
       } else {
         toast({ title: 'Post Collection not found', variant: 'destructive' });
-        router.push('/content');
+        router.push('/feed');
       }
       setIsLoading(false);
     };
@@ -89,7 +89,7 @@ export default function ViewContentCollectionPage() {
       try {
         await deletePostCollectionAction(postCollection.id);
         toast({ title: 'Post collection deleted successfully' });
-        router.push('/content');
+        router.push('/feed');
       } catch (error) {
         toast({ title: 'Failed to delete post collection', variant: 'destructive' });
         setIsProcessing(false);
@@ -123,7 +123,7 @@ export default function ViewContentCollectionPage() {
     //     const result = await repostAction(postCollection.id);
     //     if (result.success && result.newPostId) {
     //         toast({ title: 'Post duplicated!', description: 'Redirecting to schedule the new post...' });
-    //         router.push(`/content/edit/${result.newPostId}/platforms`);
+    //         router.push(`/feed/edit/${result.newPostId}/platforms`);
     //     } else {
     //         throw new Error(result.error || 'Failed to create a repost.');
     //     }
@@ -151,7 +151,7 @@ export default function ViewContentCollectionPage() {
         <div className="text-center">
             <p>Post Collection not found.</p>
             <Button asChild className="mt-4">
-                <Link href="/content">Go to Dashboard</Link>
+                <Link href="/feed">Go to Dashboard</Link>
             </Button>
         </div>
     );
@@ -167,7 +167,7 @@ export default function ViewContentCollectionPage() {
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
         <Button asChild variant="outline" size="icon" disabled={isProcessing}>
-          <Link href="/content">
+          <Link href="/feed">
             <ArrowLeft />
           </Link>
         </Button>
@@ -227,7 +227,7 @@ export default function ViewContentCollectionPage() {
                {!isPublished && (
                  <>
                     <Button asChild disabled={isProcessing}>
-                        <Link href={`/content/edit/${id}`}><Edit className="mr-2 h-4 w-4"/> Edit Collection</Link>
+                        <Link href={`/feed/edit/${id}`}><Edit className="mr-2 h-4 w-4"/> Edit Collection</Link>
                     </Button>
                     {postCollection.status === 'Scheduled' && (
                         <Button variant="outline" onClick={handleCancelSchedule} disabled={isProcessing}>

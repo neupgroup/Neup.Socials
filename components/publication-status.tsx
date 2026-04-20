@@ -153,7 +153,7 @@ export const PublicationStatus: React.FC<PublicationStatusProps> = ({ accountIds
                        )}
                     </Button>
                     <Button size="sm" variant="ghost" asChild>
-                        <Link href={`/content/edit/${postCollectionId}`}><Edit className="h-4 w-4"/></Link>
+                        <Link href={`/feed/edit/${postCollectionId}`}><Edit className="h-4 w-4"/></Link>
                     </Button>
                     <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive">
                         <Trash2 className="h-4 w-4" />

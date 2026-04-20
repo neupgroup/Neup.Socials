@@ -432,7 +432,7 @@ export default function ViewPostPage() {
         setPost(postData);
       } else {
         toast({ title: 'Post not found', variant: 'destructive' });
-        router.push('/content');
+        router.push('/feed');
       }
       setLoading(false);
     };
@@ -446,7 +446,7 @@ export default function ViewPostPage() {
         try {
             await deletePostAction(post.id);
             toast({ title: 'Post deleted successfully from dashboard.' });
-            router.push(`/content/collection/${post.postCollectionId}`);
+            router.push(`/feed/collection/${post.postCollectionId}`);
         } catch (error: any) {
             toast({ title: 'Failed to delete post', description: error.message, variant: 'destructive' });
         } finally {
@@ -472,7 +472,7 @@ export default function ViewPostPage() {
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
             <Button asChild variant="outline" size="icon" disabled={isProcessing}>
-                <Link href={post.postCollectionId ? `/content/collection/${post.postCollectionId}` : '/content'}>
+                <Link href={post.postCollectionId ? `/feed/collection/${post.postCollectionId}` : '/feed'}>
                     <ArrowLeft />
                 </Link>
             </Button>
@@ -483,7 +483,7 @@ export default function ViewPostPage() {
         </div>
         <div className="flex items-center gap-2">
             <Button asChild variant="outline" disabled={isProcessing}>
-                <Link href={`/content/edit/${post.postCollectionId}`}><Edit className="mr-2 h-4 w-4"/> Edit Collection</Link>
+                <Link href={`/feed/edit/${post.postCollectionId}`}><Edit className="mr-2 h-4 w-4"/> Edit Collection</Link>
             </Button>
              <Button variant="destructive" onClick={handleDelete} disabled={isProcessing}>
                 {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Trash2 className="mr-2 h-4 w-4"/>}

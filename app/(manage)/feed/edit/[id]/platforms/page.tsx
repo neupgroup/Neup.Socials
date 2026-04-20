@@ -53,7 +53,7 @@ export default function EditPlatformsPage() {
           setSelectedAccountIds(data.accountIds || []);
         } else {
           toast({ title: 'Post Collection not found', variant: 'destructive' });
-          router.push('/content');
+          router.push('/feed');
         }
       } catch (error) {
         console.error("Error fetching data: ", error);
@@ -88,7 +88,7 @@ export default function EditPlatformsPage() {
           accountIds: selectedAccountIds,
           platforms: Array.from(new Set(selectedPlatforms))
       });
-      router.push(`/content/edit/${id}/schedule`);
+      router.push(`/feed/edit/${id}/schedule`);
     } catch (error) {
       console.error("Error updating accounts: ", error);
       toast({ title: 'Failed to save accounts', variant: 'destructive' });
@@ -154,7 +154,7 @@ export default function EditPlatformsPage() {
       
       <div className="flex justify-between">
          <Button asChild variant="outline" disabled={isSaving}>
-          <Link href={`/content/edit/${id}`}>Previous: Edit Content</Link>
+          <Link href={`/feed/edit/${id}`}>Previous: Edit Content</Link>
         </Button>
         <Button onClick={handleNext} disabled={isSaving || connectedAccounts.length === 0}>
           {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}

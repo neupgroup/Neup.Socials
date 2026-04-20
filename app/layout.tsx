@@ -6,6 +6,32 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { ProgressBar } from '@/components/progress-bar';
 
+const FacebookSdkLoader = () => {
+  React.useEffect(() => {
+    if (typeof document === 'undefined') return;
+
+    let root = document.getElementById('fb-root');
+    if (!root) {
+      root = document.createElement('div');
+      root.id = 'fb-root';
+      document.body.prepend(root);
+    }
+
+    if (!document.getElementById('facebook-jssdk')) {
+      const script = document.createElement('script');
+      script.id = 'facebook-jssdk';
+      script.async = true;
+      script.defer = true;
+      script.crossOrigin = 'anonymous';
+      script.src =
+        'https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v25.0&appId=1460023928746399';
+      document.body.appendChild(script);
+    }
+  }, []);
+
+  return null;
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -19,8 +45,7 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
-        <div id="fb-root"></div>
-        <script async defer crossOrigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v25.0&appId=1460023928746399"></script>
+        <FacebookSdkLoader />
         <ProgressBar />
         {children}
         <Toaster />

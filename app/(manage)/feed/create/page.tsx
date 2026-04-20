@@ -170,7 +170,7 @@ export default function CreatePostPage() {
       });
       
       toast({ title: 'Draft Saved!', description: 'Your post collection has been saved as a draft.' });
-      router.push(`/content/edit/${docRef?.id}/platforms`);
+      router.push(`/feed/edit/${docRef?.id}/platforms`);
 
     } catch (error: any) {
       console.error("Error creating post collection draft: ", error);
@@ -221,7 +221,7 @@ export default function CreatePostPage() {
   };
 
   const handleCancel = () => {
-    router.push('/content');
+    router.push('/feed');
   };
 
   return (

@@ -38,7 +38,7 @@ const navItems = [
   { href: '/', icon: LayoutGrid, label: 'Dashboard' },
   { href: '/analytics', icon: LayoutGrid, label: 'Analytics' },
   { href: '/schedule', icon: Calendar, label: 'Schedule' },
-  { href: '/content', icon: PlusSquare, label: 'Content' },
+  { href: '/feed', icon: PlusSquare, label: 'Content' },
   { href: '/inbox', icon: Inbox, label: 'Inbox' },
   { href: '/uploads', icon: Upload, label: 'Uploads' },
   { href: '/accounts', icon: Users, label: 'Accounts' },
@@ -68,7 +68,7 @@ export default function AppLayout({
   const mainNavItems = [
     { href: '/', label: 'Dashboard' },
     { href: '/analytics', label: 'Analytics' },
-    { href: '/content', label: 'Content' },
+    { href: '/feed', label: 'Content' },
     { href: '/schedule', label: 'Schedule' },
     { href: '/accounts', label: 'Accounts' },
     { href: '/uploads', label: 'Uploads' },
@@ -144,7 +144,7 @@ export default function AppLayout({
 
           <div className="ml-auto flex items-center gap-2">
             <Button className="hidden sm:inline-flex" asChild>
-              <Link href="/content/create">
+              <Link href="/feed/create">
                 <Plus className="mr-2 h-4 w-4" />
                 New Post
               </Link>

@@ -41,7 +41,7 @@ export default function DashboardPage() {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Button asChild>
-              <Link href="/content/create">Create Post</Link>
+              <Link href="/feed/create">Create Post</Link>
             </Button>
             <Button variant="outline" asChild>
               <Link href="/schedule">Open Calendar</Link>
@@ -127,7 +127,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             <Button asChild className="w-full justify-start" variant="secondary">
-              <Link href="/content/create">Draft New Campaign Post</Link>
+              <Link href="/feed/create">Draft New Campaign Post</Link>
             </Button>
             <Button asChild className="w-full justify-start" variant="outline">
               <Link href="/accounts">Manage Connected Accounts</Link>

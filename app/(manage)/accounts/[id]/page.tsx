@@ -310,7 +310,7 @@ export default function AccountDetailPage() {
                     <TableRow><TableCell colSpan={3} className="text-center h-24 text-muted-foreground">No posts found for this account.</TableCell></TableRow>
                 ) : (
                     posts.map(post => (
-                    <TableRow key={post.id} className="cursor-pointer" onClick={() => router.push(`/content/${post.id}`)}>
+                    <TableRow key={post.id} className="cursor-pointer" onClick={() => router.push(`/feed/${post.id}`)}>
                         <TableCell className="max-w-md truncate">{post.message}</TableCell>
                         <TableCell className="whitespace-nowrap">{post.createdOn ? format(new Date(post.createdOn), 'yyyy-MM-dd HH:mm') : 'N/A'}</TableCell>
                         <TableCell className="text-right">

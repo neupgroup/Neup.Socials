@@ -245,7 +245,7 @@ export default function ContentDashboardPage() {
               key="add-new-post"
               className="hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-primary"
             >
-              <Link href="/content/create" className="block">
+              <Link href="/feed/create" className="block">
                 <CardContent className="p-4 flex items-center justify-center text-center h-full min-h-[110px]">
                   <div className="flex items-center gap-4">
                     <PlusCircle className="h-8 w-8 text-muted-foreground" />
@@ -268,7 +268,7 @@ export default function ContentDashboardPage() {
                 posts.map((post) => (
                     <Card key={post.id} className="hover:shadow-md transition-shadow">
                         <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                            <Link href={`/content/${post.id}`} className="flex items-center gap-4 flex-1 overflow-hidden">
+                            <Link href={`/feed/${post.id}`} className="flex items-center gap-4 flex-1 overflow-hidden">
                                 <div className="bg-muted p-3 rounded-full">
                                     <PlatformIcon platform={post.platform ?? ''} />
                                 </div>
@@ -324,8 +324,8 @@ export default function ContentDashboardPage() {
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
-                                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); router.push(`/content/${post.id}`) }}>View Details</DropdownMenuItem>
-                                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); router.push(`/content/collection/${post.postCollectionId}`) }}>View Collection</DropdownMenuItem>
+                                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); router.push(`/feed/${post.id}`) }}>View Details</DropdownMenuItem>
+                                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); router.push(`/feed/collection/${post.postCollectionId}`) }}>View Collection</DropdownMenuItem>
                                         {(post.platform ?? '').toLowerCase() === 'facebook' ? (
                                           <DropdownMenuItem
                                             onClick={async (e) => {

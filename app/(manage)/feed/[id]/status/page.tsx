@@ -53,7 +53,7 @@ export default function PostStatusPage() {
         });
       } else {
         toast({ title: 'Post Collection not found', variant: 'destructive' });
-        router.push('/content');
+        router.push('/feed');
       }
       setLoading(false);
     };
@@ -82,7 +82,7 @@ export default function PostStatusPage() {
     <div className="max-w-3xl mx-auto space-y-6">
        <div className="flex items-center gap-4">
         <Button asChild variant="outline" size="icon">
-          <Link href="/content">
+          <Link href="/feed">
             <ArrowLeft />
           </Link>
         </Button>
@@ -144,10 +144,10 @@ export default function PostStatusPage() {
                     <p className="text-muted-foreground">You can still edit or cancel this post before it goes live.</p>
                     <div className="flex justify-center gap-4 pt-4">
                         <Button asChild>
-                            <Link href={`/content/edit/${id}`}>Edit Post</Link>
+                            <Link href={`/feed/edit/${id}`}>Edit Post</Link>
                         </Button>
                         <Button asChild variant="outline">
-                            <Link href={`/content/view/${id}`}>View Details</Link>
+                            <Link href={`/feed/view/${id}`}>View Details</Link>
                         </Button>
                     </div>
                 </CardContent>
@@ -167,10 +167,10 @@ export default function PostStatusPage() {
                     <p className="text-muted-foreground">Complete the creation process to schedule or publish this post.</p>
                     <div className="flex justify-center gap-4 pt-4">
                         <Button asChild>
-                            <Link href={`/content/edit/${id}/platforms`}>Continue Editing</Link>
+                            <Link href={`/feed/edit/${id}/platforms`}>Continue Editing</Link>
                         </Button>
                          <Button asChild variant="outline">
-                            <Link href={`/content/view/${id}`}>View Details</Link>
+                            <Link href={`/feed/view/${id}`}>View Details</Link>
                         </Button>
                     </div>
                 </CardContent>
