@@ -17,6 +17,7 @@ import { getPostAnalyticsAction } from '@/services/facebook/post-insights';
 import { deletePostAction, getPostAction, getPostCollectionAction } from '@/services/db';
 import { fetchPostCommentsAction, postCommentAction, postReplyAction } from '@/services/facebook/comments-actions';
 import { getFacebookPostVideoAction } from '@/services/facebook/get-video';
+import { getInstagramPostMediaAction } from '@/services/instagram/media';
 import { sendReplyAction } from '@/services/inbox/sender';
 import { InstagramPostModeration } from '@/components/instagram-post-moderation';
 
@@ -349,6 +350,9 @@ const FacebookPostVideo = ({ postId, platform }: { postId: string; platform: str
 
   return (
     <div className="space-y-3">
+      <div className="text-xs text-muted-foreground">
+        Video ID: <span className="font-medium text-foreground">{video.id}</span>
+      </div>
       {video.permalinkUrl ? (
         <div 
           className="fb-video"
@@ -402,6 +406,35 @@ const FacebookPostVideo = ({ postId, platform }: { postId: string; platform: str
           </div>
         </div>
       )}
+    </div>
+  );
+};
+
+const InstagramPostVideoId = ({ postId, platform }: { postId: string; platform: string | null }) => {
+  const { data, error, isLoading } = useSWR(
+    isInstagramPlatform(platform) ? `${postId}-instagram-media` : null,
+    () => getInstagramPostMediaAction(postId)
+  );
+
+  if (!isInstagramPlatform(platform)) {
+    return null;
+  }
+
+  if (isLoading || error || !data?.success) {
+    return null;
+  }
+
+  const mediaType = (data.mediaType || '').toUpperCase();
+  const productType = (data.mediaProductType || '').toUpperCase();
+  const isVideo = mediaType === 'VIDEO' || mediaType === 'REELS' || productType === 'REELS';
+
+  if (!isVideo || !data.mediaId) {
+    return null;
+  }
+
+  return (
+    <div className="text-xs text-muted-foreground">
+      Video ID: <span className="font-medium text-foreground">{data.mediaId}</span>
     </div>
   );
 };
@@ -478,7 +511,10 @@ export default function ViewPostPage() {
             </Button>
             <div>
                 <h1 className="text-3xl font-bold">Post Details</h1>
-                <p className="text-muted-foreground">Platform: <Badge>{post.platform}</Badge></p>
+                <div className="text-muted-foreground flex flex-wrap items-center gap-2">
+                  <span>Platform:</span>
+                  <Badge>{post.platform}</Badge>
+                </div>
             </div>
         </div>
         <div className="flex items-center gap-2">
@@ -509,6 +545,10 @@ export default function ViewPostPage() {
 
             {isFacebookPlatform(post.platform) && (
               <FacebookPostVideo postId={post.id} platform={post.platform} />
+            )}
+
+            {isInstagramPlatform(post.platform) && (
+              <InstagramPostVideoId postId={post.id} platform={post.platform} />
             )}
             
             {post.mediaUrls && post.mediaUrls.length > 0 && (
