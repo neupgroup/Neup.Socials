@@ -93,7 +93,7 @@ export function AddAccountForm({ embeddedSignupConfigId }: AddAccountFormProps) 
   const [isEmbeddedProcessing, setIsEmbeddedProcessing] = React.useState(false);
   const router = useRouter();
   const { toast } = useToast();
-  const embeddedSignupRedirectUri = toAppUrl('/accounts/add');
+  const embeddedSignupRedirectUri = "https://neupgroup.com/socials/add";
 
   const userId = 'neupkishor';
 
