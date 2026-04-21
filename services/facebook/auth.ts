@@ -83,6 +83,7 @@ export async function getFacebookAuthUrl(userId: string, intents?: FacebookAuthI
     const state = Buffer.from(
       JSON.stringify({
         ...baseStateData,
+        platform: 'Facebook',
         facebookIntents: selectedIntents,
       })
     ).toString('base64');
@@ -95,7 +96,7 @@ export async function getFacebookAuthUrl(userId: string, intents?: FacebookAuthI
 
     const params = new URLSearchParams({
       client_id: process.env.FB_APP_ID!,
-      redirect_uri: toAppUrl('/bridge/callback.v1/auth.facebook'),
+      redirect_uri: toAppUrl('/bridge/callback.v1/auth.meta'),
       state: encodeURIComponent(state),
       scope,
       response_type: 'code',

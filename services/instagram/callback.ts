@@ -38,7 +38,7 @@ export async function handleInstagramCallback(
 
     const redirectUri = buildUrlFromBase(
       getAppBaseUrl(),
-      '/bridge/callback.v1/auth.instagram'
+      '/bridge/callback.v1/auth.meta'
     );
 
     // 2. Exchange the code for a short-lived user access token.

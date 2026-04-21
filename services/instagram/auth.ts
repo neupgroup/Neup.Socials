@@ -8,7 +8,7 @@ import { generateRandomState } from '@/core/lib/crypto';
 import { logError } from '@/core/lib/error-logging';
 import { getAppBaseUrl, buildUrlFromBase } from '@/core/lib/app-url';
 
-const INSTAGRAM_OAUTH_BASE_URL = 'https://www.instagram.com/oauth/authorize?force_reauth=true&client_id=2563657770663564&redirect_uri=https://neupgroup.com/socials/bridge/callback.v1/auth.instagram&response_type=code&scope=instagram_business_basic%2Cinstagram_business_manage_messages%2Cinstagram_business_manage_comments%2Cinstagram_business_content_publish%2Cinstagram_business_manage_insights';
+const INSTAGRAM_OAUTH_BASE_URL = 'https://www.instagram.com/oauth/authorize';
 const INSTAGRAM_AUTH_SCOPES = [
   'instagram_business_basic',
   'instagram_business_manage_messages',
@@ -27,7 +27,14 @@ const INSTAGRAM_AUTH_SCOPES = [
  */
 export async function getInstagramAuthUrl(userId: string): Promise<string> {
   try {
-    const state = await generateRandomState(userId);
+    const baseState = await generateRandomState(userId);
+    const baseStateData = JSON.parse(Buffer.from(baseState, 'base64').toString('utf8'));
+    const state = Buffer.from(
+      JSON.stringify({
+        ...baseStateData,
+        platform: 'Instagram',
+      })
+    ).toString('base64');
 
     if (!process.env.INSTAGRAM_APP_ID) {
       throw new Error('Instagram App ID environment variable is not set.');
@@ -35,7 +42,7 @@ export async function getInstagramAuthUrl(userId: string): Promise<string> {
 
     const redirectUri = buildUrlFromBase(
       getAppBaseUrl(),
-      '/bridge/callback.v1/auth.instagram'
+      '/bridge/callback.v1/auth.meta'
     );
 
     const params = new URLSearchParams({
