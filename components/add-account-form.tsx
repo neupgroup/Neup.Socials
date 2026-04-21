@@ -69,7 +69,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 type AddAccountFormProps = {
-  embeddedSignupConfigId: string | null;
+  embeddedSignupUrl: string | null;
 };
 
 const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -86,14 +86,14 @@ const platformDetails = {
   WhatsApp: { icon: <WhatsAppIcon className="h-5 w-5 text-green-500" />, isOauth: false },
 };
 
-export function AddAccountForm({ embeddedSignupConfigId }: AddAccountFormProps) {
+export function AddAccountForm({ embeddedSignupUrl }: AddAccountFormProps) {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isPreverifiedSubmitting, setIsPreverifiedSubmitting] = React.useState(false);
   const [isEmbeddedSubmitting, setIsEmbeddedSubmitting] = React.useState(false);
   const [isEmbeddedProcessing, setIsEmbeddedProcessing] = React.useState(false);
   const router = useRouter();
   const { toast } = useToast();
-  const embeddedSignupRedirectUri = "https://neupgroup.com/socials/add";
+  const embeddedSignupRedirectUri = toAppUrl('/bridge/callback.v1/auth.whatsapp');
 
   const userId = 'neupkishor';
 
@@ -158,7 +158,9 @@ export function AddAccountForm({ embeddedSignupConfigId }: AddAccountFormProps) 
     if (selectedPlatform !== 'WhatsApp' || whatsappConnectMode !== 'embedded') return;
 
     const handler = (event: MessageEvent) => {
-      if (!event.origin.endsWith('facebook.com')) return;
+      const isFacebookOrigin = event.origin.endsWith('facebook.com');
+      const isAppOrigin = event.origin === window.location.origin;
+      if (!isFacebookOrigin && !isAppOrigin) return;
 
       let payload: any = event.data;
       if (typeof payload === 'string') {
@@ -254,6 +256,32 @@ export function AddAccountForm({ embeddedSignupConfigId }: AddAccountFormProps) 
         setEmbeddedSignupAssetIds(assetIds);
       }
 
+      if (payload.type === 'WHATSAPP_EMBEDDED_SIGNUP_CODE') {
+        const errorMessage = payload.error || payload.errorMessage;
+        if (errorMessage) {
+          toast({
+            title: 'Embedded signup error',
+            description: String(errorMessage),
+            variant: 'destructive',
+          });
+          setIsEmbeddedProcessing(false);
+          return;
+        }
+
+        if (payload.code) {
+          setEmbeddedSignupCode(String(payload.code));
+          return;
+        }
+
+        toast({
+          title: 'Embedded signup failed',
+          description: 'No authorization code was returned from Meta.',
+          variant: 'destructive',
+        });
+        setIsEmbeddedProcessing(false);
+        return;
+      }
+
       // Handle generic OAuth success from our bridge page
       if (payload.type === 'OAUTH_CALLBACK_SUCCESS') {
         if (payload.status === 'success') {
@@ -340,48 +368,23 @@ export function AddAccountForm({ embeddedSignupConfigId }: AddAccountFormProps) 
   }, [embeddedSignupCode, embeddedSignupPhoneNumberId, embeddedSignupWabaId, finalizeEmbeddedSignup, whatsappConnectMode]);
 
   const handleWhatsAppEmbeddedSignup = () => {
-    if (!embeddedSignupConfigId) {
-      toast({
-        title: 'Embedded signup unavailable',
-        description: 'No embedded signup config ID is configured.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    const win = window as Window & { FB?: { login: (callback: (response: any) => void, options: Record<string, unknown>) => void } };
-    if (!win.FB || typeof win.FB.login !== 'function') {
-      toast({
-        title: 'Embedded signup unavailable',
-        description: 'Facebook SDK is not ready yet. Please try again.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setIsEmbeddedProcessing(true);
-    win.FB.login(
-      (response: any) => {
-        const code = response?.authResponse?.code;
-        if (code) {
-          setEmbeddedSignupCode(code);
-          return;
-        }
-
-        setIsEmbeddedProcessing(false);
+    if (embeddedSignupUrl) {
+      const popup = window.open(embeddedSignupUrl, '_blank', 'noopener,noreferrer');
+      if (!popup) {
         toast({
-          title: 'Embedded signup cancelled',
-          description: 'The embedded signup flow was cancelled.',
+          title: 'Popup blocked',
+          description: 'Please allow popups to continue with embedded signup.',
           variant: 'destructive',
         });
-      },
-      {
-        config_id: embeddedSignupConfigId,
-        response_type: 'code',
-        override_default_response_type: true,
-        extras: { version: 'v4' },
       }
-    );
+      return;
+    }
+
+    toast({
+      title: 'Embedded signup unavailable',
+      description: 'No embedded signup URL is configured.',
+      variant: 'destructive',
+    });
   };
 
   const handlePreverifiedNumberAdd = async () => {
