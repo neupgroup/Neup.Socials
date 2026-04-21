@@ -34,8 +34,8 @@ export async function GET(request: NextRequest) {
   const result = await handleFacebookCallback(code, state);
 
   if (result.success) {
-    return NextResponse.redirect(toAppUrl('/accounts?status=success'));
+    return NextResponse.redirect(toAppUrl('/bridge/success?status=success&platform=Facebook'));
   }
 
-  return NextResponse.redirect(toAppUrl(`/accounts/add?error=${encodeURIComponent(result.error ?? 'callback-failed')}`));
+  return NextResponse.redirect(toAppUrl(`/bridge/success?error=${encodeURIComponent(result.error ?? 'callback-failed')}&platform=Facebook`));
 }

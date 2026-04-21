@@ -35,10 +35,10 @@ export async function GET(request: NextRequest) {
   const result = await handleInstagramCallback(code, state);
 
   if (result.success) {
-    return NextResponse.redirect(buildUrlFromBase(appBaseUrl, '/accounts?status=success'));
+    return NextResponse.redirect(buildUrlFromBase(appBaseUrl, '/bridge/success?status=success&platform=Instagram'));
   }
 
   return NextResponse.redirect(
-    buildUrlFromBase(appBaseUrl, `/accounts/add?error=${encodeURIComponent(result.error ?? 'callback-failed')}`)
+    buildUrlFromBase(appBaseUrl, `/bridge/success?error=${encodeURIComponent(result.error ?? 'callback-failed')}&platform=Instagram`)
   );
 }

@@ -22,6 +22,7 @@ export default function InboxPageClient() {
   const viewType = searchParams.get('type');
   const commentId = searchParams.get('comment') ?? '';
   const postId = searchParams.get('post') ?? '';
+  const pageId = searchParams.get('page') ?? '';
   const [facebookItems, setFacebookItems] = React.useState<FacebookInboxItem[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [sendingTo, setSendingTo] = React.useState<string | null>(null);
@@ -42,7 +43,15 @@ export default function InboxPageClient() {
 
       setSendingTo(item.id);
       try {
-        const result = await sendReplyAction('Facebook', item.accountId, item.fromId, message.trim(), item.fromName, item.commentId);
+        const result = await sendReplyAction(
+          'Facebook',
+          item.accountId,
+          item.fromId,
+          message.trim(),
+          item.fromName,
+          item.commentId,
+          item.pageId
+        );
         if (!result.success) {
           throw new Error(result.error || 'Failed to send message.');
         }
@@ -139,7 +148,8 @@ export default function InboxPageClient() {
         commentView.commenterId,
         trimmed,
         commentView.commenterName,
-        commentId
+        commentId,
+        pageId || commentView.pageId
       );
       if (!result.success) {
         throw new Error(result.error || 'Failed to send reply.');
@@ -154,7 +164,7 @@ export default function InboxPageClient() {
     } finally {
       setSendingReply(false);
     }
-  }, [commentView, replyText, toast]);
+  }, [commentView, replyText, toast, commentId, pageId]);
 
   if (viewType === 'facebookComment') {
     return (
@@ -180,38 +190,49 @@ export default function InboxPageClient() {
             </Card>
           ) : (
             <div className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    Us <Badge variant="secondary">post</Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="text-sm text-muted-foreground whitespace-pre-wrap">
-                  {commentView.postMessage || 'Post'}
-                </CardContent>
-              </Card>
+              <div className="space-y-3">
+                <div className="flex flex-col gap-3">
+                  <div className="flex justify-end">
+                    <div className="max-w-[80%] rounded-2xl bg-primary px-4 py-3 text-sm text-primary-foreground shadow">
+                      <div className="flex items-center gap-2 text-xs opacity-80">
+                        <span>{commentView.pageName || 'Page'}</span>
+                        <Badge variant="secondary" className="bg-primary-foreground/15 text-primary-foreground">
+                          post
+                        </Badge>
+                      </div>
+                      <div className="mt-2 whitespace-pre-wrap">
+                        {commentView.postMessage || 'Post'}
+                      </div>
+                    </div>
+                  </div>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    {commentView.commenterName || 'User'} <Badge variant="secondary">comment</Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="text-sm whitespace-pre-wrap">
-                  {commentView.commentText || 'No comment text available.'}
-                </CardContent>
-              </Card>
+                  <div className="flex justify-start">
+                    <div className="max-w-[80%] rounded-2xl border bg-card px-4 py-3 text-sm shadow">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>{commentView.commenterName || 'User'}</span>
+                        <Badge variant="secondary">comment</Badge>
+                      </div>
+                      <div className="mt-2 whitespace-pre-wrap">
+                        {commentView.commentText || 'No comment text available.'}
+                      </div>
+                    </div>
+                  </div>
 
-              {sentReplies.map((reply, index) => (
-                <Card key={`${reply}-${index}`}>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      Us <Badge variant="outline">reply</Badge>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="text-sm whitespace-pre-wrap">{reply}</CardContent>
-                </Card>
-              ))}
+                  {sentReplies.map((reply, index) => (
+                    <div key={`${reply}-${index}`} className="flex justify-end">
+                      <div className="max-w-[80%] rounded-2xl bg-primary px-4 py-3 text-sm text-primary-foreground shadow">
+                        <div className="flex items-center gap-2 text-xs opacity-80">
+                          <span>{commentView.pageName || 'Page'}</span>
+                          <Badge variant="secondary" className="bg-primary-foreground/15 text-primary-foreground">
+                            comment-to-private-message
+                          </Badge>
+                        </div>
+                        <div className="mt-2 whitespace-pre-wrap">{reply}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
               <Card>
                 <CardHeader>
@@ -340,7 +361,7 @@ export default function InboxPageClient() {
                         {item.commentId && item.postId ? (
                           <Button asChild type="button" size="sm" variant="secondary">
                             <Link
-                              href={`/inbox?type=facebookComment&comment=${encodeURIComponent(item.commentId)}&post=${encodeURIComponent(item.postId)}`}
+                              href={`/inbox?type=facebookComment&comment=${encodeURIComponent(item.commentId)}&post=${encodeURIComponent(item.postId)}&page=${encodeURIComponent(item.pageId)}`}
                             >
                               Open thread
                             </Link>

@@ -30,6 +30,7 @@ const isReplyWindowOpen = (commentedOn: Date) => {
 export type FacebookCommentInboxView = {
   success: boolean;
   accountId?: string;
+  pageId?: string;
   pageName?: string;
   commenterId?: string;
   commenterName?: string;
@@ -66,6 +67,7 @@ export async function getFacebookCommentInboxViewAction({
     return {
       success: true,
       accountId: account.id,
+      pageId: account.platformId ?? undefined,
       pageName: account.name || 'Facebook Page',
       commenterId: comment.commenterId ?? undefined,
       commenterName: comment.commenterName ?? 'Facebook User',

@@ -14,7 +14,7 @@ import { useToast } from '@/core/hooks/use-toast';
 import { format } from 'date-fns';
 import { Textarea } from '@/components/ui/textarea';
 import { getPostAnalyticsAction } from '@/services/facebook/post-insights';
-import { deletePostAction, getPostAction, getPostCollectionAction } from '@/services/db';
+import { deletePostAction, getAccountAction, getAccountsByIdsAction, getPostAction, getPostCollectionAction } from '@/services/db';
 import { fetchPostCommentsAction, postCommentAction, postReplyAction } from '@/services/facebook/comments-actions';
 import { getFacebookPostVideoAction } from '@/services/facebook/get-video';
 import { getInstagramPostMediaAction } from '@/services/instagram/media';
@@ -98,6 +98,7 @@ const PostComments = ({ postId, platform, accountId }: { postId: string; platfor
   const [replyText, setReplyText] = React.useState('');
   const [isLoading, setIsLoading] = React.useState(false);
   const [isPosting, setIsPosting] = React.useState(false);
+  const [pageId, setPageId] = React.useState<string | null>(null);
 
   const fetchComments = async (refresh = false) => {
     if (!isFacebookPlatform(platform)) return;
@@ -117,6 +118,28 @@ const PostComments = ({ postId, platform, accountId }: { postId: string; platfor
   React.useEffect(() => {
     fetchComments();
   }, [postId, platform]);
+
+  React.useEffect(() => {
+    let active = true;
+
+    const loadPageId = async () => {
+      if (!accountId) {
+        setPageId(null);
+        return;
+      }
+
+      const account = await getAccountAction(accountId);
+      if (active) {
+        setPageId(account?.platformId ?? null);
+      }
+    };
+
+    loadPageId();
+
+    return () => {
+      active = false;
+    };
+  }, [accountId]);
 
   const handlePostComment = async () => {
     if (!newComment.trim()) return;
@@ -154,16 +177,16 @@ const PostComments = ({ postId, platform, accountId }: { postId: string; platfor
   };
 
   const handleMessageUser = async (commentId: string) => {
-    if (!accountId) {
+    if (!accountId || !pageId) {
       toast({
-        title: 'Missing account',
+        title: 'Missing page ID',
         description: 'This post is not linked to a connected Facebook page account.',
         variant: 'destructive',
       });
       return;
     }
 
-    router.push(`/inbox?type=facebookComment&post=${encodeURIComponent(postId)}&comment=${encodeURIComponent(commentId)}`);
+    router.push(`/inbox?type=facebookComment&post=${encodeURIComponent(postId)}&comment=${encodeURIComponent(commentId)}&page=${encodeURIComponent(pageId)}`);
   };
 
   if (!isFacebookPlatform(platform)) {
@@ -433,11 +456,21 @@ export default function ViewPostPage() {
 
       if (postData) {
         
-        if (!postData.mediaUrls && postData.postCollectionId) {
-            const collectionData = await getPostCollectionAction(postData.postCollectionId);
-            if (collectionData) {
-                postData.mediaUrls = collectionData.mediaUrls || [];
-            }
+        let collectionData = null as Awaited<ReturnType<typeof getPostCollectionAction>> | null;
+        if (postData.postCollectionId) {
+          collectionData = await getPostCollectionAction(postData.postCollectionId);
+        }
+
+        if (!postData.mediaUrls && collectionData) {
+          postData.mediaUrls = collectionData.mediaUrls || [];
+        }
+
+        if (!postData.accountId && isFacebookPlatform(postData.platform) && collectionData?.accountIds?.length) {
+          const accounts = await getAccountsByIdsAction(collectionData.accountIds);
+          const facebookAccount = accounts.find((account) => (account.platform || '').toLowerCase() === 'facebook');
+          if (facebookAccount?.id) {
+            postData.accountId = facebookAccount.id;
+          }
         }
         setPost(postData);
       } else {

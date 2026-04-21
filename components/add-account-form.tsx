@@ -169,87 +169,104 @@ export function AddAccountForm({ embeddedSignupUrl }: AddAccountFormProps) {
         }
       }
 
-      if (!payload || payload.type !== 'WA_EMBEDDED_SIGNUP') return;
+      if (!payload) return;
 
-      const eventType = payload.event;
-      const data = payload.data || payload;
+      // Handle standard WhatsApp embedded signup events
+      if (payload.type === 'WA_EMBEDDED_SIGNUP') {
+        const eventType = payload.event;
+        const data = payload.data || payload;
 
-      if (eventType === 'CANCEL') {
-        const currentStep = data?.current_step;
-        const errorMessage = data?.error_message;
-        const errorCode = data?.error_code;
-        if (errorMessage || errorCode) {
+        if (eventType === 'CANCEL') {
+          const currentStep = data?.current_step;
+          const errorMessage = data?.error_message;
+          const errorCode = data?.error_code;
+          if (errorMessage || errorCode) {
+            void logWhatsAppEmbeddedSignupErrorAction({
+              eventType,
+              errorMessage,
+              errorCode,
+              currentStep,
+              sessionId: data?.session_id ?? null,
+              timestamp: data?.timestamp ?? null,
+              businessId: data?.business_id ?? null,
+              wabaId: data?.waba_id ?? null,
+              phoneNumberId: data?.phone_number_id ?? null,
+            });
+          }
+          const description = errorMessage
+            ? `${errorMessage}${errorCode ? ` (code ${errorCode})` : ''}`
+            : currentStep
+              ? `Flow exited at ${currentStep}.`
+              : 'The embedded signup flow was cancelled.';
+
+          toast({
+            title: 'Embedded signup cancelled',
+            description,
+            variant: 'destructive',
+          });
+          setIsEmbeddedProcessing(false);
+          return;
+        }
+
+        if (eventType === 'ERROR') {
+          const errorMessage = data?.error_message || 'Embedded signup reported an error.';
+          const errorCode = data?.error_code;
           void logWhatsAppEmbeddedSignupErrorAction({
             eventType,
             errorMessage,
             errorCode,
-            currentStep,
+            currentStep: data?.current_step ?? null,
             sessionId: data?.session_id ?? null,
             timestamp: data?.timestamp ?? null,
             businessId: data?.business_id ?? null,
             wabaId: data?.waba_id ?? null,
             phoneNumberId: data?.phone_number_id ?? null,
           });
+          toast({
+            title: 'Embedded signup error',
+            description: errorCode ? `${errorMessage} (code ${errorCode})` : errorMessage,
+            variant: 'destructive',
+          });
+          setIsEmbeddedProcessing(false);
+          return;
         }
-        const description = errorMessage
-          ? `${errorMessage}${errorCode ? ` (code ${errorCode})` : ''}`
-          : currentStep
-            ? `Flow exited at ${currentStep}.`
-            : 'The embedded signup flow was cancelled.';
 
-        toast({
-          title: 'Embedded signup cancelled',
-          description,
-          variant: 'destructive',
-        });
-        setIsEmbeddedProcessing(false);
-        return;
+        const wabaId = data.waba_id || data.wabaId || data.whatsapp_business_account_id || '';
+        const phoneNumberId =
+          data.phone_number_id ||
+          data.phoneNumberId ||
+          (Array.isArray(data.phone_number_ids) ? data.phone_number_ids[0] : '') ||
+          '';
+        const businessId = data.business_id || '';
+
+        if (wabaId) setEmbeddedSignupWabaId(String(wabaId));
+        if (phoneNumberId) setEmbeddedSignupPhoneNumberId(String(phoneNumberId));
+        if (businessId) setEmbeddedSignupBusinessId(String(businessId));
+
+        const assetIds = {
+          adAccountIds: Array.isArray(data.ad_account_ids) ? data.ad_account_ids : undefined,
+          pageIds: Array.isArray(data.page_ids) ? data.page_ids : undefined,
+          datasetIds: Array.isArray(data.dataset_ids) ? data.dataset_ids : undefined,
+          catalogIds: Array.isArray(data.catalog_ids) ? data.catalog_ids : undefined,
+          igAccountIds: Array.isArray(data.ig_account_ids) ? data.ig_account_ids : undefined,
+          wabaIds: Array.isArray(data.waba_ids) ? data.waba_ids : undefined,
+        };
+        setEmbeddedSignupAssetIds(assetIds);
       }
 
-      if (eventType === 'ERROR') {
-        const errorMessage = data?.error_message || 'Embedded signup reported an error.';
-        const errorCode = data?.error_code;
-        void logWhatsAppEmbeddedSignupErrorAction({
-          eventType,
-          errorMessage,
-          errorCode,
-          currentStep: data?.current_step ?? null,
-          sessionId: data?.session_id ?? null,
-          timestamp: data?.timestamp ?? null,
-          businessId: data?.business_id ?? null,
-          wabaId: data?.waba_id ?? null,
-          phoneNumberId: data?.phone_number_id ?? null,
-        });
-        toast({
-          title: 'Embedded signup error',
-          description: errorCode ? `${errorMessage} (code ${errorCode})` : errorMessage,
-          variant: 'destructive',
-        });
-        setIsEmbeddedProcessing(false);
-        return;
+      // Handle generic OAuth success from our bridge page
+      if (payload.type === 'OAUTH_CALLBACK_SUCCESS') {
+        if (payload.status === 'success') {
+          toast({ title: `${payload.platform} account connected successfully!` });
+          router.push('/accounts');
+        } else {
+          toast({
+            title: `Failed to connect ${payload.platform}`,
+            description: payload.error || 'The connection was unsuccessful. Please try again.',
+            variant: 'destructive',
+          });
+        }
       }
-
-      const wabaId = data.waba_id || data.wabaId || data.whatsapp_business_account_id || '';
-      const phoneNumberId =
-        data.phone_number_id ||
-        data.phoneNumberId ||
-        (Array.isArray(data.phone_number_ids) ? data.phone_number_ids[0] : '') ||
-        '';
-      const businessId = data.business_id || '';
-
-      if (wabaId) setEmbeddedSignupWabaId(String(wabaId));
-      if (phoneNumberId) setEmbeddedSignupPhoneNumberId(String(phoneNumberId));
-      if (businessId) setEmbeddedSignupBusinessId(String(businessId));
-
-      const assetIds = {
-        adAccountIds: Array.isArray(data.ad_account_ids) ? data.ad_account_ids : undefined,
-        pageIds: Array.isArray(data.page_ids) ? data.page_ids : undefined,
-        datasetIds: Array.isArray(data.dataset_ids) ? data.dataset_ids : undefined,
-        catalogIds: Array.isArray(data.catalog_ids) ? data.catalog_ids : undefined,
-        igAccountIds: Array.isArray(data.ig_account_ids) ? data.ig_account_ids : undefined,
-        wabaIds: Array.isArray(data.waba_ids) ? data.waba_ids : undefined,
-      };
-      setEmbeddedSignupAssetIds(assetIds);
     };
 
     window.addEventListener('message', handler);
@@ -378,8 +395,29 @@ export function AddAccountForm({ embeddedSignupUrl }: AddAccountFormProps) {
         ? await getFacebookAuthUrl(userId, selectedFacebookIntents)
         : selectedPlatform === 'Instagram'
           ? await getInstagramAuthUrl(userId)
-          : await platform.handler(userId);
-      window.location.href = authUrl;
+          : await platform.handler!(userId);
+      
+      const width = 600;
+      const height = 700;
+      const left = window.screenX + (window.outerWidth - width) / 2;
+      const top = window.screenY + (window.outerHeight - height) / 2;
+      
+      const popup = window.open(
+        authUrl,
+        `Connect${selectedPlatform}`,
+        `width=${width},height=${height},left=${left},top=${top},status=no,location=no,toolbar=no,menubar=no`
+      );
+
+      if (popup) {
+        popup.focus();
+      } else {
+        toast({
+          title: 'Popup blocked',
+          description: `Please allow popups to connect your ${selectedPlatform} account.`,
+          variant: 'destructive',
+        });
+      }
+      setIsSubmitting(false);
     } catch (error) {
       console.error(`Error getting ${selectedPlatform} auth URL: `, error);
       toast({

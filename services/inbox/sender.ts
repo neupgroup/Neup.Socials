@@ -29,7 +29,8 @@ export async function sendReplyAction(
     recipientId: string,
     message: string,
     contactName?: string,
-    commentId?: string
+    commentId?: string,
+    pageId?: string
 ): Promise<SendMessageResult> {
     try {
         if (platform === 'WhatsApp') {
@@ -69,16 +70,22 @@ export async function sendReplyAction(
             }
 
             const pageToken = await decrypt(accountData.encryptedToken);
-            const pageId = accountData.platformId;
+            const resolvedPageId = pageId || accountData.platformId;
+            if (!resolvedPageId) {
+                throw new Error(`Facebook account with ID ${channelId} is missing a page ID.`);
+            }
 
             let result;
-            if (commentId) {
-                // Use the private replies endpoint if we have a comment ID
+            if (commentId && pageId) {
+                // Use the Send API for comment-to-private-message flows when the page ID is provided.
+                result = await sendFacebookPageMessage(resolvedPageId, pageToken, recipientId, message);
+            } else if (commentId) {
+                // Fall back to the private replies endpoint when only comment ID is available.
                 const { sendFacebookPrivateReply } = await import('@/services/facebook/api');
                 result = await sendFacebookPrivateReply(commentId, pageToken, message);
             } else {
                 // Fallback to standard Messaging API
-                result = await sendFacebookPageMessage(pageId, pageToken, recipientId, message);
+                result = await sendFacebookPageMessage(resolvedPageId, pageToken, recipientId, message);
             }
 
             await recordOutgoingMessageAction({
