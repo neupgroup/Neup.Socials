@@ -1,13 +1,12 @@
 
 import { AddAccountForm } from '@/components/add-account-form';
-import { getWhatsAppEmbeddedSignupUrl } from '@/services/whatsapp/embedded-signup-config';
 
 export default async function AddAccountPage() {
-  const embeddedSignupUrl = await getWhatsAppEmbeddedSignupUrl();
+  const embeddedSignupConfigId = process.env.WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID ?? null;
 
   return (
     <AddAccountForm
-      embeddedSignupUrl={embeddedSignupUrl}
+      embeddedSignupConfigId={embeddedSignupConfigId}
     />
   );
 }

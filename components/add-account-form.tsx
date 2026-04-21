@@ -69,7 +69,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 type AddAccountFormProps = {
-  embeddedSignupUrl: string | null;
+  embeddedSignupConfigId: string | null;
 };
 
 const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -86,7 +86,7 @@ const platformDetails = {
   WhatsApp: { icon: <WhatsAppIcon className="h-5 w-5 text-green-500" />, isOauth: false },
 };
 
-export function AddAccountForm({ embeddedSignupUrl }: AddAccountFormProps) {
+export function AddAccountForm({ embeddedSignupConfigId }: AddAccountFormProps) {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isPreverifiedSubmitting, setIsPreverifiedSubmitting] = React.useState(false);
   const [isEmbeddedSubmitting, setIsEmbeddedSubmitting] = React.useState(false);
@@ -340,34 +340,48 @@ export function AddAccountForm({ embeddedSignupUrl }: AddAccountFormProps) {
   }, [embeddedSignupCode, embeddedSignupPhoneNumberId, embeddedSignupWabaId, finalizeEmbeddedSignup, whatsappConnectMode]);
 
   const handleWhatsAppEmbeddedSignup = () => {
-    if (embeddedSignupUrl) {
-      const width = 600;
-      const height = 760;
-      const left = window.screenX + (window.outerWidth - width) / 2;
-      const top = window.screenY + (window.outerHeight - height) / 2;
-
-      const popup = window.open(
-        embeddedSignupUrl,
-        'WhatsAppEmbeddedSignup',
-        `width=${width},height=${height},left=${left},top=${top},status=no,location=no,toolbar=no,menubar=no,scrollbars=yes,resizable=yes`
-      );
-      if (!popup) {
-        toast({
-          title: 'Popup blocked',
-          description: 'Please allow popups to continue with embedded signup.',
-          variant: 'destructive',
-        });
-      } else {
-        popup.focus();
-      }
+    if (!embeddedSignupConfigId) {
+      toast({
+        title: 'Embedded signup unavailable',
+        description: 'No embedded signup config ID is configured.',
+        variant: 'destructive',
+      });
       return;
     }
 
-    toast({
-      title: 'Embedded signup unavailable',
-      description: 'No embedded signup URL is configured.',
-      variant: 'destructive',
-    });
+    const win = window as Window & { FB?: { login: (callback: (response: any) => void, options: Record<string, unknown>) => void } };
+    if (!win.FB || typeof win.FB.login !== 'function') {
+      toast({
+        title: 'Embedded signup unavailable',
+        description: 'Facebook SDK is not ready yet. Please try again.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsEmbeddedProcessing(true);
+    win.FB.login(
+      (response: any) => {
+        const code = response?.authResponse?.code;
+        if (code) {
+          setEmbeddedSignupCode(code);
+          return;
+        }
+
+        setIsEmbeddedProcessing(false);
+        toast({
+          title: 'Embedded signup cancelled',
+          description: 'The embedded signup flow was cancelled.',
+          variant: 'destructive',
+        });
+      },
+      {
+        config_id: embeddedSignupConfigId,
+        response_type: 'code',
+        override_default_response_type: true,
+        extras: { version: 'v4' },
+      }
+    );
   };
 
   const handlePreverifiedNumberAdd = async () => {
