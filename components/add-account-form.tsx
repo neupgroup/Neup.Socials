@@ -93,7 +93,7 @@ export function AddAccountForm({ embeddedSignupConfigId }: AddAccountFormProps) 
   const [isEmbeddedProcessing, setIsEmbeddedProcessing] = React.useState(false);
   const router = useRouter();
   const { toast } = useToast();
-  const embeddedSignupRedirectUri = toAppUrl('/bridge/callback.v1/auth.facebook');
+  const embeddedSignupRedirectUri = toAppUrl('/accounts/add');
 
   const userId = 'neupkishor';
 
