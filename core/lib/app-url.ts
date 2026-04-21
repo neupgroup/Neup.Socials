@@ -1,21 +1,14 @@
-function normalizeBaseUrl(baseUrl: string): string {
-  return baseUrl.replace(/\/+$/, '');
+function getAppUrl(): string {
+  return "https://neupgroup.com/socials";
 }
 
-function normalizePath(path: string): string {
-  if (!path) return '/';
-  return path.startsWith('/') ? path : `/${path}`;
-}
 
-export function buildUrlFromBase(baseUrl: string, path: string): string {
-  return `${normalizeBaseUrl(baseUrl)}${normalizePath(path)}`;
-}
-
-export function getAppBaseUrl(): string {
-  const configured = "https://neupgroup.com/socials";
-  return normalizeBaseUrl(configured);
-}
-
-export function toAppUrl(path: string): string {
-  return buildUrlFromBase(getAppBaseUrl(), path);
+export function makeAppUrl(path: string): string {
+  // If the path starts with a slash, remove it to avoid double slashes in the URL
+  if (path.startsWith("/")) {
+    path = path.substring(1);
+  }
+  // Remove the end slash from the base URL if it exists.
+  path = path.replace(/\/$/, "");
+  return `${getAppUrl()}/${path}`;
 }
