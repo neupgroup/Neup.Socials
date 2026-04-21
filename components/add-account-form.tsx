@@ -341,13 +341,24 @@ export function AddAccountForm({ embeddedSignupUrl }: AddAccountFormProps) {
 
   const handleWhatsAppEmbeddedSignup = () => {
     if (embeddedSignupUrl) {
-      const popup = window.open(embeddedSignupUrl, '_blank', 'noopener,noreferrer');
+      const width = 600;
+      const height = 760;
+      const left = window.screenX + (window.outerWidth - width) / 2;
+      const top = window.screenY + (window.outerHeight - height) / 2;
+
+      const popup = window.open(
+        embeddedSignupUrl,
+        'WhatsAppEmbeddedSignup',
+        `width=${width},height=${height},left=${left},top=${top},status=no,location=no,toolbar=no,menubar=no,scrollbars=yes,resizable=yes`
+      );
       if (!popup) {
         toast({
           title: 'Popup blocked',
           description: 'Please allow popups to continue with embedded signup.',
           variant: 'destructive',
         });
+      } else {
+        popup.focus();
       }
       return;
     }
