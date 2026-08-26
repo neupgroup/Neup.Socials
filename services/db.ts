@@ -1,6 +1,6 @@
 'use server';
 
-import { dataStore } from '@/core/lib/data-store';
+import { dataStore } from '@/core.v2/lib/data-store';
 import { buildTextSearchWhere } from '@/services/searches/text-search';
 
 const PAGE_SIZE = {

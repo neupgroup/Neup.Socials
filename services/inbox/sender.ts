@@ -3,7 +3,7 @@
 import { logError } from "@/core/lib/error-logging";
 import { sendTextMessage as sendWhatsAppMessage } from '@/services/whatsapp/api.send-message';
 import { sendPageTextMessage as sendFacebookPageMessage } from "@/services/facebook/messages";
-import { dataStore } from "@/core/lib/data-store";
+import { dataStore } from "@/core.v2/lib/data-store";
 import { decrypt } from "@/core/helpers/crypto";
 import { recordOutgoingMessageAction } from "@/services/db";
 

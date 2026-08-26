@@ -1,7 +1,7 @@
 
 'use server';
 
-import { dataStore } from '@/core/lib/data-store';
+import { dataStore } from '@/core.v2/lib/data-store';
 
 export interface ErrorLog {
   process: string;

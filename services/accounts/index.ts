@@ -1,9 +1,22 @@
 'use server';
 
-import { dataStore } from '@/core/lib/data-store';
+import { dataStore } from '@/core.v2/lib/data-store';
 import { logError } from '@/core/lib/error-logging';
 import { encrypt } from '@/core/helpers/crypto';
 import { revalidatePath } from 'next/cache';
+
+export const listAccounts = dataStore.accounts.list;
+export const countAccounts = dataStore.accounts.count;
+export const getAccount = dataStore.accounts.getById;
+export const getAccountsByIds = dataStore.accounts.getByIds;
+export const getWhatsAppAccounts = dataStore.accounts.getWhatsAppAccounts;
+export const findAccountByOwnerPlatformId = dataStore.accounts.findByOwnerPlatformId;
+export const findAccountsByPlatformId = dataStore.accounts.findByPlatformPlatformId;
+export const findWhatsAppAccount = dataStore.accounts.findWhatsAppAccount;
+export const createAccount = dataStore.accounts.create;
+export const updateAccount = dataStore.accounts.update;
+export const deleteAccount = dataStore.accounts.delete;
+export const upsertAccountByOwnerPlatformId = dataStore.accounts.upsertByOwnerPlatformId;
 
 /**
  * Deletes a connected account from Firestore.

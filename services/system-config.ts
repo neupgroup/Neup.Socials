@@ -1,5 +1,7 @@
 'use server';
 
-export async function getWhatsAppEmbeddedSignupLink() {
-  return process.env.WHATSAPP_EMBEDED_SIGNUP_URL ?? null;
-}
+import { dataStore } from '@/core.v2/lib/data-store';
+
+export const getSystemConfig = dataStore.systemConfig.getByKey;
+export const upsertSystemConfig = dataStore.systemConfig.upsert;
+export const createSystemAlert = dataStore.systemAlerts.create;

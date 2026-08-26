@@ -1,7 +1,7 @@
 
 'use server';
 
-import { dataStore } from '@/core/lib/data-store';
+import { dataStore } from '@/core.v2/lib/data-store';
 import { logError } from '@/core/lib/error-logging';
 import { decrypt } from '@/core/helpers/crypto';
 import { getPageCommentById } from '@/services/facebook/comments-api';

@@ -3,7 +3,7 @@
  */
 'use server';
 
-import { dataStore } from '@/core/lib/data-store';
+import { dataStore } from '@/core.v2/lib/data-store';
 import { decrypt } from '@/core/helpers/crypto';
 import { getPageInsights, InsightValue, PageInsightsQueryContext } from '@/services/facebook/api';
 import { subDays, format } from 'date-fns';
