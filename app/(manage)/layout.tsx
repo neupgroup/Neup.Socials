@@ -4,24 +4,21 @@
 import * as React from 'react';
 import Link from 'next/link';
 import {
-  Menu,
   Calendar,
   Inbox,
   LayoutGrid,
   Settings,
   Users,
-  MessageSquareText,
   PlusSquare,
   FileText,
   AlertTriangle,
   Upload,
   ArrowRightLeft,
-  Plus,
   Boxes,
 } from 'lucide-react';
 import { usePathname, notFound } from 'next/navigation';
-
 import { Button } from '@/components/ui/button';
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,7 +29,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Toaster } from "@/components/ui/toaster";
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/core/lib/utils';
 
 const navItems = [
@@ -58,8 +54,6 @@ export default function AppLayout({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
-  const [mobileNavOpen, setMobileNavOpen] = React.useState(false);
-
   // This check allows nested routes like /accounts/[id]
   const isAllowed = allowedPaths.some(path => pathname.startsWith(path));
 
@@ -67,95 +61,42 @@ export default function AppLayout({
     notFound();
   }
 
-  const mainNavItems = [
-    { href: '/', label: 'Dashboard' },
-    { href: '/analytics', label: 'Analytics' },
-    { href: '/feed', label: 'Feed' },
-    { href: '/content', label: 'Content' },
-    { href: '/schedule', label: 'Schedule' },
-    { href: '/accounts', label: 'Accounts' },
-    { href: '/uploads', label: 'Uploads' },
-  ];
+  const isActive = (href: string) => href === '/' ? pathname === '/' : pathname.startsWith(href);
+
+  const renderNavLink = (item: typeof navItems[number]) => (
+    <Link
+      key={item.href}
+      href={item.href}
+      className={cn(
+        'flex h-11 items-center gap-3 rounded-lg px-4 text-[13px] font-medium transition-colors',
+        isActive(item.href)
+          ? 'bg-[#e9f0f8] font-semibold text-[#315a87]'
+          : 'text-[#1f2937] hover:bg-[#f5f7fa]'
+      )}
+    >
+      <item.icon className="h-[17px] w-[17px] shrink-0" strokeWidth={1.8} />
+      <span>{item.label}</span>
+    </Link>
+  );
 
   return (
-    <div className="min-h-screen bg-white text-foreground">
-      <header className="fixed inset-x-0 top-0 z-50 w-full border-b border-border/60 bg-card/80 backdrop-blur">
-        <div className="mx-auto flex h-16 w-full max-w-[1440px] items-center px-5 md:px-6 lg:px-8">
+    <div className="min-h-screen bg-white text-[#172033]">
+      <header className="fixed inset-x-0 top-0 z-10 h-[70px] bg-white shadow-[0_4px_14px_rgba(15,23,42,0.10)]">
+        <div className="mx-auto flex h-full w-full max-w-[1440px] items-center justify-between px-6 lg:px-8">
+          <Link href="/" className="flex items-center gap-2.5" aria-label="Neup.Socials home">
+            <span className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-[#234f7d] text-sm font-extrabold tracking-[-0.08em] text-white">N</span>
+            <span className="text-[19px] font-bold tracking-[-0.04em] text-[#173a61]">Neup.Socials</span>
+          </Link>
+
           <div className="flex items-center gap-3">
-            <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="lg:hidden">
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-[300px] p-0">
-                <div className="flex h-full flex-col bg-background">
-                  <div className="border-b p-4">
-                    <Link href="/" className="flex items-center gap-2" onClick={() => setMobileNavOpen(false)}>
-                      <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                        <MessageSquareText className="size-5" />
-                      </div>
-                      <span className="font-headline text-lg font-semibold">Neup.Socials</span>
-                    </Link>
-                  </div>
-                  <nav className="space-y-1 p-3">
-                    {navItems.map((item) => (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={() => setMobileNavOpen(false)}
-                        className={cn(
-                          'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
-                          pathname.startsWith(item.href)
-                            ? 'bg-primary/10 text-primary'
-                            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                        )}
-                      >
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.label}</span>
-                      </Link>
-                    ))}
-                  </nav>
-                </div>
-              </SheetContent>
-            </Sheet>
-
-            <Link href="/" className="flex items-center gap-2">
-              <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <MessageSquareText className="size-5" />
-              </div>
-              <span className="font-headline text-lg font-semibold">Neup.Socials</span>
-            </Link>
-          </div>
-
-          <nav className="ml-10 hidden items-center gap-1 lg:flex">
-            {mainNavItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  'rounded-md px-3 py-2 text-sm font-medium transition-colors',
-                  pathname.startsWith(item.href)
-                    ? 'bg-primary/10 text-primary'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                )}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-
-          <div className="ml-auto flex items-center gap-2">
-            <Button className="hidden sm:inline-flex" asChild>
-              <Link href="/feed/create">
-                <Plus className="mr-2 h-4 w-4" />
-                New Post
-              </Link>
-            </Button>
+            <div className="hidden text-right sm:block">
+              <p className="text-[13px] font-semibold leading-5 text-[#1d2939]">Neup Admin</p>
+              <p className="text-[11px] leading-4 text-[#8a98a8]">@KHANALCWANI</p>
+            </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <Avatar className="h-8 w-8">
+                <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0 outline-none focus-visible:ring-0 focus-visible:ring-offset-0">
+                  <Avatar className="h-9 w-9">
                     <AvatarImage src="https://placehold.co/40x40" alt="User Avatar" />
                     <AvatarFallback>NS</AvatarFallback>
                   </Avatar>
@@ -165,7 +106,7 @@ export default function AppLayout({
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">Neup Admin</p>
-                    <p className="text-xs leading-none text-muted-foreground">admin@neup.socials</p>
+                    <p className="text-xs leading-none text-muted-foreground">@KHANALCWANI</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
@@ -180,32 +121,21 @@ export default function AppLayout({
         </div>
       </header>
 
-      <main className="w-full pt-16">
-        <div className="mx-auto grid w-full max-w-[1440px] grid-cols-1 px-5 py-6 md:px-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:gap-8 lg:px-8 lg:py-8">
-          <aside className="hidden self-start lg:sticky lg:top-24 lg:block">
-            <div className="rounded-2xl border border-border/70 bg-card p-3">
-              <nav className="space-y-1">
-                {navItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={cn(
-                      'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors',
-                      pathname.startsWith(item.href)
-                        ? 'bg-primary/10 text-primary'
-                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                    )}
-                  >
-                    <item.icon className="h-4 w-4" />
-                    <span>{item.label}</span>
-                  </Link>
-                ))}
-              </nav>
-            </div>
+      <main className="mx-auto grid min-h-[calc(100vh-70px)] w-full max-w-[1440px] grid-cols-1 pt-[70px] lg:grid-cols-[345px_minmax(0,1fr)]">
+          <aside className="hidden lg:block">
+            <nav className="fixed bottom-0 left-[max(0px,calc((100vw-1440px)/2))] top-[70px] z-[5] w-[345px] overflow-y-auto overscroll-contain border-r border-[#e7ebf0] bg-white px-5 py-7" aria-label="Primary navigation">
+              <p className="mb-5 px-4 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#7d8da0]">@KHANALCWANI</p>
+              <div className="space-y-1">
+                {navItems.slice(0, 1).map(renderNavLink)}
+                <p className="mb-2 mt-8 px-4 text-[11px] font-semibold uppercase tracking-[0.1em] text-[#7d8da0]">Root</p>
+                {navItems.slice(1, 10).map(renderNavLink)}
+                <p className="mb-2 mt-8 px-4 text-[11px] font-semibold uppercase tracking-[0.1em] text-[#7d8da0]">Account</p>
+                {navItems.slice(10).map(renderNavLink)}
+              </div>
+            </nav>
           </aside>
 
-          <section className="min-w-0">{children}</section>
-        </div>
+          <section className="min-w-0 px-6 py-8 lg:px-9 lg:py-9">{children}</section>
       </main>
       <Toaster />
     </div>

@@ -25,10 +25,9 @@ const recentActivity = [
 
 export default function DashboardPage() {
   return (
-    <div className="flex-1 space-y-6 p-4 pt-6 md:p-8">
-      <section className="relative overflow-hidden rounded-3xl border border-border/70 bg-card px-6 py-6 shadow-sm md:px-8 md:py-8">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,rgba(10,188,197,0.16),transparent_48%),radial-gradient(circle_at_100%_100%,rgba(244,163,79,0.12),transparent_38%)]" />
-        <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+    <div className="space-y-6">
+      <section className="rounded-xl border border-[#e7ebf0] bg-white px-6 py-6 shadow-[0_2px_10px_rgba(15,23,42,0.025)] md:px-8 md:py-8">
+        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div className="space-y-3">
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
               <Sparkles className="h-3.5 w-3.5" />

@@ -15,9 +15,9 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['Manrope', 'sans-serif'],
-        headline: ['Sora', 'sans-serif'],
-        code: ['JetBrains Mono', 'monospace'],
+        body: ['Outfit', 'sans-serif'],
+        headline: ['Outfit', 'sans-serif'],
+        code: ['Outfit', 'sans-serif'],
       },
       colors: {
         background: 'hsl(var(--background))',
