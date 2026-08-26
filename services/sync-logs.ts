@@ -1,6 +1,6 @@
 'use server';
 
-import { dataStore } from '@/core.v2/lib/data-store';
+import { dataStore } from '@/services/repositories';
 
 export const listSyncLogsByAccountId = dataStore.syncLogs.listByAccountId;
 export const createSyncLog = dataStore.syncLogs.create;

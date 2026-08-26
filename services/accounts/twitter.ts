@@ -1,6 +1,6 @@
 'use server';
 
-import { dataStore } from '@/core.v2/lib/data-store';
+import { dataStore } from '@/services/repositories';
 
 export const findTwitterAccounts = async () =>
   dataStore.accounts.list({ take: 500 }).then((accounts) =>

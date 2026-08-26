@@ -1,6 +1,6 @@
 'use server';
 
-import { dataStore } from '@/core.v2/lib/data-store';
+import { dataStore } from '@/services/repositories';
 
 export const getSystemConfig = dataStore.systemConfig.getByKey;
 export const upsertSystemConfig = dataStore.systemConfig.upsert;

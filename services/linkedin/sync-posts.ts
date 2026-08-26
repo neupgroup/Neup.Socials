@@ -1,7 +1,7 @@
 
 'use server';
 
-import { dataStore } from '@/core.v2/lib/data-store';
+import { dataStore } from '@/services/repositories';
 import { decrypt } from '@/core/helpers/crypto';
 import { getLinkedInPosts } from '@/services/linkedin/api';
 import { logError } from '@/services/error-logging';

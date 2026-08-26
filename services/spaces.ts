@@ -1,6 +1,6 @@
 'use server';
 
-import { dataStore } from '@/core.v2/lib/data-store';
+import { dataStore } from '@/services/repositories';
 
 export const listSpaces = dataStore.spaces.list;
 export const getSpace = dataStore.spaces.getById;

@@ -6,7 +6,7 @@
 
 import { exchangeCodeForToken, getUserProfile } from '@/services/linkedin/api';
 import { validateState, encrypt } from '@/core/helpers/crypto';
-import { dataStore } from '@/core.v2/lib/data-store';
+import { dataStore } from '@/services/repositories';
 import { logError } from '@/services/error-logging';
 
 /**

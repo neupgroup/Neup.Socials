@@ -45,15 +45,7 @@ export function AIContentAssistant() {
     const result = await generatePostVariationsAction({ ...data, numVariations: 3 });
     setIsLoading(false);
 
-    if (result.success && result.data) {
-      setVariations(result.data.variations);
-    } else {
-      toast({
-        title: 'Error',
-        description: result.error || 'Failed to generate content.',
-        variant: 'destructive',
-      });
-    }
+    setVariations([result]);
   };
   
   const copyToClipboard = (text: string) => {

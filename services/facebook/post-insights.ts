@@ -3,7 +3,7 @@
  */
 'use server';
 
-import { dataStore } from '@/core.v2/lib/data-store';
+import { dataStore } from '@/services/repositories';
 import { decrypt } from '@/core/helpers/crypto';
 import { getPagePostInsights } from '@/services/facebook/api';
 

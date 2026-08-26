@@ -1,6 +1,6 @@
 'use server';
 
-import { dataStore } from '@/core.v2/lib/data-store';
+import { dataStore } from '@/services/repositories';
 
 export const listPosts = dataStore.posts.list;
 export const countPosts = dataStore.posts.count;
