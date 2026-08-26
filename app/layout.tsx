@@ -5,6 +5,12 @@ import * as React from 'react';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { ProgressBar } from '@/components/progress-bar';
+import {
+  getAppDescription,
+  getAppLogo,
+  getAppName,
+  getApplicationCssVariables,
+} from '@/core/lib/application';
 
 const FacebookSdkLoader = () => {
   React.useEffect(() => {
@@ -37,14 +43,19 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const appName = getAppName();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <title>{appName}</title>
+        <meta name="description" content={getAppDescription()} />
+        <link rel="icon" href={getAppLogo('favicon')} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
       </head>
-      <body className="font-body antialiased">
+      <body className="font-body antialiased" style={getApplicationCssVariables()}>
         <FacebookSdkLoader />
         <ProgressBar />
         {children}

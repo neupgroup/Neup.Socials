@@ -20,6 +20,7 @@
 
 # production
 /build
+/certificates
 
 # misc
 .DS_Store
@@ -44,4 +45,9 @@ next-env.d.ts
 # firebase
 firebase-debug.log
 firestore-debug.log
-certificates
+
+# neup.standard files
+core
+neup.core
+logica
+neup.logica

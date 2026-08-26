@@ -30,6 +30,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Toaster } from "@/components/ui/toaster";
 import { cn } from '@/core/lib/utils';
+import { getAppLogo, getAppName } from '@/core/lib/application';
 
 const navItems = [
   { href: '/', icon: LayoutGrid, label: 'Dashboard' },
@@ -54,6 +55,7 @@ export default function AppLayout({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
+  const appName = getAppName();
   // This check allows nested routes like /accounts/[id]
   const isAllowed = allowedPaths.some(path => pathname.startsWith(path));
 
@@ -70,7 +72,7 @@ export default function AppLayout({
       className={cn(
         'flex h-11 items-center gap-3 rounded-lg px-4 text-[13px] font-medium transition-colors',
         isActive(item.href)
-          ? 'bg-[#e9f0f8] font-semibold text-[#315a87]'
+          ? 'bg-primary/10 font-semibold text-primary'
           : 'text-[#1f2937] hover:bg-[#f5f7fa]'
       )}
     >
@@ -80,12 +82,17 @@ export default function AppLayout({
   );
 
   return (
-    <div className="min-h-screen bg-white text-[#172033]">
-      <header className="fixed inset-x-0 top-0 z-10 h-[70px] bg-white shadow-[0_4px_14px_rgba(15,23,42,0.10)]">
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="fixed inset-x-0 top-0 z-10 h-[70px] bg-background shadow-[var(--app-box-shadow)]">
         <div className="mx-auto flex h-full w-full max-w-[1440px] items-center justify-between px-6 lg:px-8">
-          <Link href="/" className="flex items-center gap-2.5" aria-label="Neup.Socials home">
-            <span className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-[#234f7d] text-sm font-extrabold tracking-[-0.08em] text-white">N</span>
-            <span className="text-[19px] font-bold tracking-[-0.04em] text-[#173a61]">Neup.Socials</span>
+          <Link href="/" className="flex items-center gap-2.5" aria-label={`${appName} home`}>
+            <img
+              src={getAppLogo('mainlogo')}
+              alt={appName}
+              className="max-h-8 max-w-[180px] object-contain"
+              onError={(event) => { event.currentTarget.style.display = 'none'; }}
+            />
+            <span className="text-[19px] font-bold tracking-[-0.04em] text-primary">{appName}</span>
           </Link>
 
           <div className="flex items-center gap-3">
@@ -123,7 +130,7 @@ export default function AppLayout({
 
       <main className="mx-auto grid min-h-[calc(100vh-70px)] w-full max-w-[1440px] grid-cols-1 pt-[70px] lg:grid-cols-[345px_minmax(0,1fr)]">
           <aside className="hidden lg:block">
-            <nav className="fixed bottom-0 left-[max(0px,calc((100vw-1440px)/2))] top-[70px] z-[5] w-[345px] overflow-y-auto overscroll-contain border-r border-[#e7ebf0] bg-white px-5 py-7" aria-label="Primary navigation">
+            <nav className="fixed bottom-0 left-[max(0px,calc((100vw-1440px)/2))] top-[70px] z-[5] w-[345px] overflow-y-auto overscroll-contain border-r border-border bg-background px-5 py-7" aria-label="Primary navigation">
               <p className="mb-5 px-4 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#7d8da0]">@KHANALCWANI</p>
               <div className="space-y-1">
                 {navItems.slice(0, 1).map(renderNavLink)}
