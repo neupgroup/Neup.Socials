@@ -29,8 +29,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Toaster } from "@/components/ui/toaster";
-import { cn } from '@/core/lib/utils';
-import { getAppLogo, getAppName } from '@/core/lib/application';
+import { cn } from '@/core/utils';
+import { getAppInterface, getAppLogo, getAppName } from '@/core/appconfig';
 
 const navItems = [
   { href: '/', icon: LayoutGrid, label: 'Dashboard' },
@@ -83,7 +83,10 @@ export default function AppLayout({
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="fixed inset-x-0 top-0 z-10 h-[70px] bg-background shadow-[var(--app-box-shadow)]">
+      <header
+        className="fixed inset-x-0 top-0 z-10 h-[70px] bg-background"
+        style={{ boxShadow: getAppInterface().boxShadow }}
+      >
         <div className="mx-auto flex h-full w-full max-w-[1440px] items-center justify-between px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-2.5" aria-label={`${appName} home`}>
             <img

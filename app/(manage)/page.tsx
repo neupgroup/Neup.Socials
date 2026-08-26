@@ -1,7 +1,7 @@
 
 'use client';
 
-import { ArrowDown, ArrowUp, BarChart3, CalendarCheck2, MessageCircle, Share2, Sparkles, ThumbsUp, Users } from 'lucide-react';
+import { ArrowDown, ArrowUp, BarChart3, CalendarCheck2, MessageCircle, Share2, ThumbsUp, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
@@ -26,28 +26,13 @@ const recentActivity = [
 export default function DashboardPage() {
   return (
     <div className="space-y-6">
-      <section className="rounded-xl border border-[#e7ebf0] bg-white px-6 py-6 shadow-[0_2px_10px_rgba(15,23,42,0.025)] md:px-8 md:py-8">
-        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+      <section className="px-0 py-0">
+        <div>
           <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
-              <Sparkles className="h-3.5 w-3.5" />
-              Home Overview
-            </div>
             <h1 className="font-headline text-3xl font-semibold tracking-tight md:text-4xl">Good morning. Your channels are active.</h1>
             <p className="max-w-2xl text-sm text-muted-foreground md:text-base">
               4 posts are scheduled today, engagement is trending up, and inbox response time is improving.
             </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button asChild>
-              <Link href="/feed/create">Create Post</Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link href="/schedule">Open Calendar</Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link href="/analytics">View Analytics</Link>
-            </Button>
           </div>
         </div>
       </section>

@@ -10,7 +10,7 @@ import {
   getAppLogo,
   getAppName,
   getApplicationCssVariables,
-} from '@/core/lib/application';
+} from '@/core/appconfig';
 
 const FacebookSdkLoader = () => {
   React.useEffect(() => {

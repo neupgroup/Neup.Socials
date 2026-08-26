@@ -4,7 +4,7 @@ import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
-import { logError } from '@/core/lib/error-logging';
+import { logger } from '@/logica/logger';
 
 export default function GlobalError({
   error,
@@ -15,15 +15,16 @@ export default function GlobalError({
 }) {
   React.useEffect(() => {
     // Log the error to our logging service
-    logError({
-      process: 'Client-side Rendering',
-      location: 'GlobalError Boundary',
-      errorMessage: error.message,
-      context: {
+    logger
+      .type('error')
+      .data({
+        source: 'GlobalError Boundary',
+        message: error.message,
         stack: error.stack,
         digest: error.digest,
-      },
-    }).catch(console.error); // Log to console if logging service fails
+      })
+      .log()
+      .catch(console.error); // Log to console if logging service fails
   }, [error]);
 
   return (
