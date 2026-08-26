@@ -17,6 +17,9 @@ export const createAccount = dataStore.accounts.create;
 export const updateAccount = dataStore.accounts.update;
 export const deleteAccount = dataStore.accounts.delete;
 export const upsertAccountByOwnerPlatformId = dataStore.accounts.upsertByOwnerPlatformId;
+export const listLocalAccounts = dataStore.localAccounts.list;
+export const getLocalAccount = dataStore.localAccounts.getById;
+export const updateLocalAccount = dataStore.localAccounts.update;
 
 /**
  * Deletes a connected account from Firestore.

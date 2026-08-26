@@ -112,7 +112,7 @@ export default function DashboardPage() {
               <Link href="/uploads">Review Media Library</Link>
             </Button>
             <Button asChild className="w-full justify-start" variant="outline">
-              <Link href="/root/errors">Inspect System Errors</Link>
+              <Link href="/settings">Open Settings</Link>
             </Button>
 
             <div className="mt-5 rounded-xl border border-primary/20 bg-primary/10 p-4">

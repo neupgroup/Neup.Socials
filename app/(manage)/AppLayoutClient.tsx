@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { Calendar, Inbox, LayoutGrid, Settings, Users, PlusSquare, FileText, AlertTriangle, Upload, ArrowRightLeft, Boxes } from 'lucide-react';
+import { Calendar, Inbox, LayoutGrid, Settings, Users, PlusSquare, FileText, Upload, ArrowRightLeft, Boxes } from 'lucide-react';
 import { usePathname, notFound } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -16,14 +16,16 @@ const navItems = [
   { href: '/content', icon: FileText, label: 'Content' }, { href: '/inbox', icon: Inbox, label: 'Inbox' },
   { href: '/uploads', icon: Upload, label: 'Uploads' }, { href: '/accounts', icon: Users, label: 'Accounts' },
   { href: '/space', icon: Boxes, label: 'Spaces' }, { href: '/switch', icon: ArrowRightLeft, label: 'Switch' },
-  { href: '/settings', icon: Settings, label: 'Settings' }, { href: '/root/errors', icon: AlertTriangle, label: 'Errors' },
+  { href: '/settings', icon: Settings, label: 'Settings' },
 ];
 
-type AccountSnapshot = { displayName: string; displayImage: string; neupId: string | null } | null;
+const additionalAllowedPaths = ['/manage/accounts'];
+
+type AccountSnapshot = { displayName: string | null; displayImage: string | null; neupId: string | null } | null;
 
 export default function AppLayoutClient({ children, appName, appImage, account }: { children: React.ReactNode; appName: string; appImage: string; account: AccountSnapshot }) {
   const pathname = usePathname();
-  if (!navItems.some((item) => pathname.startsWith(item.href))) notFound();
+  if (!navItems.some((item) => pathname.startsWith(item.href)) && !additionalAllowedPaths.some((path) => pathname.startsWith(path))) notFound();
   const isActive = (href: string) => href === '/' ? pathname === '/' : pathname.startsWith(href);
   const renderNavLink = (item: typeof navItems[number]) => <Link key={item.href} href={item.href} className={cn('flex h-11 items-center gap-3 rounded-lg px-4 text-[13px] font-medium transition-colors', isActive(item.href) ? 'bg-primary/10 font-semibold text-primary' : 'text-foreground/80 hover:bg-secondary')}><item.icon className="h-[17px] w-[17px] shrink-0" strokeWidth={1.8} /><span>{item.label}</span></Link>;
   const displayName = account?.displayName || 'Neup Admin';

@@ -1,6 +1,7 @@
 'use server';
 
-import { ensureAccount } from '@/logica/account/self';
+import { getBasics } from '@/logica/account/self';
+import { getAccountBasics } from '@/logica/account/lookup';
 import { buildTextSearchWhere } from '@/services/searches/text-search';
 import {
   countAccounts,
@@ -9,6 +10,9 @@ import {
   getAccountsByIds,
   getWhatsAppAccounts,
   listAccounts,
+  listLocalAccounts,
+  getLocalAccount,
+  updateLocalAccount,
 } from '@/services/accounts';
 
 const PAGE_SIZE = 10;
@@ -26,13 +30,13 @@ const serializeAccount = (account: Awaited<ReturnType<typeof getAccount>>) =>
     : null;
 
 export async function ensureCurrentAccountAction() {
-  const account = await ensureAccount();
+  const account = (await getBasics())[0];
   if (!account) return null;
 
   return {
     displayName: account.displayName,
     displayImage: account.displayImage,
-    neupId: account.neupId,
+    neupId: account.neupid,
   };
 }
 
@@ -51,6 +55,51 @@ export async function listAccountsAction({ owner, search, skip = 0 }: {
     items: accounts.map((account) => serializeAccount(account)!),
     hasMore: skip + accounts.length < total,
   };
+}
+
+export async function listAllAccountsAction({ owner, search }: { owner?: string; search?: string } = {}) {
+  const searchBuild = buildTextSearchWhere(search, ['name', 'username', 'platform']);
+  const accounts = await listAccounts({ owner, search, searchFilter: searchBuild.where });
+  return accounts.map((account: NonNullable<Awaited<ReturnType<typeof getAccount>>>) => serializeAccount(account)!);
+}
+
+export async function listLocalAccountsAction() {
+  return listLocalAccounts();
+}
+
+const serializeLocalAccount = (account: any) => account ? {
+  ...account,
+  createdOn: toIso(account.createdOn),
+} : null;
+
+export async function getLocalAccountAction(accountId: string) {
+  if (!accountId) return null;
+  return serializeLocalAccount(await getLocalAccount(accountId));
+}
+
+export async function syncLocalAccountAction(accountId: string) {
+  if (!accountId) return { success: false, error: 'Account ID is required.' };
+
+  const remote = await getAccountBasics({
+    accountId,
+    fields: ['neupid', 'displayName', 'displayImage', 'accountType'],
+  });
+
+  if (!remote.ok || !remote.body.success) {
+    return {
+      success: false,
+      error: remote.body.error || `Remote account lookup failed with status ${remote.status}.`,
+    };
+  }
+
+  const account = await updateLocalAccount(accountId, {
+    displayName: remote.body.displayName ?? '',
+    displayImage: remote.body.displayImage ?? '',
+    neupId: remote.body.neupid ?? null,
+    type: remote.body.accountType ?? 'individual',
+  });
+
+  return { success: true, account: serializeLocalAccount(account), syncedAt: new Date().toISOString() };
 }
 
 export async function getAccountAction(id: string) {

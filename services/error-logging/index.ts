@@ -1,7 +1,7 @@
 'use server';
 
 /**
- * @fileoverview A centralized service adapter for the Logica error logger.
+ * @fileoverview Application error logging adapter backed by Logica logger.
  */
 
 import { logger } from '@/logica/logger';
@@ -22,8 +22,9 @@ export type ErrorLog = {
 };
 
 /**
- * Logs an error through Logica's centralized logger.
- * @param errorLog - An object containing the details of the error to be logged.
+ * Sends an application error through the existing Logica logger API.
+ * Logging failures are swallowed so they never hide the original application
+ * error or change the response status.
  */
 export async function logError(errorLog: Omit<ErrorLog, 'timestamp'>): Promise<string> {
   try {
@@ -39,12 +40,8 @@ export async function logError(errorLog: Omit<ErrorLog, 'timestamp'>): Promise<s
       })
       .error();
 
-    return typeof response.activity === 'string' ? response.activity : '';
-  } catch (loggingError) {
-    // Logging must not hide the original application error.
-    console.error('FATAL: Failed to send error to Logica.', loggingError);
-    console.error('Original Error:', errorLog);
-    // In a production environment, you might want to send this to a more robust, secondary logging service.
+    return typeof response.body?.activity === 'string' ? response.body.activity : '';
+  } catch {
     return '';
   }
 }

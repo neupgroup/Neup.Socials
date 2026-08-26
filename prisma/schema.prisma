@@ -86,25 +86,6 @@ model Upload {
   @@map("uploads")
 }
 
-model ErrorLog {
-  id           String   @id @default(cuid())
-  process      String?
-  location     String?
-  errorMessage String?
-  user         String?
-  context      Json?
-  timestamp    DateTime @default(now())
-  count        Int      @default(1)
-  source       String?
-  message      String?
-  stack        String?
-  userId       String?
-  request      Json?
-
-  @@index([timestamp])
-  @@map("errors")
-}
-
 model SyncLog {
   id           String   @id @default(cuid())
   accountId    String
@@ -330,8 +311,15 @@ model InstagramMessage {
 }
 
 model Account {
-  account_id  String       @id
-  spaceAssets SpaceAsset[]
+  account_id   String       @id
+  displayName  String       @default("") @map("display_name")
+  displayImage String       @default("") @map("display_image")
+  neupId       String?      @map("neupid")
+  type         String       @default("individual")
+  createdOn    DateTime     @default(now()) @map("created_on")
+  status       String       @default("active")
+  moreDetails  Json?        @map("more_details")
+  spaceAssets  SpaceAsset[]
 
   @@map("accounts")
 }

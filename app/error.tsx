@@ -4,7 +4,6 @@ import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
-import { logger } from '@/logica/logger';
 
 export default function GlobalError({
   error,
@@ -13,20 +12,6 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  React.useEffect(() => {
-    // Log the error to our logging service
-    logger
-      .type('error')
-      .data({
-        source: 'GlobalError Boundary',
-        message: error.message,
-        stack: error.stack,
-        digest: error.digest,
-      })
-      .log()
-      .catch(console.error); // Log to console if logging service fails
-  }, [error]);
-
   return (
     <div className="flex items-center justify-center min-h-screen bg-background p-4">
       <Card className="w-full max-w-lg text-center">
