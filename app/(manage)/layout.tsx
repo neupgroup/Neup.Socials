@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { usePathname, notFound } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { ensureCurrentAccountAction } from '@/app/actions';
 
 import {
   DropdownMenu,
@@ -30,7 +31,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Toaster } from "@/components/ui/toaster";
 import { cn } from '@/core/utils';
-import { getAppInterface, getAppLogo, getAppName } from '@/core/appconfig';
+import application from '@/base/application.json';
 
 const navItems = [
   { href: '/', icon: LayoutGrid, label: 'Dashboard' },
@@ -55,7 +56,16 @@ export default function AppLayout({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
-  const appName = getAppName();
+  const appName = application.appName;
+  const [account, setAccount] = React.useState<{
+    displayName: string;
+    displayImage: string;
+    neupId: string | null;
+  } | null>(null);
+
+  React.useEffect(() => {
+    ensureCurrentAccountAction().then(setAccount).catch(() => setAccount(null));
+  }, []);
   // This check allows nested routes like /accounts/[id]
   const isAllowed = allowedPaths.some(path => pathname.startsWith(path));
 
@@ -85,12 +95,12 @@ export default function AppLayout({
     <div className="min-h-screen bg-background text-foreground">
       <header
         className="fixed inset-x-0 top-0 z-10 h-[70px] bg-background"
-        style={{ boxShadow: getAppInterface().boxShadow }}
+        style={{ boxShadow: application.appInterface.boxShadow }}
       >
         <div className="mx-auto flex h-full w-full max-w-[1440px] items-center justify-between px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-2.5" aria-label={`${appName} home`}>
             <img
-              src={getAppLogo('mainlogo')}
+              src={application.appLogo.mainlogo}
               alt={appName}
               className="max-h-8 max-w-[180px] object-contain"
               onError={(event) => { event.currentTarget.style.display = 'none'; }}
@@ -100,23 +110,23 @@ export default function AppLayout({
 
           <div className="flex items-center gap-3">
             <div className="hidden text-right sm:block">
-              <p className="text-[13px] font-semibold leading-5 text-[#1d2939]">Neup Admin</p>
-              <p className="text-[11px] leading-4 text-[#8a98a8]">@KHANALCWANI</p>
+              <p className="text-[13px] font-semibold leading-5 text-[#1d2939]">{account?.displayName || 'Neup Admin'}</p>
+              <p className="text-[11px] leading-4 text-[#8a98a8]">{account?.neupId || '@KHANALCWANI'}</p>
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0 outline-none focus-visible:ring-0 focus-visible:ring-offset-0">
                   <Avatar className="h-9 w-9">
-                    <AvatarImage src="https://placehold.co/40x40" alt="User Avatar" />
-                    <AvatarFallback>NS</AvatarFallback>
+                    <AvatarImage src={account?.displayImage || undefined} alt={account?.displayName || 'User Avatar'} />
+                    <AvatarFallback>{(account?.displayName || 'NS').slice(0, 2).toUpperCase()}</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">Neup Admin</p>
-                    <p className="text-xs leading-none text-muted-foreground">@KHANALCWANI</p>
+                    <p className="text-sm font-medium leading-none">{account?.displayName || 'Neup Admin'}</p>
+                    <p className="text-xs leading-none text-muted-foreground">{account?.neupId || '@KHANALCWANI'}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />

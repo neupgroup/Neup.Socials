@@ -2,7 +2,7 @@
 
 import { dataStore } from '@/core/lib/data-store';
 import { logError } from '@/core/lib/error-logging';
-import { encrypt } from '@/core/lib/crypto';
+import { encrypt } from '@/core.v2/lib/crypto';
 import { revalidatePath } from 'next/cache';
 
 /**

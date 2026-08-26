@@ -34,7 +34,7 @@ import {
   subscribeAppToPageWebhooks,
 } from '../../services/facebook/api';
 import { FACEBOOK_AUTH_INTENTS, type FacebookAuthIntent } from './auth-intents';
-import { validateState, encrypt } from '@/core/lib/crypto';
+import { validateState, encrypt } from '@/core.v2/lib/crypto';
 import { dataStore } from '@/core/lib/data-store';
 import { logError } from '@/core/lib/error-logging';
 

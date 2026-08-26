@@ -14,7 +14,7 @@
  */
 'use server';
 
-import { generateRandomState } from '@/core/lib/crypto';
+import { generateRandomState } from '@/core.v2/lib/crypto';
 import { logError } from '@/core/lib/error-logging';
 import { toAppUrl } from '@/core/lib/app-url';
 import { FACEBOOK_AUTH_INTENTS, type FacebookAuthIntent } from './auth-intents';

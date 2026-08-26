@@ -4,7 +4,7 @@
  */
 'use server';
 
-import { generateRandomState } from '@/core/lib/crypto';
+import { generateRandomState } from '@/core.v2/lib/crypto';
 import { logError } from '@/core/lib/error-logging';
 import { getAppBaseUrl, buildUrlFromBase } from '@/core/lib/app-url';
 

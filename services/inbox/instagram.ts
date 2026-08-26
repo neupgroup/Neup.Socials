@@ -1,4 +1,4 @@
-import { prisma } from '@/core/lib/prisma';
+import { prisma } from '@/core.v2/lib/prisma';
 import { logError } from '@/core/lib/error-logging';
 import { processInstagramLiveCommentsWebhook } from '@/services/inbox/instagram-live-comments';
 import { processInstagramMessagesWebhook } from '@/services/inbox/instagram-messages';

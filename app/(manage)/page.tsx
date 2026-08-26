@@ -1,12 +1,11 @@
 
 'use client';
 
-import { ArrowDown, ArrowUp, BarChart3, CalendarCheck2, MessageCircle, Share2, ThumbsUp, Users } from 'lucide-react';
+import { ArrowDown, ArrowUp, CalendarCheck2, MessageCircle, Share2, ThumbsUp, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 
 const overviewData = [
   { title: 'Total Followers', value: '12,345', change: '+20.1%', icon: Users },
@@ -69,19 +68,14 @@ export default function DashboardPage() {
         })}
       </section>
 
-      <section className="grid grid-cols-1 gap-6 xl:grid-cols-5">
-        <Card className="xl:col-span-3">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-primary" />
-              Live Activity Feed
-            </CardTitle>
-            <CardDescription>Prioritized events from your connected platforms.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {recentActivity.map((activity, index) => (
-              <div key={activity.id}>
-                <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-muted/25 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <section className="mt-16 space-y-4">
+          <div>
+            <h2 className="text-xl font-semibold">Live Activity Feed</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Prioritized events from your connected platforms.</p>
+          </div>
+          <div className="space-y-3">
+            {recentActivity.map((activity) => (
+              <div key={activity.id} className="flex flex-col gap-3 rounded-xl border border-border/60 bg-muted/25 p-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge variant={activity.priority === 'high' ? 'default' : activity.priority === 'normal' ? 'secondary' : 'outline'}>
@@ -94,22 +88,20 @@ export default function DashboardPage() {
                   <Button variant="ghost" size="sm" asChild>
                     <Link href="/inbox">Review</Link>
                   </Button>
-                </div>
-                {index < recentActivity.length - 1 ? <Separator className="my-1" /> : null}
               </div>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+      </section>
 
-        <Card className="xl:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+      <section className="space-y-4">
+          <div>
+            <h2 className="flex items-center gap-2 text-lg font-semibold">
               <CalendarCheck2 className="h-5 w-5 text-primary" />
               Quick Actions
-            </CardTitle>
-            <CardDescription>Jump into your most-used workflows.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">Jump into your most-used workflows.</p>
+          </div>
+          <div className="space-y-3">
             <Button asChild className="w-full justify-start" variant="secondary">
               <Link href="/feed/create">Draft New Campaign Post</Link>
             </Button>
@@ -129,8 +121,7 @@ export default function DashboardPage() {
                 Use the schedule view to distribute posts by platform and avoid same-hour publishing spikes.
               </p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
       </section>
     </div>
   );

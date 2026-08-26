@@ -1,7 +1,7 @@
 'use server';
 
 import { dataStore } from '@/core/lib/data-store';
-import { decrypt } from '@/core/lib/crypto';
+import { decrypt } from '@/core.v2/lib/crypto';
 import { logError } from '@/core/lib/error-logging';
 import {
 	blockPageUser,
@@ -196,4 +196,3 @@ export async function respondToFacebookPageProposalAction(
 		return { success: false, error: error.message };
 	}
 }
-

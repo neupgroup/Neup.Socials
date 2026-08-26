@@ -1,4 +1,4 @@
-import { prisma } from '@/core/lib/prisma';
+import { prisma } from '@/core.v2/lib/prisma';
 
 type InstagramMessageEditPayload = {
   sender?: {
