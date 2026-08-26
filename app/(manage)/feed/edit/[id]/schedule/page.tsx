@@ -16,7 +16,7 @@ import { Calendar as CalendarIcon, Clock, Send, Loader2 } from 'lucide-react';
 	import { useRouter, useParams } from 'next/navigation';
 	import { useToast } from '@/core/hooks/useToast';
 	import { publishPostAction } from '@/services/content/publish';
-	import { getPostCollectionAction, updatePostCollectionAction } from '@/services/db';
+	import { getPostCollectionAction, updatePostCollectionAction } from '@/services/posts/actions';
 
 export default function EditSchedulePage() {
   const params = useParams();

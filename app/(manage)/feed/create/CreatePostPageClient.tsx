@@ -14,7 +14,8 @@ import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { createPostCollectionDraftAction, listAllUploadsAction, listUploadsAction } from '@/services/db';
+import { createPostCollectionDraftAction } from '@/services/posts/actions';
+import { listAllUploadsAction, listUploadsAction } from '@/services/uploads/actions';
 
 const UPLOAD_ENDPOINT = 'https://neupgroup.com/usercontent/bridge/api/upload.php';
 

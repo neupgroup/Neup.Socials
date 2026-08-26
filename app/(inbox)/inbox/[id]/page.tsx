@@ -18,8 +18,8 @@ import {
 import {
     getConversationAction,
     listConversationMessagesAction,
-    recordOutgoingMessageAction,
-} from '@/services/db';
+} from '@/services/conversations/actions';
+import { recordOutgoingMessageAction } from '@/services/messages/actions';
 
 type Message = {
     id: string;

@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/core/hooks/useToast';
-import { getUploadAction, updateUploadAction } from '@/services/db';
+import { getUploadAction, updateUploadAction } from '@/services/uploads/actions';
 
 type FormData = {
   contentName: string;

@@ -13,7 +13,7 @@ import { Loader2, ArrowLeft, History, CheckCircle, XCircle } from 'lucide-react'
 import { Badge } from '@/components/ui/badge';
 import { syncPostsAction } from '@/services/facebook/sync-posts';
 import { syncFacebookCommentsAction, syncFacebookMessagesAction } from '@/services/facebook/sync-inbox';
-import { listSyncLogsAction } from '@/services/db';
+import { listSyncLogsAction } from '@/services/sync-logs/actions';
 
 type SyncLog = {
     id: string;

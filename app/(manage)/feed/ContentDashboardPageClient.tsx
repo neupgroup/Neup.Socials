@@ -24,7 +24,7 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { listPostsAction } from '@/services/db';
+import { listPostsAction } from '@/services/posts/actions';
 import { refreshPostAnalyticsAction } from '@/services/facebook/post-insights';
 
 type Post = {
@@ -421,4 +421,3 @@ export default function ContentDashboardPageClient() {
     </div>
   );
 }
-

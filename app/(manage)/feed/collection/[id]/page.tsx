@@ -18,7 +18,7 @@ import {
   deletePostCollectionAction,
   getPostCollectionAction,
   getPostCollectionPostsAction,
-} from '@/services/db';
+} from '@/services/posts/actions';
 
 type PostCollection = {
   id: string;

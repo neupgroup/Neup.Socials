@@ -3,9 +3,9 @@
 import { logError } from "@/services/error-logging";
 import { sendTextMessage as sendWhatsAppMessage } from '@/services/whatsapp/api.send-message';
 import { sendPageTextMessage as sendFacebookPageMessage } from "@/services/facebook/messages";
-import { dataStore } from "@/core.v2/lib/data-store";
 import { decrypt } from "@/core/helpers/crypto";
-import { recordOutgoingMessageAction } from "@/services/db";
+import { recordOutgoingMessageAction } from '@/services/messages/actions';
+import { getInboxAccount } from '@/services/inbox/account-data';
 
 type SendMessageResult = {
     success: boolean;
@@ -38,7 +38,7 @@ export async function sendReplyAction(
                 throw new Error("WhatsApp channel ID is missing.");
             }
 
-            const accountData = await dataStore.accounts.getById(channelId);
+            const accountData = await getInboxAccount(channelId);
 
             if (!accountData) {
                 throw new Error(`WhatsApp account with ID ${channelId} not found.`);
@@ -61,7 +61,7 @@ export async function sendReplyAction(
                 throw new Error("Facebook channel ID is missing.");
             }
 
-            const accountData = await dataStore.accounts.getById(channelId);
+            const accountData = await getInboxAccount(channelId);
             if (!accountData) {
                 throw new Error(`Facebook account with ID ${channelId} not found.`);
             }

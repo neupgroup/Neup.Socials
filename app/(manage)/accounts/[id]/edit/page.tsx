@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/core/hooks/useToast';
 import { updateWhatsAppTokenAction } from '@/services/accounts';
-import { getAccountAction } from '@/services/db';
+import { getAccountAction } from '@/services/accounts/actions';
 
 type FormData = {
   accessToken: string;

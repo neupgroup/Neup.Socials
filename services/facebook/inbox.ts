@@ -1,7 +1,16 @@
 'use server';
 
-import { dataStore } from '@/core.v2/lib/data-store';
 import { logError } from '@/services/error-logging';
+import {
+  getFacebookInboxAccount,
+  getFacebookInboxAccounts,
+  getFacebookInboxComment,
+  getFacebookInboxPosts,
+  listFacebookInboxAccounts,
+  listFacebookInboxComments,
+  listFacebookInboxConversations,
+  listFacebookInboxMessages,
+} from '@/services/facebook/inbox-data';
 
 export type FacebookInboxItem = {
   id: string;
@@ -49,17 +58,18 @@ export async function getFacebookCommentInboxViewAction({
   postId: string;
 }): Promise<FacebookCommentInboxView> {
   try {
-    const comment = await dataStore.postComments.getByCommentId(commentId);
+    const comment = await getFacebookInboxComment(commentId);
     if (!comment || comment.postId !== postId) {
       return { success: false, error: 'Comment not found.' };
     }
 
-    const post = await dataStore.posts.getById(comment.postId);
+    const posts = await getFacebookInboxPosts([comment.postId]);
+    const post = posts[0] ?? null;
     if (!post?.accountId) {
       return { success: false, error: 'Post not found.' };
     }
 
-    const account = await dataStore.accounts.getById(post.accountId);
+    const account = await getFacebookInboxAccount(post.accountId);
     if (!account) {
       return { success: false, error: 'Account not found.' };
     }
@@ -89,7 +99,7 @@ export async function getFacebookCommentInboxViewAction({
 }
 
 export async function listFacebookInboxFeedAction(): Promise<FacebookInboxItem[]> {
-  const accounts = await dataStore.accounts.list({ take: 200 });
+  const accounts = await listFacebookInboxAccounts(200);
   const facebookAccounts = accounts.filter(
     (account) => account.platform === 'Facebook' && account.platformId
   );
@@ -103,21 +113,11 @@ export async function listFacebookInboxFeedAction(): Promise<FacebookInboxItem[]
   const accountIds = facebookAccounts.map((account) => account.id);
 
   const replyWindowStart = new Date(Date.now() - REPLY_WINDOW_HOURS * 60 * 60 * 1000);
-  const savedComments = await dataStore.postComments.listRecent({
-    platform: 'facebook',
-    since: replyWindowStart,
-    take: 500,
-  });
+  const savedComments = await listFacebookInboxComments({ since: replyWindowStart, take: 500 });
 
-  const conversations = await dataStore.conversations.listByChannelIds({
-    channelIds: accountIds,
-    take: 400,
-  });
+  const conversations = await listFacebookInboxConversations(accountIds, 400);
   const conversationById = new Map(conversations.map((conversation) => [conversation.id, conversation]));
-  const latestMessages = await dataStore.messages.listByConversationIds({
-    conversationIds: conversations.map((item) => item.id),
-    take: 1200,
-  });
+  const latestMessages = await listFacebookInboxMessages(conversations.map((item) => item.id), 1200);
 
   const latestByConversation = new Map<string, (typeof latestMessages)[number]>();
   for (const message of latestMessages) {
@@ -153,11 +153,11 @@ export async function listFacebookInboxFeedAction(): Promise<FacebookInboxItem[]
     .filter((item): item is FacebookInboxItem => item !== null);
 
   const postIds = Array.from(new Set(savedComments.map((item) => item.postId)));
-  const posts = postIds.length ? await dataStore.posts.getByIds(postIds) : [];
+  const posts = postIds.length ? await getFacebookInboxPosts(postIds) : [];
   const postById = new Map(posts.map((post) => [post.id, post]));
   const accountIdsFromPosts = Array.from(new Set(posts.map((post) => post.accountId).filter(Boolean) as string[]));
   const accountsFromPosts = accountIdsFromPosts.length
-    ? await dataStore.accounts.getByIds(accountIdsFromPosts)
+    ? await getFacebookInboxAccounts(accountIdsFromPosts)
     : [];
   const accountByPostId = new Map(accountsFromPosts.map((account) => [account.id, account]));
 

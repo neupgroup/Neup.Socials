@@ -18,7 +18,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/core/hooks/useToast';
 import { Loader2 } from 'lucide-react';
 import { sendReplyAction } from '@/services/inbox/sender';
-import { getWhatsAppAccountsAction, recordOutgoingMessageAction } from '@/services/db';
+import { getWhatsAppAccountsAction } from '@/services/accounts/actions';
+import { recordOutgoingMessageAction } from '@/services/messages/actions';
 
 type Conversation = {
   id: string;

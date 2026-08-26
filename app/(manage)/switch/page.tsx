@@ -19,7 +19,7 @@ import { useToast } from '@/core/hooks/useToast';
 import { Input } from '@/components/ui/input';
 import { syncPostsAction as syncFacebookPostsAction } from '@/services/facebook/sync-posts';
 import { syncLinkedInPostsAction } from '@/services/linkedin/sync-posts';
-import { listAccountsAction } from '@/services/db';
+import { listAccountsAction } from '@/services/accounts/actions';
 
 type Account = {
   id: string;

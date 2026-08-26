@@ -11,7 +11,7 @@ import { Loader2, ArrowLeft, Trash2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { deleteErrorAction } from '@/services/error-log-actions';
 import { format } from 'date-fns';
-import { getErrorAction } from '@/services/db';
+import { getErrorAction } from '@/services/errors/actions';
 import {
   AlertDialog,
   AlertDialogAction,

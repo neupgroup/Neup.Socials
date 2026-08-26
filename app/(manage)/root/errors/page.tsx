@@ -11,7 +11,7 @@ import { Loader2, AlertTriangle, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { clearAllErrorsAction } from '@/services/error-log-actions';
 import { useToast } from '@/core/hooks/useToast';
-import { listErrorsAction } from '@/services/db';
+import { listErrorsAction } from '@/services/errors/actions';
 import {
   AlertDialog,
   AlertDialogAction,

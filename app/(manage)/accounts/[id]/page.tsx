@@ -15,7 +15,8 @@ import { format } from 'date-fns';
 import { logError } from '@/services/error-logging';
 import { syncPostsAction as syncFacebookPostsAction } from '@/services/facebook/sync-posts';
 import { syncLinkedInPostsAction } from '@/services/linkedin/sync-posts';
-import { getAccountAction, listPostsAction } from '@/services/db';
+import { getAccountAction } from '@/services/accounts/actions';
+import { listPostsAction } from '@/services/posts/actions';
 
 type Account = {
   id: string;

@@ -3,11 +3,11 @@
  */
 'use server';
 
-import { dataStore } from '@/core.v2/lib/data-store';
 import { decrypt } from '@/core/helpers/crypto';
 import { getPageInsights, InsightValue, PageInsightsQueryContext } from '@/services/facebook/api';
 import { subDays, format } from 'date-fns';
 import { logError } from '@/services/error-logging';
+import { getFacebookInsightsAccount, listFacebookInsightsAccounts } from '@/services/facebook/insights-data';
 
 type ConnectedAccount = {
   id: string;
@@ -68,10 +68,16 @@ const getLatestNumericValue = (values: InsightValue[] | undefined) => {
  */
 export async function getConnectedAccounts(ownerId: string = 'neupkishor'): Promise<GetAccountsResult> {
   try {
-    const accounts = await dataStore.accounts.list({ owner: ownerId, skip: 0, take: 100 });
+    const accounts = await listFacebookInsightsAccounts(ownerId, 100);
     return {
       success: true,
-      accounts: accounts.map((account) => ({
+      accounts: accounts.map((account: {
+        id: string;
+        platform: string;
+        name: string | null;
+        username: string | null;
+        platformId: string | null;
+      }) => ({
         id: account.id,
         platform: account.platform,
         name: account.name ?? account.username ?? account.platformId ?? account.id,
@@ -98,7 +104,7 @@ export async function getPageInsightsAction(
   context?: InsightsActionContext
 ): Promise<GetInsightsResult> {
   try {
-    const account = await dataStore.accounts.getById(accountId);
+    const account = await getFacebookInsightsAccount(accountId);
 
     if (!account) {
       throw new Error('Account not found.');

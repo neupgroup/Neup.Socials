@@ -22,7 +22,7 @@ import { getLinkedInAuthUrl } from '@/services/linkedin/auth';
 import { encrypt } from '@/core/lib/crypto';
 import { toAppUrl } from '@/core/lib/app-url';
 import { getWhatsAppAccountName } from '@/services/whatsapp/api.get-account-name';
-import { createConnectedAccountAction } from '@/services/db';
+import { createConnectedAccountAction } from '@/services/accounts/actions';
 import {
   addPreverifiedWhatsAppNumberAction,
   exchangeWhatsAppAccessTokenAction,

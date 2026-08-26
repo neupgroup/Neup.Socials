@@ -10,7 +10,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Facebook, Instagram, Twitter, Linkedin, Loader2 } from 'lucide-react';
 import { useToast } from '@/core/hooks/useToast';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { getPostCollectionAction, listAccountsAction, updatePostCollectionAction } from '@/services/db';
+import { listAccountsAction } from '@/services/accounts/actions';
+import { getPostCollectionAction, updatePostCollectionAction } from '@/services/posts/actions';
 
 type ConnectedAccount = {
   id: string;
