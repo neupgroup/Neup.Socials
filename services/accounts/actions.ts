@@ -1,5 +1,6 @@
 'use server';
 
+import { ensureAccount } from '@/logica/account/self';
 import { buildTextSearchWhere } from '@/services/searches/text-search';
 import {
   countAccounts,
@@ -23,6 +24,17 @@ const serializeAccount = (account: Awaited<ReturnType<typeof getAccount>>) =>
         createdAt: toIso(account.createdAt),
       }
     : null;
+
+export async function ensureCurrentAccountAction() {
+  const account = await ensureAccount();
+  if (!account) return null;
+
+  return {
+    displayName: account.displayName,
+    displayImage: account.displayImage,
+    neupId: account.neupId,
+  };
+}
 
 export async function listAccountsAction({ owner, search, skip = 0 }: {
   owner?: string;
