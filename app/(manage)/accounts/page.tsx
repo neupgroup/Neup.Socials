@@ -34,6 +34,7 @@ import { syncPostsAction as syncFacebookPostsAction } from '@/services/facebook/
 import { syncLinkedInPostsAction } from '@/services/linkedin/sync-posts';
 import { disconnectAccountAction } from '@/services/accounts';
 import { listAccountsAction } from '@/services/accounts/actions';
+import { application } from '@/base/application';
 
 type Account = {
   id: string;
@@ -292,7 +293,7 @@ export default function AccountsPage() {
                                         <AlertDialogHeader>
                                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                         <AlertDialogDescription>
-                                            This will disconnect the account <span className="font-bold">{account.name}</span> from Neup.Socials. You may lose access to its data. This action cannot be undone.
+                                            This will disconnect the account <span className="font-bold">{account.name}</span> from {application.appName}. You may lose access to its data. This action cannot be undone.
                                         </AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>

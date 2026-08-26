@@ -5,7 +5,7 @@ import * as React from 'react';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { ProgressBar } from '@/components/progress-bar';
-import application from '@/base/application.json';
+import { application, getApplicationRadius, getGoogleFontUrl, getHslChannels } from '@/base/application';
 
 const FacebookSdkLoader = () => {
   React.useEffect(() => {
@@ -39,6 +39,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const appName = application.appName;
+  const theme = application.appTheme;
+  const appInterface = application.appInterface;
+  const appFont = application.appFont;
+  const primaryFont = appFont?.primaryFont ?? 'ui-sans-serif, system-ui, sans-serif';
+  const secondaryFont = appFont?.secondaryFont ?? primaryFont;
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -46,19 +51,47 @@ export default function RootLayout({
         <title>{appName}</title>
         <meta name="description" content={application.appDescription} />
         <link rel="icon" href={application.appLogo.favicon} />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+        <link rel="apple-touch-icon" href={application.appLogo['apple-touch-icon']} />
+        {getGoogleFontUrl(appFont) && <link rel="stylesheet" href={getGoogleFontUrl(appFont) ?? undefined} />}
       </head>
       <body
         className="font-body antialiased"
         style={{
-          backgroundColor: application.appTheme.backgroundColor,
-          color: application.appTheme.textColor,
-          fontFamily: application.appInterface.fontFamily,
-          fontSize: application.appInterface.fontSize,
-          lineHeight: application.appInterface.lineHeight,
-        }}
+          backgroundColor: theme.backgroundColor,
+          color: theme.textColor,
+          fontFamily: primaryFont,
+          fontSize: appInterface.fontSize,
+          lineHeight: appInterface.lineHeight,
+          '--background': getHslChannels(theme.backgroundColor),
+          '--foreground': getHslChannels(theme.textColor),
+          '--card': getHslChannels(theme.backgroundColor),
+          '--card-foreground': getHslChannels(theme.textColor),
+          '--popover': getHslChannels(theme.backgroundColor),
+          '--popover-foreground': getHslChannels(theme.textColor),
+          '--primary': getHslChannels(theme.primaryColor),
+          '--primary-foreground': getHslChannels(theme.backgroundColor),
+          '--secondary': getHslChannels(theme.secondaryColor),
+          '--secondary-foreground': getHslChannels(theme.textColor),
+          '--muted': getHslChannels(theme.secondaryColor),
+          '--muted-foreground': getHslChannels(theme.textColor),
+          '--accent': getHslChannels(theme.secondaryColor),
+          '--accent-foreground': getHslChannels(theme.textColor),
+          '--border': getHslChannels(theme.secondaryColor),
+          '--input': getHslChannels(theme.secondaryColor),
+          '--ring': getHslChannels(theme.primaryColor),
+          '--sidebar-background': getHslChannels(theme.backgroundColor),
+          '--sidebar-foreground': getHslChannels(theme.textColor),
+          '--sidebar-primary': getHslChannels(theme.primaryColor),
+          '--sidebar-primary-foreground': getHslChannels(theme.backgroundColor),
+          '--sidebar-accent': getHslChannels(theme.secondaryColor),
+          '--sidebar-accent-foreground': getHslChannels(theme.textColor),
+          '--sidebar-border': getHslChannels(theme.secondaryColor),
+          '--sidebar-ring': getHslChannels(theme.primaryColor),
+          '--font-primary': primaryFont,
+          '--font-secondary': secondaryFont,
+          '--radius': getApplicationRadius(appInterface.borderRadius),
+          '--box-shadow': appInterface.boxShadow,
+        } as React.CSSProperties}
       >
         <FacebookSdkLoader />
         <ProgressBar />

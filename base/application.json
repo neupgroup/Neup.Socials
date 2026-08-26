@@ -21,15 +21,18 @@
         "instagram": "https://www.instagram.com/neupgroup"
     },
     "appTheme": {
-        "primaryColor": "#4CAF50",
+        "primaryColor": "#305CDE",
         "secondaryColor": "#FFC107",
         "backgroundColor": "#ffffff",
         "textColor": "#212121"
     },
+    "appFont": {
+        "primaryFont": "'Outfit', sans-serif",
+        "secondaryFont": "'Roboto', sans-serif"
+    },
     "appInterface": {
         "borderRadius": "medium",
         "boxShadow": "0 6px 18px rgba(15, 23, 42, 0.15)",
-        "fontFamily": "'Outfit', sans-serif",
         "fontSize": "14px",
         "lineHeight": "1.5"
     },

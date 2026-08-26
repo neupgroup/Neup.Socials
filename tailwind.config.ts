@@ -1,4 +1,10 @@
 import type {Config} from 'tailwindcss';
+import application from './base/application.json';
+
+const defaultFont = 'ui-sans-serif, system-ui, sans-serif';
+const primaryFont = application.appFont?.primaryFont ?? defaultFont;
+const secondaryFont = application.appFont?.secondaryFont ?? primaryFont;
+const fontStack = (font: string) => font.split(',').map((family) => family.trim());
 
 export default {
   darkMode: ['class'],
@@ -15,9 +21,10 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['Outfit', 'sans-serif'],
-        headline: ['Outfit', 'sans-serif'],
-        code: ['Outfit', 'sans-serif'],
+        sans: fontStack(primaryFont),
+        body: fontStack(primaryFont),
+        headline: fontStack(primaryFont),
+        code: fontStack(primaryFont),
       },
       colors: {
         background: 'hsl(var(--background))',

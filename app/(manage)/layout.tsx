@@ -31,7 +31,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Toaster } from "@/components/ui/toaster";
 import { cn } from '@/core/utils';
-import application from '@/base/application.json';
+import { application } from '@/base/application';
 
 const navItems = [
   { href: '/', icon: LayoutGrid, label: 'Dashboard' },
@@ -83,7 +83,7 @@ export default function AppLayout({
         'flex h-11 items-center gap-3 rounded-lg px-4 text-[13px] font-medium transition-colors',
         isActive(item.href)
           ? 'bg-primary/10 font-semibold text-primary'
-          : 'text-[#1f2937] hover:bg-[#f5f7fa]'
+          : 'text-foreground/80 hover:bg-secondary'
       )}
     >
       <item.icon className="h-[17px] w-[17px] shrink-0" strokeWidth={1.8} />
@@ -94,8 +94,7 @@ export default function AppLayout({
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header
-        className="fixed inset-x-0 top-0 z-10 h-[70px] bg-background"
-        style={{ boxShadow: application.appInterface.boxShadow }}
+        className="fixed inset-x-0 top-0 z-10 h-[70px] bg-background shadow-configured"
       >
         <div className="mx-auto flex h-full w-full max-w-[1440px] items-center justify-between px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-2.5" aria-label={`${appName} home`}>
@@ -110,8 +109,8 @@ export default function AppLayout({
 
           <div className="flex items-center gap-3">
             <div className="hidden text-right sm:block">
-              <p className="text-[13px] font-semibold leading-5 text-[#1d2939]">{account?.displayName || 'Neup Admin'}</p>
-              <p className="text-[11px] leading-4 text-[#8a98a8]">{account?.neupId || '@KHANALCWANI'}</p>
+              <p className="text-[13px] font-semibold leading-5 text-foreground">{account?.displayName || 'Neup Admin'}</p>
+              <p className="text-[11px] leading-4 text-muted-foreground">{account?.neupId || '@KHANALCWANI'}</p>
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -144,12 +143,12 @@ export default function AppLayout({
       <main className="mx-auto grid min-h-[calc(100vh-70px)] w-full max-w-[1440px] grid-cols-1 pt-[70px] lg:grid-cols-[345px_minmax(0,1fr)]">
           <aside className="hidden lg:block">
             <nav className="fixed bottom-0 left-[max(0px,calc((100vw-1440px)/2))] top-[70px] z-[5] w-[345px] overflow-y-auto overscroll-contain border-r border-border bg-background px-5 py-7" aria-label="Primary navigation">
-              <p className="mb-5 px-4 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#7d8da0]">@KHANALCWANI</p>
+              <p className="mb-5 px-4 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">@KHANALCWANI</p>
               <div className="space-y-1">
                 {navItems.slice(0, 1).map(renderNavLink)}
-                <p className="mb-2 mt-8 px-4 text-[11px] font-semibold uppercase tracking-[0.1em] text-[#7d8da0]">Root</p>
+                <p className="mb-2 mt-8 px-4 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Root</p>
                 {navItems.slice(1, 10).map(renderNavLink)}
-                <p className="mb-2 mt-8 px-4 text-[11px] font-semibold uppercase tracking-[0.1em] text-[#7d8da0]">Account</p>
+                <p className="mb-2 mt-8 px-4 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Account</p>
                 {navItems.slice(10).map(renderNavLink)}
               </div>
             </nav>

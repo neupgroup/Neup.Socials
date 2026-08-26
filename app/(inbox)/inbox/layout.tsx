@@ -49,6 +49,7 @@ import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { formatDistanceToNow } from 'date-fns';
 import { listConversationsAction } from '@/services/conversations/actions';
+import { application } from '@/base/application';
 
 const inboxNavItems = [
     { href: '/inbox', icon: MessageSquare, label: 'All Messages', count: 24 },
@@ -110,7 +111,7 @@ function InboxSidebarContent({
                     <div className="flex items-center justify-center size-8 bg-primary rounded-lg text-primary-foreground">
                         <MessageSquareText className="size-5" />
                     </div>
-                    <span className="font-semibold text-lg">Neup.Socials</span>
+                    <span className="font-semibold text-lg">{application.appName}</span>
                 </Link>
             </SidebarHeader>
 
