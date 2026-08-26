@@ -30,7 +30,7 @@ export default async function WhatsAppSettingsPage() {
             placeholder="https://www.facebook.com/v20.0/dialog/oauth?client_id=..."
           />
           <p className="text-sm text-muted-foreground">
-            Update WHATSAPP_EMBEDED_SIGNUP_URL in .env to change this value.
+            Update SOCIALS_WHATSAPP_EMBEDED_SIGNUP_URL in .env to change this value.
           </p>
         </CardContent>
       </Card>

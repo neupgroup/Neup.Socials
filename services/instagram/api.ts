@@ -55,8 +55,8 @@ export async function exchangeCodeForToken(
   redirectUri?: string
 ): Promise<AccessTokenResponse> {
   const params = new URLSearchParams({
-    client_id: process.env.INSTAGRAM_APP_ID!,
-    client_secret: process.env.INSTAGRAM_APP_SECRET!,
+    client_id: process.env.SOCIALS_INSTAGRAM_APP_ID!,
+    client_secret: process.env.SOCIALS_INSTAGRAM_APP_SECRET!,
     grant_type: 'authorization_code',
     redirect_uri: redirectUri ?? toAppUrl('/bridge/callback.v1/auth.meta'),
     code,
@@ -79,7 +79,7 @@ export async function exchangeCodeForToken(
 export async function exchangeForLongLivedToken(shortLivedToken: string): Promise<LongLivedTokenResponse> {
   const params = new URLSearchParams({
     grant_type: 'ig_exchange_token',
-    client_secret: process.env.INSTAGRAM_APP_SECRET!,
+    client_secret: process.env.SOCIALS_INSTAGRAM_APP_SECRET!,
     access_token: shortLivedToken,
   });
 

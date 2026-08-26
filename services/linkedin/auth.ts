@@ -18,7 +18,7 @@ export async function getLinkedInAuthUrl(userId: string): Promise<string> {
   try {
     const state = await generateRandomState(userId);
 
-    if (!process.env.LINKEDIN_CLIENT_ID) {
+    if (!process.env.SOCIALS_LINKEDIN_CLIENT_ID) {
       throw new Error('LinkedIn Client ID environment variable is not set.');
     }
 
@@ -27,7 +27,7 @@ export async function getLinkedInAuthUrl(userId: string): Promise<string> {
 
     const params = new URLSearchParams({
       response_type: 'code',
-      client_id: process.env.LINKEDIN_CLIENT_ID!,
+      client_id: process.env.SOCIALS_LINKEDIN_CLIENT_ID!,
       redirect_uri: 'https://khanalcwani.com/bridge/callback.v1/auth.linkedin',
       state: encodeURIComponent(state),
       scope,

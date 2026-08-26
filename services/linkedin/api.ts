@@ -89,8 +89,8 @@ export async function exchangeCodeForToken(code: string): Promise<AccessTokenRes
     const params = new URLSearchParams({
         grant_type: 'authorization_code',
         code,
-        client_id: process.env.LINKEDIN_CLIENT_ID!,
-        client_secret: process.env.LINKEDIN_CLIENT_SECRET!,
+        client_id: process.env.SOCIALS_LINKEDIN_CLIENT_ID!,
+        client_secret: process.env.SOCIALS_LINKEDIN_CLIENT_SECRET!,
         redirect_uri: 'https://khanalcwani.com/bridge/callback.v1/auth.linkedin',
     });
 

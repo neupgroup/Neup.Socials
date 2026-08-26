@@ -227,9 +227,9 @@ async function handleApiResponse<T>(res: Response): Promise<T> {
  */
 export async function exchangeCodeForShortLivedToken(code: string): Promise<AccessTokenResponse> {
   const params = new URLSearchParams({
-    client_id: process.env.FB_APP_ID!,
+    client_id: process.env.SOCIALS_FACEBOOK_APP_ID!,
     redirect_uri: "https://neupgroup.com/socials/bridge/callback.v1/auth.meta",
-    client_secret: process.env.FB_APP_SECRET!,
+    client_secret: process.env.SOCIALS_FACEBOOK_APP_SECRET!,
     code,
   });
 
@@ -244,8 +244,8 @@ export async function exchangeCodeForShortLivedToken(code: string): Promise<Acce
 export async function exchangeForLongLivedToken(shortLivedToken: string): Promise<AccessTokenResponse> {
   const params = new URLSearchParams({
     grant_type: 'fb_exchange_token',
-    client_id: process.env.FB_APP_ID!,
-    client_secret: process.env.FB_APP_SECRET!,
+    client_id: process.env.SOCIALS_FACEBOOK_APP_ID!,
+    client_secret: process.env.SOCIALS_FACEBOOK_APP_SECRET!,
     fb_exchange_token: shortLivedToken,
   });
 
@@ -271,7 +271,7 @@ export async function getUserPages(longLivedUserToken: string): Promise<UserPage
  * Validates a Page Access Token to ensure it's still valid.
  */
 export async function validateToken(pageToken: string): Promise<DebugTokenResponse> {
-  const appAccessToken = `${process.env.FB_APP_ID}|${process.env.FB_APP_SECRET}`;
+  const appAccessToken = `${process.env.SOCIALS_FACEBOOK_APP_ID}|${process.env.SOCIALS_FACEBOOK_APP_SECRET}`;
   const params = new URLSearchParams({
     input_token: pageToken,
     access_token: appAccessToken,

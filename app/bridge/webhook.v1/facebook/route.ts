@@ -37,7 +37,7 @@ export async function GET(request: Request) {
 
     if (mode === 'subscribe' && token) {
         // Use validation token from env or default
-        const verifyToken = process.env.FACEBOOK_VERIFY_TOKEN || process.env.WHATSAPP_VERIFY_TOKEN; // Fallback for convenience if they share
+        const verifyToken = process.env.SOCIALS_FACEBOOK_VERIFY_TOKEN || process.env.SOCIALS_WHATSAPP_VERIFY_TOKEN; // Fallback for convenience if they share
 
         if (token === verifyToken) {
             console.log('Facebook webhook verified successfully.');

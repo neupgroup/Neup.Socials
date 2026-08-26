@@ -36,7 +36,7 @@ export async function getInstagramAuthUrl(userId: string): Promise<string> {
       })
     ).toString('base64');
 
-    if (!process.env.INSTAGRAM_APP_ID) {
+    if (!process.env.SOCIALS_INSTAGRAM_APP_ID) {
       throw new Error('Instagram App ID environment variable is not set.');
     }
 
@@ -47,7 +47,7 @@ export async function getInstagramAuthUrl(userId: string): Promise<string> {
 
     const params = new URLSearchParams({
       force_reauth: 'true',
-      client_id: process.env.INSTAGRAM_APP_ID!,
+      client_id: process.env.SOCIALS_INSTAGRAM_APP_ID!,
       redirect_uri: redirectUri,
       response_type: 'code',
       scope: INSTAGRAM_AUTH_SCOPES,

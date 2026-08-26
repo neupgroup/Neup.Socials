@@ -10,13 +10,13 @@ export async function GET(request: Request) {
   const token = searchParams.get('hub.verify_token');
   const challenge = searchParams.get('hub.challenge');
 
-  const verifyToken = process.env.INSTAGRAM_TOKEN || process.env.INSTRGRAM_TOKEN;
+  const verifyToken = process.env.SOCIALS_INSTAGRAM_TOKEN;
 
   if (!verifyToken) {
     await logError({
       process: 'instagram-webhook-verify',
       location: ENDPOINT,
-      errorMessage: 'Missing INSTAGRAM_TOKEN or INSTRGRAM_TOKEN.',
+      errorMessage: 'Missing SOCIALS_INSTAGRAM_TOKEN.',
     });
     return new NextResponse('Server misconfigured', { status: 500 });
   }

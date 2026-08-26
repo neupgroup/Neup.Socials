@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     return response;
   }
 
-  return verifyWebhookRequest(request, 'FACEBOOK_VERIFY_TOKEN', ENDPOINT);
+  return verifyWebhookRequest(request, 'SOCIALS_FACEBOOK_VERIFY_TOKEN', ENDPOINT);
 }
 
 export async function POST(request: Request) {

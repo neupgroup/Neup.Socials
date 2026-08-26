@@ -11,7 +11,7 @@ type ActionResult = {
 const GRAPH_BASE_URL = 'https://graph.facebook.com/v25.0';
 
 function resolveWhatsAppToken(accessToken?: string) {
-  return accessToken || process.env.WHATSAPP_SYSTEM_USER_TOKEN;
+  return accessToken || process.env.SOCIALS_WHATSAPP_SYSTEM_USER_TOKEN;
 }
 
 function toErrorMessage(error: unknown) {
@@ -83,8 +83,8 @@ export async function exchangeWhatsAppAccessTokenAction({
     return { success: false, error: 'Authorization code and redirect URI are required.' };
   }
 
-  const clientId = process.env.FB_APP_ID;
-  const clientSecret = process.env.FB_APP_SECRET;
+  const clientId = process.env.SOCIALS_FACEBOOK_APP_ID;
+  const clientSecret = process.env.SOCIALS_FACEBOOK_APP_SECRET;
 
   if (!clientId || !clientSecret) {
     return { success: false, error: 'Missing FB app credentials in environment.' };
@@ -246,7 +246,7 @@ export async function listPreverifiedWhatsAppNumbersAction({
   status?: string;
   accessToken?: string;
 }): Promise<ActionResult> {
-  const resolvedBusinessId = businessId || process.env.WHATSAPP_BUSINESS_ID;
+  const resolvedBusinessId = businessId || process.env.SOCIALS_WHATSAPP_BUSINESS_ID;
   if (!resolvedBusinessId) {
     return { success: false, error: 'Missing WhatsApp business ID in environment.' };
   }

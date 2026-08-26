@@ -88,14 +88,14 @@ export async function getFacebookAuthUrl(userId: string, intents?: FacebookAuthI
       })
     ).toString('base64');
 
-    if (!process.env.FB_APP_ID) {
+    if (!process.env.SOCIALS_FACEBOOK_APP_ID) {
       throw new Error('Facebook App ID environment variable is not set.');
     }
 
     const scope = scopesForIntents(selectedIntents).join(',');
 
     const params = new URLSearchParams({
-      client_id: process.env.FB_APP_ID!,
+      client_id: process.env.SOCIALS_FACEBOOK_APP_ID!,
       redirect_uri: toAppUrl('/bridge/callback.v1/auth.meta'),
       state: encodeURIComponent(state),
       scope,
