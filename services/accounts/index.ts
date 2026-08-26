@@ -1,7 +1,7 @@
 'use server';
 
 import { dataStore } from '@/core.v2/lib/data-store';
-import { logError } from '@/core/lib/error-logging';
+import { logError } from '@/services/error-logging';
 import { encrypt } from '@/core/helpers/crypto';
 import { revalidatePath } from 'next/cache';
 

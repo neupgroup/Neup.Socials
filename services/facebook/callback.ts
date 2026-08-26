@@ -36,7 +36,7 @@ import {
 import { FACEBOOK_AUTH_INTENTS, type FacebookAuthIntent } from './auth-intents';
 import { validateState, encrypt } from '@/core/helpers/crypto';
 import { dataStore } from '@/core.v2/lib/data-store';
-import { logError } from '@/core/lib/error-logging';
+import { logError } from '@/services/error-logging';
 
 function extractFacebookIntentsFromState(state: string): FacebookAuthIntent[] {
   try {

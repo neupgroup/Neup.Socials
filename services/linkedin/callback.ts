@@ -7,7 +7,7 @@
 import { exchangeCodeForToken, getUserProfile } from '@/services/linkedin/api';
 import { validateState, encrypt } from '@/core/helpers/crypto';
 import { dataStore } from '@/core.v2/lib/data-store';
-import { logError } from '@/core/lib/error-logging';
+import { logError } from '@/services/error-logging';
 
 /**
  * Handles the OAuth callback from LinkedIn.

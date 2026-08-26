@@ -3,7 +3,7 @@
 
 import { dataStore } from '@/core.v2/lib/data-store';
 import { decrypt } from '@/core/helpers/crypto';
-import { logError } from '../error-logging';
+import { logError } from '@/services/error-logging';
 import { publishToPage as publishToFacebookPage } from '../../services/facebook/api';
 import { publishToInstagramAccount } from '../../services/instagram/post-content';
 import { publishToLinkedIn } from '../../services/linkedin/api';

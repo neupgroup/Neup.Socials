@@ -1,7 +1,7 @@
 'use server';
 
 import { dataStore } from '@/core.v2/lib/data-store';
-import { logError } from '@/core/lib/error-logging';
+import { logError } from '@/services/error-logging';
 
 export type UploadRecord = {
   fileName: string;

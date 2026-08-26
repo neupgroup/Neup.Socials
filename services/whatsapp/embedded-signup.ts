@@ -1,6 +1,6 @@
 'use server';
 
-import { logError } from '@/core/lib/error-logging';
+import { logError } from '@/services/error-logging';
 
 type ActionResult = {
   success: boolean;

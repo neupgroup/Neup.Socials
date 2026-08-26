@@ -1,6 +1,6 @@
 'use server';
 
-import { logError } from '@/core/lib/error-logging';
+import { logError } from '@/services/error-logging';
 import { handleWhatsAppAccountAlerts, handleWhatsAppAccountReviewUpdate, handleWhatsAppAccountSettingsUpdate } from '@/services/whatsapp/webhook.account-update';
 import { handleWhatsAppCalls, handleWhatsAppMessages } from '@/services/whatsapp/webhook.get-messages';
 

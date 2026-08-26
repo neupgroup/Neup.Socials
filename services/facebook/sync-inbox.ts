@@ -2,7 +2,7 @@
 
 import { decrypt } from '@/core/helpers/crypto';
 import { dataStore } from '@/core.v2/lib/data-store';
-import { logError } from '@/core/lib/error-logging';
+import { logError } from '@/services/error-logging';
 import { getPageConversationsWithMessages } from '@/services/facebook/messages';
 import { getPagePostComments } from '@/services/facebook/comments-api';
 import { getPageScopedProfile } from '@/services/facebook/comments-api';

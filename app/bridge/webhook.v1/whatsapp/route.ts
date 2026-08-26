@@ -1,7 +1,7 @@
 
 import { NextResponse } from 'next/server';
 import { processWhatsAppWebhook } from '@/services/whatsapp/webhook';
-import { logError } from '@/core/lib/error-logging';
+import { logError } from '@/services/error-logging';
 
 export async function POST(request: Request) {
     console.log('📥 [Webhook] POST request received at /bridge/webhook.v1/whatsapp');

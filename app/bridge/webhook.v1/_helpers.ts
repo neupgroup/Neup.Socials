@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { logError } from '@/core/lib/error-logging';
+import { logError } from '@/services/error-logging';
 
 export async function verifyWebhookRequest(
   request: Request,

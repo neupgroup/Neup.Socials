@@ -2,7 +2,7 @@
 
 import { dataStore } from '@/core.v2/lib/data-store';
 import { decrypt } from '@/core/helpers/crypto';
-import { logError } from '@/core/lib/error-logging';
+import { logError } from '@/services/error-logging';
 import { instagramRequest } from '@/services/instagram/comments/shared';
 
 const isInstagramPlatform = (platform: string | null | undefined) =>

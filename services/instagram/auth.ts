@@ -5,7 +5,7 @@
 'use server';
 
 import { generateRandomState } from '@/core/helpers/crypto';
-import { logError } from '@/core/lib/error-logging';
+import { logError } from '@/services/error-logging';
 import { getAppBaseUrl, buildUrlFromBase } from '@/core/lib/app-url';
 
 const INSTAGRAM_OAUTH_BASE_URL = 'https://www.instagram.com/oauth/authorize';

@@ -4,7 +4,7 @@
 import { dataStore } from '@/core.v2/lib/data-store';
 import { decrypt } from '@/core/helpers/crypto';
 import { getLinkedInPosts } from '@/services/linkedin/api';
-import { logError } from '@/core/lib/error-logging';
+import { logError } from '@/services/error-logging';
 
 type SyncResult = {
   success: boolean;

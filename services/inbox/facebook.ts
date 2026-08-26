@@ -2,7 +2,7 @@
 'use server';
 
 import { dataStore } from '@/core.v2/lib/data-store';
-import { logError } from '@/core/lib/error-logging';
+import { logError } from '@/services/error-logging';
 import { decrypt } from '@/core/helpers/crypto';
 import { getPageCommentById } from '@/services/facebook/comments-api';
 import { getPageScopedProfile } from '@/services/facebook/comments-api';

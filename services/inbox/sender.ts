@@ -1,6 +1,6 @@
 'use server';
 
-import { logError } from "@/core/lib/error-logging";
+import { logError } from "@/services/error-logging";
 import { sendTextMessage as sendWhatsAppMessage } from '@/services/whatsapp/api.send-message';
 import { sendPageTextMessage as sendFacebookPageMessage } from "@/services/facebook/messages";
 import { dataStore } from "@/core.v2/lib/data-store";

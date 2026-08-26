@@ -2,7 +2,7 @@
 
 import { dataStore } from '@/core.v2/lib/data-store';
 import { decrypt } from '@/core/helpers/crypto';
-import { logError } from '@/core/lib/error-logging';
+import { logError } from '@/services/error-logging';
 import { getPostAnalyticsAction } from '@/services/facebook/post-insights';
 import { getPostComments as getPostCommentsWithReplies } from '@/services/facebook/comments-api';
 import { postCommentOnPost, postReplyToComment } from '@/services/facebook/api';

@@ -12,7 +12,7 @@ import {
 } from '@/services/facebook/inbox';
 import { sendReplyAction } from '@/services/inbox/sender';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/core/hooks/use-toast';
+import { useToast } from '@/core/hooks/useToast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
@@ -395,4 +395,3 @@ export default function InboxPageClient() {
     </div>
   );
 }
-

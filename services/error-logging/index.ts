@@ -1,10 +1,10 @@
 'use server';
 
 /**
- * @fileoverview A centralized service for logging application errors to Firestore.
+ * @fileoverview A centralized service adapter for the Logica error logger.
  */
 
-import { dataStore } from '@/core.v2/lib/data-store';
+import { logger } from '@/logica/logger';
 
 export type ErrorLog = {
   timestamp: any;
@@ -22,26 +22,27 @@ export type ErrorLog = {
 };
 
 /**
- * Logs an error to the 'errors' collection in Firestore.
+ * Logs an error through Logica's centralized logger.
  * @param errorLog - An object containing the details of the error to be logged.
  */
 export async function logError(errorLog: Omit<ErrorLog, 'timestamp'>): Promise<string> {
   try {
-    const created = await dataStore.errors.create({
-      source: errorLog.source,
-      message: errorLog.message,
-      errorMessage: errorLog.message,
-      stack: errorLog.stack,
-      userId: errorLog.userId,
-      request: errorLog.request,
-      context: errorLog.context,
-      timestamp: new Date(),
-    });
-    console.log('Error logged with ID: ', created.id);
-    return created.id;
-  } catch (loggingError: any) {
-    // If logging to Firestore fails, log to console as a fallback.
-    console.error('FATAL: Failed to log error to Firestore.', loggingError);
+    const response = await logger
+      .type('error')
+      .data({
+        source: errorLog.source,
+        message: errorLog.message,
+        stack: errorLog.stack,
+        userId: errorLog.userId,
+        request: errorLog.request,
+        context: errorLog.context,
+      })
+      .error();
+
+    return typeof response.activity === 'string' ? response.activity : '';
+  } catch (loggingError) {
+    // Logging must not hide the original application error.
+    console.error('FATAL: Failed to send error to Logica.', loggingError);
     console.error('Original Error:', errorLog);
     // In a production environment, you might want to send this to a more robust, secondary logging service.
     return '';

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { handleLinkedInCallback } from '@/services/linkedin/callback';
-import { logError } from '@/core/lib/error-logging';
+import { logError } from '@/services/error-logging';
 import { toAppUrl } from '@/core/lib/app-url';
 
 export async function GET(request: NextRequest) {

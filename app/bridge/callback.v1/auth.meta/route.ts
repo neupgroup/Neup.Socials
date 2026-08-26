@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { handleFacebookCallback } from '@/services/facebook/callback';
 import { handleInstagramCallback } from '@/services/instagram/callback';
-import { logError } from '@/core/lib/error-logging';
+import { logError } from '@/services/error-logging';
 import { toAppUrl } from '@/core/lib/app-url';
 
 function escapeHtml(value: string) {

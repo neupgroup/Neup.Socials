@@ -1,5 +1,5 @@
 import { prisma } from '@/core.v2/lib/prisma';
-import { logError } from '@/core/lib/error-logging';
+import { logError } from '@/services/error-logging';
 import { processInstagramLiveCommentsWebhook } from '@/services/inbox/instagram-live-comments';
 import { processInstagramMessagesWebhook } from '@/services/inbox/instagram-messages';
 import { processInstagramMessageReactionsWebhook } from '@/services/inbox/instagram-message-reactions';
