@@ -9,7 +9,7 @@ import {
   exchangeForLongLivedToken,
   getUserProfile,
 } from '../../services/instagram/api';
-import { validateState, encrypt } from '@/core.v2/lib/crypto';
+import { validateState, encrypt } from '@/core/helpers/crypto';
 import { dataStore } from '@/core/lib/data-store';
 import { logError } from '@/core/lib/error-logging';
 import { getAppBaseUrl, buildUrlFromBase } from '@/core/lib/app-url';

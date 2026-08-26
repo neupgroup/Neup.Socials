@@ -4,7 +4,7 @@
 'use server';
 
 import { dataStore } from '@/core/lib/data-store';
-import { decrypt } from '@/core.v2/lib/crypto';
+import { decrypt } from '@/core/helpers/crypto';
 import { getPagePostInsights } from '@/services/facebook/api';
 
 const isFacebookPlatform = (platform: string | null | undefined) =>

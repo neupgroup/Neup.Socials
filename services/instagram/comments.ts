@@ -1,7 +1,7 @@
 'use server';
 
 import { dataStore } from '@/core/lib/data-store';
-import { decrypt } from '@/core.v2/lib/crypto';
+import { decrypt } from '@/core/helpers/crypto';
 import { logError } from '@/core/lib/error-logging';
 import { getInstagramMediaComments } from '@/services/instagram/comments/get-comments';
 import { getInstagramCommentReplies } from '@/services/instagram/comments/get-comment-replies';
