@@ -12,7 +12,7 @@ import {
 import { validateState, encrypt } from '#/core/helpers/crypto';
 import { dataStore } from '@/services/repositories';
 import { logError } from '@/services/error-logging';
-import { Link } from '#/components/ui/link';
+import data from '$/data.json';
 
 /**
  * Handles the OAuth callback from Instagram. It exchanges the authorization code
@@ -36,7 +36,7 @@ export async function handleInstagramCallback(
       throw new Error('State validation failed: No user ID present.');
     }
 
-    const redirectUri = Link.takesTo('/bridge/callback.v1/auth.meta').get();
+    const redirectUri = data.instagram.redirect_uri;
 
     // 2. Exchange the code for a short-lived user access token.
     const shortLivedTokenResponse = await exchangeCodeForToken(code, redirectUri);

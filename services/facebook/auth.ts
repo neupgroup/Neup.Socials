@@ -18,12 +18,13 @@ import { generateRandomState } from '#/core/helpers/crypto';
 import { getEnvVariable } from '#/core/helpers/env';
 import { logError } from '@/services/error-logging';
 import { FACEBOOK_AUTH_INTENTS, type FacebookAuthIntent } from './auth-intents';
+import data from '$/data.json';
 
 const FB_OAUTH_BASE_URL = 'https://www.facebook.com/v23.0/dialog/oauth';
 const FACEBOOK_BASE_SCOPES = ['pages_show_list'];
 
 function getFacebookRedirectUri() {
-  return 'https://localhost:7624/socials/accounts/add';
+  return data.facebook.redirect_uri;
 }
 
 function normalizeIntents(intents?: FacebookAuthIntent[]): FacebookAuthIntent[] {

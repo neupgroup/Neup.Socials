@@ -11,7 +11,7 @@
  */
 'use server';
 import * as mime from 'mime-types';
-import { Link } from '#/components/ui/link';
+import data from '$/data.json';
 
 const API_VERSION = 'v25.0';
 const GRAPH_API_BASE_URL = `https://graph.facebook.com/${API_VERSION}`;
@@ -228,7 +228,7 @@ async function handleApiResponse<T>(res: Response): Promise<T> {
 export async function exchangeCodeForShortLivedToken(code: string): Promise<AccessTokenResponse> {
   const params = new URLSearchParams({
     client_id: process.env.SOCIALS_FACEBOOK_APP_ID!,
-    redirect_uri: "https://localhost:7624/socials/accounts/add",
+    redirect_uri: data.facebook.redirect_uri,
     client_secret: process.env.SOCIALS_FACEBOOK_APP_SECRET!,
     code,
   });
