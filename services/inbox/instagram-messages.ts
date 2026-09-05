@@ -11,6 +11,7 @@ type InstagramMessageEditPayload = {
   message?: {
     mid?: string;
     text?: string;
+    attachments?: { data?: Array<Record<string, unknown>> };
   };
   message_edit?: {
     mid?: string;

@@ -240,6 +240,18 @@ Fields:
 > createdAt: timestamp, default: now;
 > reactionSummary: json, nullable;
 
+Table: instagram_message_attachments, Model: InstagramMessageAttachment
+Fields:
+> id: string, cuid;
+> instagramMessageId: string, references instagram_messages.id;
+> platformAttachmentId: string, nullable;
+> attachmentType: string;
+> mediaUrl: string, nullable;
+> thumbnailUrl: string, nullable;
+> permalink: string, nullable;
+> metadata: json, nullable;
+> createdAt: timestamp, default: now;
+
 Table: accounts, Model: Account
 Fields:
 > id: string;

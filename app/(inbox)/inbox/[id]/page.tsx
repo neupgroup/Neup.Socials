@@ -21,6 +21,8 @@ import {
     listInstagramConversationMessagesAction,
 } from '@/services/conversations/actions';
 import { recordOutgoingMessageAction } from '@/services/messages/actions';
+import application from '$/application.json';
+import { normalizeInstagramAttachment } from '@/services/platform/instagram/attachments';
 
 type Message = {
     id: string;
@@ -31,22 +33,28 @@ type Message = {
   replyTo?: { id: string; text: string };
 };
 
+function MessageSkeletons({ count = 5 }: { count?: number }) {
+    return <div className="space-y-4" aria-label="Loading messages">
+        {Array.from({ length: count }, (_, index) => <div key={index} className={`flex items-end gap-3 ${index % 2 ? 'justify-end' : ''}`}>
+            {index % 2 === 0 ? <div className="h-8 w-8 animate-pulse rounded-full bg-muted" /> : null}
+            <div className={`space-y-2 ${index % 2 ? 'items-end' : ''}`}>
+                <div className={`h-4 animate-pulse rounded bg-muted ${index % 2 ? 'w-40' : 'w-52'}`} />
+                <div className={`h-3 animate-pulse rounded bg-muted/70 ${index % 2 ? 'w-24' : 'w-32'}`} />
+            </div>
+        </div>)}
+    </div>;
+}
+
 function MessageAttachments({ attachments }: { attachments?: Message['attachments'] }) {
     if (!attachments?.length) return null;
     return <div className="mt-2 space-y-2">{attachments.map((attachment, index) => {
-        const type = attachment.type?.toLowerCase() ?? '';
-        const mediaUrl = attachment.media_url || attachment.url;
-        const thumbnail = attachment.thumbnail_url || mediaUrl;
-        const isVideo = type.includes('video') || type.includes('reel');
-        const isImage = type.includes('image') || type.includes('photo');
-        const isLink = type.includes('link') || (!isImage && !isVideo && Boolean(mediaUrl));
-        const isOneTime = type.includes('ephemeral') || type.includes('one_time') || type.includes('view_once');
+        const normalized = normalizeInstagramAttachment(attachment as unknown as Record<string, unknown>);
+        const mediaUrl = normalized.url;
+        const rawType = String(attachment.type ?? '').toLowerCase();
+        const isOneTime = rawType.includes('ephemeral') || rawType.includes('one_time') || rawType.includes('view_once');
         if (isOneTime) return <div key={index} className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground">This one-time photo or video can’t be shown on this platform.</div>;
-        if (!mediaUrl) return <div key={index} className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground">This media can’t be shown on this platform.</div>;
-        if (isImage) return <img key={index} src={mediaUrl} alt={attachment.title || 'Instagram photo'} className="max-h-72 w-full rounded-lg object-cover" />;
-        if (isVideo) return <a key={index} href={mediaUrl} target="_blank" rel="noreferrer" className="relative block overflow-hidden rounded-lg"><img src={thumbnail} alt={attachment.title || 'Instagram video'} className="max-h-72 w-full object-cover" /><span className="absolute inset-0 flex items-center justify-center bg-black/25 text-white"><Play className="h-8 w-8 fill-current" /></span></a>;
-        if (isLink) return <a key={index} href={mediaUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-lg border p-3 text-sm hover:bg-muted"><ExternalLink className="h-4 w-4" />{attachment.title || 'Open shared link'}</a>;
-        return <div key={index} className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground">This post or reel can’t be shown on this platform.</div>;
+        if (!mediaUrl && !normalized.permalink) return <div key={index} className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground">Instagram media</div>;
+        return <a key={index} href={normalized.permalink || mediaUrl || '#'} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-lg border p-3 text-sm hover:bg-muted"><ExternalLink className="h-4 w-4" />{normalized.permalink ? 'Open on Instagram' : `Open Instagram ${normalized.type} attachment`}</a>;
     })}</div>;
 }
 
@@ -99,6 +107,7 @@ export default function ConversationPage() {
     const [reply, setReply] = React.useState('');
     const [replyingTo, setReplyingTo] = React.useState<Message | null>(null);
     const [loading, setLoading] = React.useState(true);
+    const [messagesLoading, setMessagesLoading] = React.useState(true);
     const [sending, setSending] = React.useState(false);
     const [olderCursor, setOlderCursor] = React.useState<string | null>(null);
     const [loadingOlder, setLoadingOlder] = React.useState(false);
@@ -128,8 +137,10 @@ export default function ConversationPage() {
             let active = true;
 
             const fetchMessages = async () => {
+                setMessagesLoading(true);
                 if (conversation?.platform === 'Instagram') {
-                    const result = await listInstagramConversationMessagesAction(conversationId);
+                    try {
+                    const result = await fetch(`${application.appBasePath}/api/inbox/${conversationId}/messages`, { cache: 'no-store' }).then((response) => response.json());
                     const msgs = [...(result?.messages?.data ?? [])].sort((a, b) => {
                         return timestampValue(a.created_time) - timestampValue(b.created_time);
                     });
@@ -144,12 +155,17 @@ export default function ConversationPage() {
                             replyTo: message.reply_to ? { id: message.reply_to.id, text: message.reply_to.message ?? '' } : undefined,
                         })));
                     }
+                    } finally {
+                        if (active) setMessagesLoading(false);
+                    }
                     return;
                 }
 
-                const msgs = await listConversationMessagesAction(conversationId);
-                if (active) {
-                    setMessages(msgs as Message[]);
+                try {
+                    const msgs = await listConversationMessagesAction(conversationId);
+                    if (active) setMessages(msgs as Message[]);
+                } finally {
+                    if (active) setMessagesLoading(false);
                 }
             };
 
@@ -287,7 +303,7 @@ export default function ConversationPage() {
     return (
         <div className="flex flex-col h-full">
             {/* Header */}
-            <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="sticky top-0 z-20 shrink-0 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
                 <div className="flex items-center justify-between p-4">
                     <div className="flex items-center gap-3">
                         <Avatar className="h-10 w-10">
@@ -336,8 +352,8 @@ export default function ConversationPage() {
 
             {/* Messages */}
             <div onScroll={handleMessagesScroll} className="flex-1 overflow-y-auto p-6 space-y-4 bg-muted/20">
-                {loadingOlder ? <div className="text-center text-xs text-muted-foreground">Loading older messages…</div> : null}
-                {messages.length === 0 ? (
+                {loadingOlder ? <MessageSkeletons count={2} /> : null}
+                {messagesLoading && messages.length === 0 ? <MessageSkeletons /> : messages.length === 0 ? (
                     <div className="flex items-center justify-center h-full">
                         <p className="text-muted-foreground">No messages yet. Start the conversation!</p>
                     </div>
@@ -391,7 +407,7 @@ export default function ConversationPage() {
             </div>
 
             {/* Input */}
-            <div className="border-t bg-background p-4">
+            <div className="sticky bottom-0 z-20 shrink-0 border-t bg-background p-4">
                 {replyingTo ? <div className="mb-2 flex items-center justify-between rounded-md border-l-2 border-primary bg-muted px-3 py-2 text-xs"><span className="truncate">Replying to: {replyingTo.text || 'Unsupported message'}</span><Button type="button" variant="ghost" size="sm" onClick={() => setReplyingTo(null)}>Cancel</Button></div> : null}
                 <form
                     onSubmit={(e) => {

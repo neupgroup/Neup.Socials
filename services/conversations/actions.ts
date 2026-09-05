@@ -31,10 +31,11 @@ export async function listInstagramConversationsAction() {
     const conversations = await getInstagramConversations({
       igUserId: account.platformId,
       accessToken,
+      limit: 20,
     });
     console.log('[Instagram conversations] fetched from inbox', conversations);
 
-    const recentConversations = conversations.data.slice(0, 10);
+    const recentConversations = conversations.data.slice(0, 20);
     await Promise.all(recentConversations.map(async (conversation) => {
       try {
         const detail = await getInstagramConversationMessages({

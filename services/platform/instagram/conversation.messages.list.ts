@@ -18,15 +18,19 @@ export type InstagramConversationMessage = {
   to?: { data: InstagramMessageParticipant[] };
   attachments?: {
     data?: Array<{
+      id?: string;
       type?: string;
+      payload?: Record<string, unknown>;
       url?: string;
       media_url?: string;
       thumbnail_url?: string;
       title?: string;
+      [key: string]: unknown;
     }>;
   };
   reply_to?: { id: string; message?: string };
 };
+
 
 export type InstagramConversationMessagesResponse = {
   id: string;
@@ -64,7 +68,7 @@ export async function getInstagramConversationMessages({
   if (!accessToken.trim()) throw new Error('Instagram access token is required.');
 
   try {
-    const fields = 'messages{id,from,to,created_time,message,attachments,reply_to}';
+    const fields = 'id,messages{id,from,to,created_time,message,attachments{type,payload},reply_to}';
     const params = new URLSearchParams({ fields });
     if (after?.trim()) params.set('after', after.trim());
     const url = `${INSTAGRAM_GRAPH_API_BASE_URL}/${encodeURIComponent(conversationId)}?${params.toString()}`;
@@ -96,7 +100,7 @@ export async function getInstagramMessage({
   if (!messageId.trim()) throw new Error('Instagram message ID is required.');
   if (!accessToken.trim()) throw new Error('Instagram access token is required.');
 
-  const fields = 'id,message,from,to,created_time';
+  const fields = 'id,message,from,to,created_time,attachments{type,payload}';
   const url = `${INSTAGRAM_GRAPH_API_BASE_URL}/${encodeURIComponent(messageId)}?fields=${encodeURIComponent(fields)}`;
   const response = await getInstagramApi<InstagramConversationMessage>(url, accessToken);
   console.log('[Instagram message] response', { messageId, response });
