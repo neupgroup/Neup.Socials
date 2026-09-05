@@ -4,19 +4,19 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '#/components/ui/button';
+import { Card, CardContent } from '#/components/ui/card';
+import { Badge } from '#/components/ui/badge';
 import { PlusCircle, Twitter, Facebook, Linkedin, Instagram, MoreHorizontal, Loader2, Search, RefreshCw, ArrowRightLeft } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from '#/components/ui/dropdown-menu';
 import { format, formatDistanceToNow } from 'date-fns';
 import { useToast } from '@/core/hooks/useToast';
-import { Input } from '@/components/ui/input';
+import { Input } from '#/components/ui/input';
 import { syncPostsAction as syncFacebookPostsAction } from '@/services/facebook/sync-posts';
 import { syncLinkedInPostsAction } from '@/services/linkedin/sync-posts';
 import { listAccountsAction } from '@/services/accounts/actions';

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { ArrowUpRight, BookOpen, Sparkles, Users, ShieldCheck, Megaphone, MessageCircle, Newspaper } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#/components/ui/card';
 
 const contentTypes = [
   {

@@ -2,6 +2,7 @@
 
 import { getBasics } from '@/logica/account/self';
 import { getAccountBasics } from '@/logica/account/lookup';
+import { logger } from '@/logica/logger';
 import { buildTextSearchWhere } from '@/services/searches/text-search';
 import {
   countAccounts,
@@ -80,24 +81,73 @@ export async function getLocalAccountAction(accountId: string) {
 export async function syncLocalAccountAction(accountId: string) {
   if (!accountId) return { success: false, error: 'Account ID is required.' };
 
-  const remote = await getAccountBasics({
-    accountId,
-    fields: ['neupid', 'displayName', 'displayImage', 'accountType'],
-  });
+  let remote;
+  try {
+    remote = await getAccountBasics({
+      accountId,
+      fields: ['neupid', 'displayName', 'displayImage', 'accountType'],
+    });
+  } catch (error) {
+    void logger
+      .type('error')
+      .data({
+        source: 'syncLocalAccountAction',
+        event: 'remote_account_lookup_exception',
+        accountId,
+        error: error instanceof Error ? { name: error.name, message: error.message, stack: error.stack } : error,
+      })
+      .error()
+      .catch(() => undefined);
+    return { success: false, error: `Remote account lookup failed: ${error instanceof Error ? error.message : 'Unknown lookup error.'}` };
+  }
 
   if (!remote.ok || !remote.body.success) {
+    const remoteMessage = remote.body.error || remote.body.reason || (
+      remote.status === 401 || remote.status === 403
+        ? 'Invalid application credentials.'
+        : remote.status === 404
+          ? `Remote account ${accountId} was not found.`
+          : 'The remote server returned an unsuccessful account response.'
+    );
+    void logger
+      .type('error')
+      .data({
+        source: 'syncLocalAccountAction',
+        event: 'remote_account_lookup_failed',
+        accountId,
+        status: remote.status,
+        error: remoteMessage,
+        remoteBody: remote.body,
+      })
+      .error()
+      .catch(() => undefined);
     return {
       success: false,
-      error: remote.body.error || `Remote account lookup failed with status ${remote.status}.`,
+      error: `Remote account lookup failed (${remote.status}): ${remoteMessage}`,
     };
   }
 
-  const account = await updateLocalAccount(accountId, {
-    displayName: remote.body.displayName ?? '',
-    displayImage: remote.body.displayImage ?? '',
-    neupId: remote.body.neupid ?? null,
-    type: remote.body.accountType ?? 'individual',
-  });
+  let account;
+  try {
+    account = await updateLocalAccount(accountId, {
+      displayName: remote.body.displayName ?? '',
+      displayImage: remote.body.displayImage ?? '',
+      neupId: remote.body.neupid ?? null,
+      type: remote.body.accountType ?? 'individual',
+    });
+  } catch (error) {
+    void logger
+      .type('error')
+      .data({
+        source: 'syncLocalAccountAction',
+        event: 'local_account_update_failed',
+        accountId,
+        error: error instanceof Error ? { name: error.name, message: error.message, stack: error.stack } : error,
+      })
+      .error()
+      .catch(() => undefined);
+    return { success: false, error: 'Local account update failed.' };
+  }
 
   return { success: true, account: serializeLocalAccount(account), syncedAt: new Date().toISOString() };
 }

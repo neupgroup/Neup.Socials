@@ -4,10 +4,10 @@
 import * as React from 'react';
 import Link from 'next/link';
 import useSWR from 'swr';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '#/components/ui/button';
+import { Card, CardContent } from '#/components/ui/card';
 import { Twitter, Linkedin, Facebook, Instagram, Youtube, Loader2, ExternalLink, Edit, Trash2, ThumbsUp, MessageSquare, Share2 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '#/components/ui/badge';
 import { getPostAnalyticsAction } from '@/services/facebook/post-insights';
 import { getAccountsByIdsAction } from '@/services/accounts/actions';
 

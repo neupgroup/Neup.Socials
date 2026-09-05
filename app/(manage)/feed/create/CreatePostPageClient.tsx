@@ -3,17 +3,17 @@
 
 import * as React from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
+import { Button } from '#/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '#/components/ui/card';
+import { Textarea } from '#/components/ui/textarea';
 import { UploadCloud, Loader2, Search, CheckCircle, Facebook } from 'lucide-react';
-import { Label } from '@/components/ui/label';
+import { Label } from '#/components/ui/label';
 import { useToast } from '@/core/hooks/useToast';
 import { recordUpload, UploadRecord } from '@/services/uploads/recordUpload';
-import { Progress } from '@/components/ui/progress';
+import { Progress } from '#/components/ui/progress';
 import Image from 'next/image';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '#/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '#/components/ui/select';
 import { createPostCollectionDraftAction } from '@/services/posts/actions';
 import { listAllUploadsAction, listUploadsAction } from '@/services/uploads/actions';
 

@@ -4,9 +4,9 @@ import * as React from 'react';
 import { format } from 'date-fns';
 import { Loader2, MessageSquare, RefreshCw, Send, EyeOff, Eye, Trash2 } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
+import { Button } from '#/components/ui/button';
+import { Badge } from '#/components/ui/badge';
+import { Textarea } from '#/components/ui/textarea';
 import { useToast } from '@/core/hooks/useToast';
 import {
   deleteInstagramCommentAction,

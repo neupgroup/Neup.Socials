@@ -32,8 +32,8 @@ import {
     SidebarGroup,
     SidebarGroupLabel,
     SidebarGroupContent,
-} from '@/components/ui/sidebar';
-import { Button } from '@/components/ui/button';
+} from '#/components/ui/sidebar';
+import { Button } from '#/components/ui/button';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -41,12 +41,12 @@ import {
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+} from '#/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '#/components/ui/avatar';
 import { Toaster } from "@/components/ui/toaster";
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Input } from '#/components/ui/input';
+import { Badge } from '#/components/ui/badge';
+import { Sheet, SheetContent, SheetTrigger } from '#/components/ui/sheet';
 import { formatDistanceToNow } from 'date-fns';
 import { listConversationsAction } from '@/services/conversations/actions';
 import { application } from '@/base/application';

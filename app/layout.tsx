@@ -33,6 +33,42 @@ const FacebookSdkLoader = () => {
   return null;
 };
 
+const ClientErrorReporter = () => {
+  React.useEffect(() => {
+    const report = (payload: Record<string, unknown>) => {
+      void fetch(`${application.appBasePath}/api/log-error`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload),
+        keepalive: true,
+      }).catch(() => undefined);
+    };
+
+    const onError = (event: ErrorEvent) => report({
+      source: 'window.error',
+      message: event.message,
+      stack: event.error?.stack,
+      filename: event.filename,
+      lineNumber: event.lineno,
+      columnNumber: event.colno,
+    });
+    const onRejection = (event: PromiseRejectionEvent) => report({
+      source: 'window.unhandledrejection',
+      message: event.reason instanceof Error ? event.reason.message : String(event.reason),
+      stack: event.reason instanceof Error ? event.reason.stack : undefined,
+    });
+
+    window.addEventListener('error', onError);
+    window.addEventListener('unhandledrejection', onRejection);
+    return () => {
+      window.removeEventListener('error', onError);
+      window.removeEventListener('unhandledrejection', onRejection);
+    };
+  }, []);
+
+  return null;
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -94,6 +130,7 @@ export default function RootLayout({
         } as React.CSSProperties}
       >
         <FacebookSdkLoader />
+        <ClientErrorReporter />
         <ProgressBar />
         {children}
         <Toaster />

@@ -2,10 +2,10 @@
 'use client';
 
 import { ArrowDown, ArrowUp, CalendarCheck2, MessageCircle, Share2, ThumbsUp, Users } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '#/components/ui/card';
+import { Badge } from '#/components/ui/badge';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import { Button } from '#/components/ui/button';
 
 const overviewData = [
   { title: 'Total Followers', value: '12,345', change: '+20.1%', icon: Users },

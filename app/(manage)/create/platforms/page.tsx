@@ -2,10 +2,10 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
+import { Button } from '#/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '#/components/ui/card';
+import { Checkbox } from '#/components/ui/checkbox';
+import { Label } from '#/components/ui/label';
 import { Facebook, Instagram, Youtube, Twitter } from 'lucide-react';
 
 const socialPlatforms = [

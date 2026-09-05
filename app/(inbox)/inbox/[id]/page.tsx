@@ -2,9 +2,9 @@
 
 import * as React from 'react';
 import { useParams } from 'next/navigation';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '#/components/ui/avatar';
+import { Input } from '#/components/ui/input';
+import { Button } from '#/components/ui/button';
 import { Send, Loader2, Twitter, Facebook, Linkedin, MoreVertical, Phone, Video, Info } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { sendReplyAction } from '@/services/inbox/sender';
@@ -14,7 +14,7 @@ import {
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from '#/components/ui/dropdown-menu';
 import {
     getConversationAction,
     listConversationMessagesAction,

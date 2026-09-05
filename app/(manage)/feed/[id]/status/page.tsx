@@ -4,11 +4,11 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '#/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '#/components/ui/card';
 import { ArrowLeft, CheckCircle, Clock, BarChart2, Loader2, FileText } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
-import { Label } from '@/components/ui/label';
+import { Progress } from '#/components/ui/progress';
+import { Label } from '#/components/ui/label';
 import { useToast } from '@/core/hooks/useToast';
 import { format } from 'date-fns';
 import { getPostCollectionAction } from '@/services/posts/actions';

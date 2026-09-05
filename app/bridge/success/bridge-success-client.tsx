@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useSearchParams } from 'next/navigation';
 import { CheckCircle2, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '#/components/ui/button';
 
 export default function BridgeSuccessClient() {
   const searchParams = useSearchParams();

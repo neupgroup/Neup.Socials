@@ -3,14 +3,14 @@
 'use client';
 import * as React from 'react';
 import { BarChart, LineChart } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '#/components/ui/card';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '#/components/ui/chart';
 import { Users, ThumbsUp, MessageCircle, ArrowUp, ArrowDown, Share2, MousePointerClick, AlertCircle } from 'lucide-react';
 import { Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { getConnectedAccounts, getPageInsightsAction } from '@/services/facebook/insights';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '#/components/ui/select';
+import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert';
+import { Button } from '#/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { format, subDays } from 'date-fns';
 

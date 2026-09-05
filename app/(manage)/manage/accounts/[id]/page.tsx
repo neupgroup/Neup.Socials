@@ -3,9 +3,9 @@
 import * as React from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, RefreshCw } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '#/components/ui/badge';
+import { Button } from '#/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#/components/ui/card';
 import { getLocalAccountAction, syncLocalAccountAction } from '@/services/accounts/actions';
 
 type Account = {
@@ -32,7 +32,7 @@ export default function ManageAccountDetailPage() {
     setError(null);
     const result = await getLocalAccountAction(params.id);
     setAccount(result as Account | null);
-    if (!result) setError('Account not found.');
+    if (!result) setError(`Account ${params.id} was not found in the local accounts table.`);
     setLoading(false);
   }, [params.id]);
 
@@ -57,7 +57,7 @@ export default function ManageAccountDetailPage() {
   };
 
   if (loading) return <div className="text-sm text-muted-foreground">Loading account…</div>;
-  if (!account) return <div className="space-y-4"><p className="text-sm text-destructive">{error || 'Account not found.'}</p><Button variant="outline" onClick={() => router.push('/manage/accounts')}><ArrowLeft className="mr-2 h-4 w-4" />Back to accounts</Button></div>;
+  if (!account) return <div className="space-y-4"><p className="text-sm text-destructive">{error || `Account ${params.id} was not found in the local accounts table.`}</p><Button variant="outline" onClick={() => router.push('/manage/accounts')}><ArrowLeft className="mr-2 h-4 w-4" />Back to accounts</Button></div>;
 
   return <div className="space-y-6">
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div><Button variant="ghost" className="mb-2 -ml-3" onClick={() => router.push('/manage/accounts')}><ArrowLeft className="mr-2 h-4 w-4" />Back to accounts</Button><h1 className="text-3xl font-bold">{account.displayName || 'Account details'}</h1><p className="font-mono text-xs text-muted-foreground">{account.account_id}</p></div><Button onClick={syncAccount} disabled={syncing}><RefreshCw className={`mr-2 h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />{syncing ? 'Syncing…' : 'Sync from Neup server'}</Button></div>

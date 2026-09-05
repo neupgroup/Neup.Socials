@@ -1,9 +1,10 @@
 'use client';
 
 import * as React from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '#/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '#/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
+import application from '@/base/application.json';
 
 export default function GlobalError({
   error,
@@ -12,6 +13,19 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  React.useEffect(() => {
+    void fetch(`${application.appBasePath}/api/log-error`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        source: 'GlobalErrorBoundary',
+        message: error.message,
+        stack: error.stack,
+        digest: error.digest,
+      }),
+    }).catch(() => undefined);
+  }, [error]);
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-background p-4">
       <Card className="w-full max-w-lg text-center">

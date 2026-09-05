@@ -1,0 +1,238 @@
+Table: connected_accounts, Model: ConnectedAccount
+Fields:
+> id: string, cuid;
+> platform: string;
+> platformId: string, nullable;
+> name: string, nullable;
+> username: string, nullable;
+> encryptedToken: string, nullable;
+> category: string, nullable;
+> status: string, nullable;
+> owner: string, nullable;
+> connectedOn: timestamp, default: now;
+> updatedAt: timestamp, nullable;
+> lastSyncedAt: timestamp, nullable;
+> nameStatus: string, nullable;
+> metadata: json, nullable;
+> createdAt: timestamp, default: now;
+
+Table: posts, Model: Post
+Fields:
+> id: string, cuid;
+> postCollectionId: string, nullable;
+> accountId: string, nullable;
+> platform: string, nullable;
+> platformPostId: string, nullable;
+> message: string, nullable;
+> postLink: string, nullable;
+> createdBy: string, nullable;
+> createdOn: timestamp, default: now;
+> analytics: json, nullable;
+> logs: string[], default: [];
+> mediaUrls: string[], default: [];
+
+Table: post_collections, Model: PostCollection
+Fields:
+> id: string, cuid;
+> content: string;
+> mediaUrls: string[], default: [];
+> status: string;
+> author: string, nullable;
+> createdAt: timestamp, default: now;
+> postsId: string[], default: [];
+> accountIds: string[], default: [];
+> platforms: string[], default: [];
+> ctaType: string, nullable;
+> ctaLink: string, nullable;
+> publishedAt: timestamp, nullable;
+> scheduledAt: timestamp, nullable;
+> originalPostCollectionId: string, nullable;
+
+Table: uploads, Model: Upload
+Fields:
+> id: string, cuid;
+> contentName: string, nullable;
+> fileName: string;
+> fileSize: int;
+> fileType: string;
+> uploadedBy: string;
+> filePath: string;
+> platform: string;
+> contentId: string;
+> uploadedOn: timestamp, default: now;
+
+Table: sync_logs, Model: SyncLog
+Fields:
+> id: string, cuid;
+> accountId: string;
+> status: string;
+> syncedAt: timestamp, default: now;
+> postsSynced: int, nullable;
+> errorMessage: string, nullable;
+> range: json, nullable;
+> details: json, nullable;
+
+Table: sync_log, Model: SyncLogEntry
+Fields:
+> id: string, cuid;
+> type: string;
+> platform: string;
+> forProfile: string;
+> sinceTime: timestamp, nullable;
+> toTime: timestamp, nullable;
+> moreInfo: json, nullable;
+> createdOn: timestamp, default: now;
+
+Table: space, Model: Space
+Fields:
+> id: string, cuid;
+> name: string;
+.. SpaceAsset references this
+
+Table: space_assets, Model: SpaceAsset
+Fields:
+> id: string, cuid;
+> spaceId: string, references space.id;
+> platform: string;
+> assetId: string, references accounts.account_id;
+.. Account references this
+
+Table: conversations, Model: Conversation
+Fields:
+> id: string, cuid;
+> contactId: string;
+> contactName: string;
+> channelId: string;
+> platform: string;
+> lastMessage: string, nullable;
+> lastMessageAt: timestamp, nullable;
+> unread: boolean, default: false;
+> avatar: string, nullable;
+> createdAt: timestamp, default: now;
+
+Table: conversation_messages, Model: ConversationMessage
+Fields:
+> id: string, cuid;
+> conversationId: string, references conversations.id;
+> platformMessageId: string, nullable, unique;
+> text: string;
+> sender: string;
+> timestamp: timestamp, default: now;
+> type: string, default: text;
+> callEvent: string, nullable;
+
+Table: system_alerts, Model: SystemAlert
+Fields:
+> id: string, cuid;
+> type: string;
+> platform: string;
+> payload: json, nullable;
+> timestamp: timestamp, default: now;
+
+Table: system_config, Model: SystemConfig
+Fields:
+> id: string, cuid;
+> key: string, unique;
+> value: string, nullable;
+> createdAt: timestamp, default: now;
+> updatedAt: timestamp, auto-updated;
+
+Table: commentors, Model: Commentor
+Fields:
+> id: string, cuid;
+> platform: string;
+> onProfile: string;
+> platformUserId: string;
+> name: string;
+> firstInteraction: timestamp, default: now;
+> createdAt: timestamp, default: now;
+.. Comment references this
+
+Table: comments, Model: Comment
+Fields:
+> id: string, cuid;
+> by: string, references commentors.id;
+> onProfile: string;
+> comment: string;
+> on: timestamp;
+> platform: string;
+> platformCommentId: string, nullable, unique;
+> postId: string, nullable;
+> postMessage: string, nullable;
+> permalinkUrl: string, nullable;
+> createdAt: timestamp, default: now;
+
+Table: identity_unified, Model: IdentityUnified
+Fields:
+> id: string, cuid;
+> name: string;
+> moreInfo: json, nullable;
+> createdOn: timestamp, default: now;
+.. IdentityPlatform references this
+
+Table: identity_platform, Model: IdentityPlatform
+Fields:
+> id: string, cuid;
+> platUserId: string;
+> platform: string;
+> unifiedId: string, references identity_unified.id;
+
+Table: facebook_comments, Model: FacebookComment
+Fields:
+> id: string, cuid;
+> psid: string;
+> comment: string;
+> commentedOn: timestamp;
+> moreInfo: json, nullable;
+
+Table: post_comments, Model: PostComment
+Fields:
+> id: string, cuid;
+> commentId: string, unique;
+> postId: string;
+> platform: string;
+> commentedOn: timestamp;
+> commenterId: string, nullable;
+> commenterName: string, nullable;
+> commentText: string, nullable;
+> createdAt: timestamp, default: now;
+> updatedAt: timestamp, auto-updated;
+
+Table: instagram_live_comments, Model: InstagramLiveComment
+Fields:
+> id: string, cuid;
+> commentId: string, unique;
+> mediaId: string, nullable;
+> mediaProductType: string, nullable;
+> fromId: string, nullable;
+> fromUsername: string, nullable;
+> selfIgScopedId: string, nullable;
+> text: string, nullable;
+> payload: json, nullable;
+> createdAt: timestamp, default: now;
+> updatedAt: timestamp, default: now;
+
+Table: instagram_messages, Model: InstagramMessage
+Fields:
+> id: string, cuid;
+> senderId: string, nullable;
+> recipientId: string, nullable;
+> eventTimestamp: timestamp;
+> messageMid: string, nullable;
+> messageText: string, nullable;
+> numEdit: int, nullable;
+> payload: json, nullable;
+> createdAt: timestamp, default: now;
+> reactionSummary: json, nullable;
+
+Table: accounts, Model: Account
+Fields:
+> account_id: string;
+> displayName: string, default: empty;
+> displayImage: string, default: empty;
+> neupId: string, nullable;
+> type: string, default: individual;
+> createdOn: timestamp, default: now;
+> status: string, default: active;
+> moreDetails: json, nullable;
+.. SpaceAsset references this
