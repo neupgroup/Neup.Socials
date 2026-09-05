@@ -1,6 +1,6 @@
 import { Prisma } from '@/prisma/client';
 
-import { parseSearchQuery, type SearchNode } from '#/core/helpers/url';
+import { parseSearchQuery, type SearchNode } from '#/core/search/query';
 
 type SearchWhere = Record<string, unknown>;
 

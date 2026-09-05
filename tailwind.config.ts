@@ -11,6 +11,7 @@ export default {
   content: [
     './app/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
+    './.neup/**/*.{js,ts,jsx,tsx,mdx}',
     './services/**/*.{js,ts,jsx,tsx,mdx}',
     './core/ai/**/*.{js,ts,jsx,tsx,mdx}',
     './services/**/*.{js,ts,jsx,tsx,mdx}',

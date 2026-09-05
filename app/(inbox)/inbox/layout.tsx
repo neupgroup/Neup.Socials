@@ -46,7 +46,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '#/components/ui/avatar';
 import { Input } from '#/components/ui/input';
 import { Badge } from '#/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '#/components/ui/sheet';
-import RootLayout from '#/components/layout/RootLayout';
 import { formatDistanceToNow } from 'date-fns';
 import { listConversationsAction } from '@/services/conversations/actions';
 import { application } from '@/base/application';
@@ -338,8 +337,7 @@ export default function InboxLayout({
     }, []);
 
     return (
-        <RootLayout>
-            <SidebarProvider>
+        <SidebarProvider>
                 <div className="flex min-h-screen w-full">
                 {/* Desktop Sidebar */}
                 <Sidebar className="hidden md:flex border-r">
@@ -413,7 +411,6 @@ export default function InboxLayout({
                     <div className="flex-1">{children}</div>
                 </main>
                 </div>
-            </SidebarProvider>
-        </RootLayout>
+        </SidebarProvider>
     );
 }
