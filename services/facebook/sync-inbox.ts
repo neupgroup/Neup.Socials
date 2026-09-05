@@ -3,7 +3,8 @@
 import { decrypt } from '#/core/helpers/crypto';
 import { dataStore } from '@/services/repositories';
 import { logError } from '@/services/error-logging';
-import { getPageConversationsWithMessages } from '@/services/facebook/messages';
+import { getFacebookConversations } from '@/services/platform/facebook/conversations.list';
+import { getFacebookConversationMessages } from '@/services/platform/facebook/conversation.messages.list';
 import { getPagePostComments } from '@/services/facebook/comments-api';
 import { getPageScopedProfile } from '@/services/facebook/comments-api';
 
@@ -17,19 +18,25 @@ async function upsertConversationMessage(params: {
   accountId: string;
   contactId: string;
   contactName: string;
+  platformConversationId: string;
+  pageId: string;
   text: string;
   platformMessageId: string;
   timestamp: Date;
   type?: string;
+  sender?: 'user' | 'page';
 }): Promise<boolean> {
   const {
     accountId,
     contactId,
     contactName,
+    platformConversationId,
+    pageId,
     text,
     platformMessageId,
     timestamp,
     type = 'text',
+    sender = 'user',
   } = params;
 
   if (!text.trim()) {
@@ -60,6 +67,7 @@ async function upsertConversationMessage(params: {
       lastMessageAt: timestamp,
       unread: true,
       avatar,
+      moreDetails: { platformInfo: { conversationId: platformConversationId, pageId } },
     });
   } else {
     conversation = await dataStore.conversations.update(conversation.id, {
@@ -68,6 +76,7 @@ async function upsertConversationMessage(params: {
       lastMessageAt: timestamp,
       unread: true,
       avatar: conversation.avatar || avatar,
+      moreDetails: { platformInfo: { conversationId: platformConversationId, pageId } },
     });
   }
 
@@ -75,7 +84,7 @@ async function upsertConversationMessage(params: {
     conversationId: conversation.id,
     platformMessageId,
     text,
-    sender: 'user',
+    sender,
     timestamp,
     type,
   });
@@ -100,7 +109,35 @@ export async function syncFacebookMessagesAction(accountId: string): Promise<Syn
 
     const pageId = account.platformId;
     const pageToken = await decrypt(account.encryptedToken);
-    const messages = await getPageConversationsWithMessages(pageId, pageToken);
+    const conversations = await getFacebookConversations({ pageId, accessToken: pageToken });
+    const messages = [] as Array<{
+      conversationId: string;
+      messageId: string;
+      text: string;
+      createdTime: string;
+      senderId: string;
+      senderName: string;
+      sender: 'user' | 'page';
+    }>;
+
+    for (const conversation of conversations.data) {
+      const conversationMessages = await getFacebookConversationMessages({
+        conversationId: conversation.id,
+        accessToken: pageToken,
+      });
+      for (const message of conversationMessages.messages?.data ?? []) {
+        if (!message.id || !message.message?.trim() || !message.from?.id) continue;
+        messages.push({
+          conversationId: conversation.id,
+          messageId: message.id,
+          text: message.message,
+          createdTime: message.created_time ?? conversation.updated_time ?? new Date().toISOString(),
+          senderId: message.from.id,
+          senderName: message.from.name || (message.from.id === pageId ? account.name : `Facebook User ${message.from.id.slice(-6)}`),
+          sender: message.from.id === pageId ? 'page' : 'user',
+        });
+      }
+    }
 
     let saved = 0;
     for (const item of messages) {
@@ -108,10 +145,13 @@ export async function syncFacebookMessagesAction(accountId: string): Promise<Syn
         accountId,
         contactId: item.senderId,
         contactName: item.senderName,
+        platformConversationId: item.conversationId,
+        pageId,
         text: item.text,
         platformMessageId: `fb_msg:${accountId}:${item.messageId}`,
         timestamp: new Date(item.createdTime),
         type: 'text',
+        sender: item.sender,
       });
 
       if (inserted) {
@@ -259,6 +299,8 @@ export async function syncFacebookCommentsAction(accountId: string): Promise<Syn
         accountId,
         contactId: item.commenterId,
         contactName: resolvedName,
+        platformConversationId: `comment:${item.commentId}`,
+        pageId,
         text: item.postId ? `Comment on ${item.postId}: ${item.commentText}` : `Comment: ${item.commentText}`,
         platformMessageId: `fb_comment:${accountId}:${item.commentId}`,
         timestamp: commentedOn,

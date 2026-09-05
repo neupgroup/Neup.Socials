@@ -115,6 +115,22 @@ const stores: Record<string, Record<string, (...args: any[]) => Promise<any>>> =
     findByPlatformMessageId: (platformMessageId) => model('conversationMessage').findUnique({ where: { platformMessageId } }),
     create: (data) => model('conversationMessage').create({ data }),
   },
+  syncLogs: {
+    listByAccountId: (accountId, take = 100) => model('syncLog').findMany({
+      where: { accountId },
+      orderBy: { syncedAt: 'desc' },
+      take,
+    }),
+    create: (data) => model('syncLog').create({ data }),
+  },
+  syncLogEntries: {
+    listByProfile: (forProfile, take = 100) => model('syncLogEntry').findMany({
+      where: { forProfile },
+      orderBy: { createdOn: 'desc' },
+      take,
+    }),
+    create: (data) => model('syncLogEntry').create({ data }),
+  },
   systemConfig: {
     getByKey: (key) => model('systemConfig').findUnique({ where: { key } }),
     upsert: (data) => model('systemConfig').upsert({

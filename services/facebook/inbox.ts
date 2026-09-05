@@ -11,6 +11,7 @@ import {
   listFacebookInboxConversations,
   listFacebookInboxMessages,
 } from '@/services/facebook/inbox-data';
+import { syncFacebookMessagesAction } from '@/services/facebook/sync-inbox';
 
 export type FacebookInboxItem = {
   id: string;
@@ -107,6 +108,30 @@ export async function listFacebookInboxFeedAction(): Promise<FacebookInboxItem[]
   if (!facebookAccounts.length) {
     return [];
   }
+
+  // Refresh every connected Facebook Page before reading the combined inbox.
+  // Each account's platformId is its Page ID and its encryptedToken is the
+  // Page access token used by the Graph API conversation endpoints.
+  await Promise.all(
+    facebookAccounts.map(async (account) => {
+      try {
+        const result = await syncFacebookMessagesAction(account.id);
+        if (!result.success) {
+          console.error('[Facebook inbox] account sync failed', {
+            accountId: account.id,
+            pageId: account.platformId,
+            error: result.error,
+          });
+        }
+      } catch (error) {
+        console.error('[Facebook inbox] account sync failed', {
+          accountId: account.id,
+          pageId: account.platformId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }),
+  );
 
   const accountById = new Map(facebookAccounts.map((account) => [account.id, account]));
   const pageIds = facebookAccounts.map((account) => String(account.platformId));

@@ -358,9 +358,9 @@ export default function ConversationPage() {
                         <p className="text-muted-foreground">No messages yet. Start the conversation!</p>
                     </div>
                 ) : (
-                    messages.map((msg) => (
+                    messages.map((msg, index) => (
                         <div
-                            key={msg.id}
+                            key={`${msg.id}-${msg.timestamp ?? 'no-time'}-${index}`}
                             className={`flex items-end gap-3 ${msg.sender === 'agent' ? 'justify-end' : ''}`}
                         >
                             {msg.sender === 'user' && (

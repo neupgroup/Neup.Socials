@@ -2,7 +2,7 @@
 
 import { logError } from "@/services/error-logging";
 import { sendTextMessage as sendWhatsAppMessage } from '@/services/whatsapp/api.send-message';
-import { sendPageTextMessage as sendFacebookPageMessage } from "@/services/facebook/messages";
+import { sendFacebookMessage } from '@/services/platform/facebook/message.send';
 import { decrypt } from "#/core/helpers/crypto";
 import { recordOutgoingMessageAction } from '@/services/messages/actions';
 import { getInboxAccount } from '@/services/inbox/account-data';
@@ -105,14 +105,14 @@ export async function sendReplyAction(
             let result;
             if (commentId && pageId) {
                 // Use the Send API for comment-to-private-message flows when the page ID is provided.
-                result = await sendFacebookPageMessage(resolvedPageId, pageToken, recipientId, message);
+                result = await sendFacebookMessage({ recipientId, accessToken: pageToken, text: message });
             } else if (commentId) {
                 // Fall back to the private replies endpoint when only comment ID is available.
                 const { sendFacebookPrivateReply } = await import('@/services/facebook/api');
                 result = await sendFacebookPrivateReply(commentId, pageToken, message);
             } else {
                 // Fallback to standard Messaging API
-                result = await sendFacebookPageMessage(resolvedPageId, pageToken, recipientId, message);
+                result = await sendFacebookMessage({ recipientId, accessToken: pageToken, text: message });
             }
 
             await recordOutgoingMessageAction({
