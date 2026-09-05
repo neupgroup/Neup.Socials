@@ -66,9 +66,9 @@ export default function BridgeSuccessClient() {
             <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
               <CheckCircle2 className="h-12 w-12 text-primary" />
             </div>
-            <h1 className="text-2xl font-bold tracking-tight">Account Connected</h1>
+            <h1 className="text-2xl font-bold tracking-tight">Authorization granted</h1>
             <p className="text-muted-foreground">
-              Your {platform} account has been successfully connected to Neup Socials.
+              Your {platform} account information was saved successfully in Neup Socials.
             </p>
             <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />

@@ -15,12 +15,16 @@
 'use server';
 
 import { generateRandomState } from '#/core/helpers/crypto';
+import { getEnvVariable } from '#/core/helpers/env';
 import { logError } from '@/services/error-logging';
-import { Link } from '#/components/ui/link';
 import { FACEBOOK_AUTH_INTENTS, type FacebookAuthIntent } from './auth-intents';
 
-const FB_OAUTH_BASE_URL = 'https://www.facebook.com/v25.0/dialog/oauth';
+const FB_OAUTH_BASE_URL = 'https://www.facebook.com/v23.0/dialog/oauth';
 const FACEBOOK_BASE_SCOPES = ['pages_show_list'];
+
+function getFacebookRedirectUri() {
+  return 'https://localhost:7624/socials/accounts/add';
+}
 
 function normalizeIntents(intents?: FacebookAuthIntent[]): FacebookAuthIntent[] {
   const valid = new Set(FACEBOOK_AUTH_INTENTS);
@@ -74,7 +78,11 @@ function scopesForIntents(intents: FacebookAuthIntent[]): string[] {
  * @param intents - User intentions: 'messages' or 'posts' (or both).
  * @returns The full Facebook OAuth dialog URL (v25.0).
  */
-export async function getFacebookAuthUrl(userId: string, intents?: FacebookAuthIntent[]): Promise<string> {
+export async function getFacebookAuthUrl(
+  userId: string,
+  intents?: FacebookAuthIntent[],
+  redirectUri?: string,
+): Promise<string> {
   try {
     const selectedIntents = normalizeIntents(intents);
     // The state parameter is used for security purposes to prevent CSRF attacks.
@@ -88,16 +96,17 @@ export async function getFacebookAuthUrl(userId: string, intents?: FacebookAuthI
       })
     ).toString('base64');
 
-    if (!process.env.SOCIALS_FACEBOOK_APP_ID) {
+    const appId = getEnvVariable('SOCIALS_FACEBOOK_APP_ID', false);
+    if (!appId) {
       throw new Error('Facebook App ID environment variable is not set.');
     }
 
     const scope = scopesForIntents(selectedIntents).join(',');
 
     const params = new URLSearchParams({
-      client_id: process.env.SOCIALS_FACEBOOK_APP_ID!,
-      redirect_uri: Link.takesTo('/bridge/callback.v1/auth.meta').get(),
-      state: encodeURIComponent(state),
+      client_id: appId,
+      redirect_uri: redirectUri || getFacebookRedirectUri(),
+      state,
       scope,
       response_type: 'code',
     });

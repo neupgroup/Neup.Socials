@@ -69,6 +69,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 type AddAccountFormProps = {
   embeddedSignupConfigId: string | null;
+  oauthStatus?: { success: boolean; message: string };
 };
 
 const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -85,7 +86,7 @@ const platformDetails = {
   WhatsApp: { icon: <WhatsAppIcon className="h-5 w-5 text-green-500" />, isOauth: false },
 };
 
-export function AddAccountForm({ embeddedSignupConfigId }: AddAccountFormProps) {
+export function AddAccountForm({ embeddedSignupConfigId, oauthStatus }: AddAccountFormProps) {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isPreverifiedSubmitting, setIsPreverifiedSubmitting] = React.useState(false);
   const [isEmbeddedSubmitting, setIsEmbeddedSubmitting] = React.useState(false);
@@ -284,7 +285,10 @@ export function AddAccountForm({ embeddedSignupConfigId }: AddAccountFormProps) 
       // Handle generic OAuth success from our bridge page
       if (payload.type === 'OAUTH_CALLBACK_SUCCESS') {
         if (payload.status === 'success') {
-          toast({ title: `${payload.platform} account connected successfully!` });
+          toast({
+            title: 'Authorization granted',
+            description: `${payload.platform} account information was saved successfully.`,
+          });
           router.push('/accounts');
         } else {
           toast({
@@ -543,6 +547,14 @@ export function AddAccountForm({ embeddedSignupConfigId }: AddAccountFormProps) 
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
+      {oauthStatus && (
+        <Card className={oauthStatus.success ? 'border-green-500/50' : 'border-destructive/50'}>
+          <CardContent className="pt-6">
+            <p className="font-medium">{oauthStatus.success ? 'Authorization granted' : 'Authorization could not be completed'}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{oauthStatus.message}</p>
+          </CardContent>
+        </Card>
+      )}
       {isWhatsAppFlow && (
         <>
           <div id="fb-root" />

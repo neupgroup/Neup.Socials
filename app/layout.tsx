@@ -3,8 +3,7 @@
 
 import * as React from 'react';
 import './globals.css';
-import { Toaster } from "@/components/ui/toaster";
-import { ProgressBar } from '@/components/progress-bar';
+import RootLayoutShell from '#/components/layout/RootLayout';
 import { application, getApplicationRadius, getGoogleFontUrl, getHslChannels } from '@/base/application';
 
 const FacebookSdkLoader = () => {
@@ -131,9 +130,7 @@ export default function RootLayout({
       >
         <FacebookSdkLoader />
         <ClientErrorReporter />
-        <ProgressBar />
-        {children}
-        <Toaster />
+        <RootLayoutShell>{children}</RootLayoutShell>
       </body>
     </html>
   );

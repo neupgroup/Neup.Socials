@@ -35,7 +35,24 @@ const stores: Record<string, Record<string, (...args: any[]) => Promise<any>>> =
     create: (data) => model('connectedAccount').create({ data }),
     update: (id, data) => model('connectedAccount').update({ where: { id }, data }),
     delete: (id) => model('connectedAccount').delete(byId(id)),
-    upsertByOwnerPlatformId: (data) => model('connectedAccount').upsert({ where: { platform_platformId_owner: { platform: data.platform, platformId: data.platformId, owner: data.owner } }, create: data, update: data }),
+    upsertByOwnerPlatformId: (data) => {
+      // OAuth callers historically wrapped provider fields in `data`, while
+      // connected_accounts is a flat Prisma model. Normalize both shapes here.
+      const { data: nestedData, ...accountData } = data;
+      const fields = nestedData && typeof nestedData === 'object' ? nestedData : {};
+      const record = { ...accountData, ...fields };
+      return model('connectedAccount').upsert({
+        where: {
+          platform_platformId_owner: {
+            platform: record.platform,
+            platformId: record.platformId,
+            owner: record.owner,
+          },
+        },
+        create: record,
+        update: record,
+      });
+    },
   },
   localAccounts: {
     list: () => model('account').findMany({ orderBy: { createdOn: 'desc' } }),
