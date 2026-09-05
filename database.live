@@ -100,6 +100,7 @@ Fields:
 Table: conversations, Model: Conversation
 Fields:
 > id: string, cuid;
+> moreDetails: json, nullable; includes platformInfo.conversationId;
 > contactId: string;
 > contactName: string;
 > channelId: string;
@@ -118,6 +119,20 @@ Fields:
 > text: string;
 > sender: string;
 > timestamp: timestamp, default: now;
+
+Table: messages, Model: Message
+Fields:
+> id: string, cuid;
+> conversationId: string;
+> platform: string;
+> platformMessageId: string, unique;
+> text: string;
+> sender: string;
+> timestamp: timestamp;
+> type: string, default: text;
+> moreDetails: json, nullable;
+> createdAt: timestamp, default: now;
+> updatedAt: timestamp, default: auto update;
 > type: string, default: text;
 > callEvent: string, nullable;
 

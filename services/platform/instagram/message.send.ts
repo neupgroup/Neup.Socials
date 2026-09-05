@@ -8,6 +8,7 @@ const INSTAGRAM_GRAPH_API_BASE_URL = `https://graph.instagram.com/${INSTAGRAM_GR
 export type InstagramMessageResponse = {
   recipient_id: string;
   message_id: string;
+  statusCode: number;
 };
 
 type InstagramMessageErrorResponse = {
@@ -24,11 +25,13 @@ export async function sendInstagramMessage({
   recipientId,
   accessToken,
   text,
+  replyToMessageId,
 }: {
   igUserId: string;
   recipientId: string;
   accessToken: string;
   text: string;
+  replyToMessageId?: string;
 }): Promise<InstagramMessageResponse> {
   if (!igUserId.trim()) {
     throw new Error('Instagram user ID is required.');
@@ -58,6 +61,7 @@ export async function sendInstagramMessage({
         body: JSON.stringify({
           recipient: { id: recipientId },
           message: { text: text.trim() },
+          ...(replyToMessageId?.trim() ? { reply_to: { message_id: replyToMessageId.trim() } } : {}),
         }),
       },
     );
@@ -78,8 +82,21 @@ export async function sendInstagramMessage({
       throw new Error('Instagram returned an invalid message response.');
     }
 
-    return payload;
+    console.log('[Instagram message] sent', {
+      igUserId,
+      recipientId,
+      replyToMessageId: replyToMessageId || null,
+      messageId: payload.message_id,
+    });
+
+    return { ...payload, statusCode: response.status };
   } catch (error) {
+    console.error('[Instagram message] send failed', {
+      igUserId,
+      recipientId,
+      replyToMessageId: replyToMessageId || null,
+      error: error instanceof Error ? error.message : String(error),
+    });
     await logError({
       process: 'sendInstagramMessage',
       location: 'Instagram Graph API /messages',

@@ -8,8 +8,9 @@ import { recordOutgoingMessageAction } from '@/services/messages/actions';
 import { getInboxAccount } from '@/services/inbox/account-data';
 
 type SendMessageResult = {
-    success: boolean;
-    messageId?: string;
+  success: boolean;
+  messageId?: string;
+  statusCode?: number;
     error?: string;
 }
 
@@ -30,7 +31,9 @@ export async function sendReplyAction(
     message: string,
     contactName?: string,
     commentId?: string,
-    pageId?: string
+  pageId?: string,
+  replyToMessageId?: string,
+  conversationId?: string
 ): Promise<SendMessageResult> {
     try {
         if (platform === 'WhatsApp') {
@@ -56,6 +59,30 @@ export async function sendReplyAction(
                 throw new Error('No message ID returned from WhatsApp API.');
             }
             return { success: true, messageId };
+        } else if (platform === 'Instagram') {
+            const accountData = await getInboxAccount(channelId);
+            if (!accountData?.encryptedToken || !accountData.platformId) throw new Error(`Instagram account with ID ${channelId} is missing credentials.`);
+            const accessToken = await decrypt(accountData.encryptedToken);
+            const { sendInstagramMessage } = await import('@/services/platform/instagram/message.send');
+            let instagramRecipientId = recipientId;
+            if (conversationId) {
+                const { getConversation } = await import('@/services/conversations');
+                const localConversation = await getConversation(conversationId);
+                const platformInfo = localConversation?.moreDetails as { platformInfo?: { recipientId?: string; conversationId?: string } } | null;
+                if (!platformInfo?.platformInfo?.recipientId || platformInfo.platformInfo.recipientId === platformInfo.platformInfo.conversationId) {
+                    const { getInstagramConversationMessages } = await import('@/services/platform/instagram/conversation.messages.list');
+                    const instagramConversationId = platformInfo?.platformInfo?.conversationId || recipientId;
+                    const details = await getInstagramConversationMessages({ conversationId: instagramConversationId, accessToken });
+                    const participant = details.messages?.data
+                        ?.flatMap((item) => [item.from, ...(item.to?.data || [])])
+                        .find((item) => item?.id && item.id !== accountData.platformId);
+                    if (participant?.id) instagramRecipientId = participant.id;
+                } else {
+                    instagramRecipientId = platformInfo.platformInfo.recipientId;
+                }
+            }
+            const result = await sendInstagramMessage({ igUserId: accountData.platformId, recipientId: instagramRecipientId, accessToken, text: message, replyToMessageId });
+            return { success: true, messageId: result.message_id, statusCode: result.statusCode };
         } else if (platform === 'Facebook') {
             if (!channelId) {
                 throw new Error("Facebook channel ID is missing.");

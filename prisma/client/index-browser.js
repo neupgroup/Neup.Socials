@@ -219,6 +219,7 @@ exports.Prisma.SpaceAssetScalarFieldEnum = {
 
 exports.Prisma.ConversationScalarFieldEnum = {
   id: 'id',
+  moreDetails: 'moreDetails',
   contactId: 'contactId',
   contactName: 'contactName',
   channelId: 'channelId',
@@ -239,6 +240,20 @@ exports.Prisma.ConversationMessageScalarFieldEnum = {
   timestamp: 'timestamp',
   type: 'type',
   callEvent: 'callEvent'
+};
+
+exports.Prisma.MessageScalarFieldEnum = {
+  id: 'id',
+  conversationId: 'conversationId',
+  platform: 'platform',
+  platformMessageId: 'platformMessageId',
+  text: 'text',
+  sender: 'sender',
+  timestamp: 'timestamp',
+  type: 'type',
+  moreDetails: 'moreDetails',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.SystemAlertScalarFieldEnum = {
@@ -393,6 +408,7 @@ exports.Prisma.ModelName = {
   SpaceAsset: 'SpaceAsset',
   Conversation: 'Conversation',
   ConversationMessage: 'ConversationMessage',
+  Message: 'Message',
   SystemAlert: 'SystemAlert',
   SystemConfig: 'SystemConfig',
   Commentor: 'Commentor',

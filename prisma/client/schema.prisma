@@ -140,6 +140,7 @@ model SpaceAsset {
 
 model Conversation {
   id            String    @id @default(cuid())
+  moreDetails   Json?
   contactId     String
   contactName   String
   channelId     String
@@ -167,6 +168,24 @@ model ConversationMessage {
 
   @@index([conversationId, timestamp])
   @@map("conversation_messages")
+}
+
+model Message {
+  id                String   @id @default(cuid())
+  conversationId    String
+  platform          String
+  platformMessageId String   @unique
+  text              String
+  sender            String
+  timestamp         DateTime
+  type              String   @default("text")
+  moreDetails       Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([conversationId, timestamp])
+  @@index([platform, conversationId])
+  @@map("messages")
 }
 
 model SystemAlert {

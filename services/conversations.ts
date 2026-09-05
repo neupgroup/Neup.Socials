@@ -14,6 +14,9 @@ export const getConversation = async (id: string) =>
 export const findConversationByContactAndChannel = async (contactId: string, channelId: string) =>
   prisma.conversation.findFirst({ where: { contactId, channelId } });
 
+export const findConversationByPlatformId = async (platformConversationId: string) =>
+  prisma.conversation.findFirst({ where: { moreDetails: { path: ['platformInfo', 'conversationId'], equals: platformConversationId } } });
+
 export const listConversationsByChannelIds = async ({
   channelIds,
   take = 200,
@@ -28,6 +31,7 @@ export const listConversationsByChannelIds = async ({
   });
 
 export const createConversation = async (data: {
+  moreDetails?: any;
   contactId: string;
   contactName: string;
   channelId: string;
@@ -39,6 +43,7 @@ export const createConversation = async (data: {
 }) =>
   prisma.conversation.create({
     data: {
+      moreDetails: data.moreDetails,
       contactId: data.contactId,
       contactName: data.contactName,
       channelId: data.channelId,
@@ -51,6 +56,7 @@ export const createConversation = async (data: {
   });
 
 export const updateConversation = async (id: string, data: {
+  moreDetails?: any;
   contactName?: string;
   lastMessage?: string | null;
   lastMessageAt?: Date | null;

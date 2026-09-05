@@ -35,6 +35,7 @@ import { Sheet, SheetContent } from '#/components/ui/sheet';
 import { Userbar } from '#/components/element/userbar';
 import { formatDistanceToNow } from 'date-fns';
 import { listConversationsAction } from '@/services/conversations/actions';
+import { listInstagramConversationsAction } from '@/services/conversations/actions';
 import { application } from '@/base/application';
 
 const inboxNavItems = [
@@ -290,6 +291,11 @@ export default function InboxLayout({
             window.clearInterval(interval);
         };
     }, []);
+
+    React.useEffect(() => {
+        if (pathname !== '/inbox/instagram') return;
+        void listInstagramConversationsAction();
+    }, [pathname]);
 
     return (
         <SidebarProvider>

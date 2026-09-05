@@ -47,6 +47,7 @@ firebase-debug.log
 firestore-debug.log
 
 # neup.standard files
+/.neup
 core
 neup.core
 logica
