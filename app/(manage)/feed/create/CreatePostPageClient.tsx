@@ -59,6 +59,12 @@ export default function CreatePostPageClient() {
 
     const queryString = params.toString();
     const nextUrl = queryString ? `${pathname}?${queryString}` : pathname;
+
+    // Avoid replacing the current URL when it already matches. Next navigation
+    // updates searchParams, so an unconditional replace creates a navigation loop.
+    const currentQuery = searchParams.get('query') ?? '';
+    if (currentQuery === trimmed) return;
+
     router.replace(nextUrl, { scroll: false });
   }, [searchParams, searchTerm, pathname, router]);
 
