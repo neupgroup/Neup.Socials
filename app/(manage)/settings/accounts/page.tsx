@@ -1,96 +1,51 @@
-import { format } from 'date-fns';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '#/components/ui/avatar';
 import { Badge } from '#/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '#/components/ui/table';
-import { listAllAccountsAction } from '@/services/accounts/actions';
+import { listLocalAccountsAction } from '@/services/accounts/actions';
 
-type Account = {
+type PlatformAccount = {
   id: string;
-  platform: string;
-  platformId: string | null;
-  name: string | null;
-  username: string | null;
-  owner: string | null;
-  status: string | null;
-  category: string | null;
-  nameStatus: string | null;
-  connectedOn: string | null;
-  updatedAt: string | null;
-  lastSyncedAt: string | null;
-  metadata: unknown;
+  connectionId: string;
+  displayName: string;
+  displayImage: string;
+  neupId: string | null;
+  type: string;
+  status: string;
 };
 
-function formatDate(value: string | null | undefined) {
-  if (!value) return '—';
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? '—' : format(date, 'yyyy-MM-dd HH:mm');
-}
-
-function formatMetadata(value: unknown) {
-  if (value === null || value === undefined) return '—';
-  try {
-    return JSON.stringify(value);
-  } catch {
-    return 'Unavailable';
-  }
-}
-
 export default async function SettingsAccountsPage() {
-  const accounts = await listAllAccountsAction() as Account[];
+  const accounts = await listLocalAccountsAction() as PlatformAccount[];
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Connected Accounts</h1>
-        <p className="text-muted-foreground">All social accounts currently stored for this application.</p>
+        <h1 className="text-3xl font-bold">Platform Accounts</h1>
+        <p className="text-muted-foreground">Accounts created and stored in this platform.</p>
       </div>
-
       <Card>
         <CardHeader>
           <CardTitle>Account records</CardTitle>
           <CardDescription>{accounts.length} account{accounts.length === 1 ? '' : 's'} found.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-3">
           {accounts.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">No connected accounts have been created yet.</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Account</TableHead>
-                  <TableHead>Platform ID</TableHead>
-                  <TableHead>Owner</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Name status</TableHead>
-                  <TableHead>Connected</TableHead>
-                  <TableHead>Updated</TableHead>
-                  <TableHead>Last synced</TableHead>
-                  <TableHead>Metadata</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {accounts.map((account) => (
-                  <TableRow key={account.id}>
-                    <TableCell className="min-w-[220px]">
-                      <p className="font-medium">{account.name || account.username || 'Unnamed account'}</p>
-                      <p className="text-xs text-muted-foreground">{account.platform} · {account.username || 'No username'}</p>
-                      <p className="mt-1 max-w-[260px] truncate font-mono text-[10px] text-muted-foreground">{account.id}</p>
-                    </TableCell>
-                    <TableCell className="font-mono text-xs">{account.platformId || '—'}</TableCell>
-                    <TableCell>{account.owner || '—'}</TableCell>
-                    <TableCell><Badge variant={account.status?.toLowerCase() === 'active' ? 'default' : 'outline'}>{account.status || 'Unknown'}</Badge></TableCell>
-                    <TableCell>{account.category || '—'}</TableCell>
-                    <TableCell>{account.nameStatus || '—'}</TableCell>
-                    <TableCell className="whitespace-nowrap">{formatDate(account.connectedOn)}</TableCell>
-                    <TableCell className="whitespace-nowrap">{formatDate(account.updatedAt)}</TableCell>
-                    <TableCell className="whitespace-nowrap">{formatDate(account.lastSyncedAt)}</TableCell>
-                    <TableCell className="max-w-[260px] truncate font-mono text-xs" title={formatMetadata(account.metadata)}>{formatMetadata(account.metadata)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+            <p className="py-8 text-center text-sm text-muted-foreground">No platform accounts have been created yet.</p>
+          ) : accounts.map((account) => (
+            <div key={account.id} className="flex items-center justify-between gap-4 rounded-lg border p-4">
+              <div className="flex min-w-0 items-center gap-3">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={account.displayImage || undefined} alt={account.displayName || 'Account'} />
+                  <AvatarFallback>{(account.displayName || account.id).slice(0, 2).toUpperCase()}</AvatarFallback>
+                </Avatar>
+                <div className="min-w-0">
+                  <p className="truncate font-medium">{account.displayName || 'Unnamed account'}</p>
+                  <p className="truncate text-sm text-muted-foreground">{account.neupId || 'No NeupID'} · {account.type}</p>
+                  <p className="truncate font-mono text-xs text-muted-foreground">{account.id} · {account.connectionId}</p>
+                </div>
+              </div>
+              <Badge variant={account.status === 'active' ? 'default' : 'outline'}>{account.status}</Badge>
+            </div>
+          ))}
         </CardContent>
       </Card>
     </div>

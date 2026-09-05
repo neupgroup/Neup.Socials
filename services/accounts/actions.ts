@@ -1,6 +1,6 @@
 'use server';
 
-import { getBasics } from '#/logica/account/self';
+import { self } from '#/logica/account/self';
 import { getAccountBasics } from '#/logica/account/lookup';
 import { logger } from '#/logica/logger';
 import { buildTextSearchWhere } from '@/services/searches/text-search';
@@ -31,13 +31,13 @@ const serializeAccount = (account: Awaited<ReturnType<typeof getAccount>>) =>
     : null;
 
 export async function ensureCurrentAccountAction() {
-  const account = (await getBasics())[0];
+  const account = await self.ensureRecord();
   if (!account) return null;
 
   return {
     displayName: account.displayName,
     displayImage: account.displayImage,
-    neupId: account.neupid,
+    neupId: account.neupId,
   };
 }
 
@@ -85,7 +85,7 @@ export async function syncLocalAccountAction(accountId: string) {
   try {
     remote = await getAccountBasics({
       accountId,
-      fields: ['neupid', 'displayName', 'displayImage', 'accountType'],
+      fields: ['neupid', 'accountId', 'connectionId', 'displayName', 'displayImage', 'accountType'],
     });
   } catch (error) {
     void logger
@@ -130,6 +130,7 @@ export async function syncLocalAccountAction(accountId: string) {
   let account;
   try {
     account = await updateLocalAccount(accountId, {
+      connectionId: remote.body.connectionId ?? '',
       displayName: remote.body.displayName ?? '',
       displayImage: remote.body.displayImage ?? '',
       neupId: remote.body.neupid ?? null,

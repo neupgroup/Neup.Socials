@@ -24123,7 +24123,8 @@ export namespace Prisma {
   }
 
   export type AccountMinAggregateOutputType = {
-    account_id: string | null
+    id: string | null
+    connectionId: string | null
     displayName: string | null
     displayImage: string | null
     neupId: string | null
@@ -24133,7 +24134,8 @@ export namespace Prisma {
   }
 
   export type AccountMaxAggregateOutputType = {
-    account_id: string | null
+    id: string | null
+    connectionId: string | null
     displayName: string | null
     displayImage: string | null
     neupId: string | null
@@ -24143,7 +24145,8 @@ export namespace Prisma {
   }
 
   export type AccountCountAggregateOutputType = {
-    account_id: number
+    id: number
+    connectionId: number
     displayName: number
     displayImage: number
     neupId: number
@@ -24156,7 +24159,8 @@ export namespace Prisma {
 
 
   export type AccountMinAggregateInputType = {
-    account_id?: true
+    id?: true
+    connectionId?: true
     displayName?: true
     displayImage?: true
     neupId?: true
@@ -24166,7 +24170,8 @@ export namespace Prisma {
   }
 
   export type AccountMaxAggregateInputType = {
-    account_id?: true
+    id?: true
+    connectionId?: true
     displayName?: true
     displayImage?: true
     neupId?: true
@@ -24176,7 +24181,8 @@ export namespace Prisma {
   }
 
   export type AccountCountAggregateInputType = {
-    account_id?: true
+    id?: true
+    connectionId?: true
     displayName?: true
     displayImage?: true
     neupId?: true
@@ -24260,7 +24266,8 @@ export namespace Prisma {
   }
 
   export type AccountGroupByOutputType = {
-    account_id: string
+    id: string
+    connectionId: string
     displayName: string
     displayImage: string
     neupId: string | null
@@ -24288,7 +24295,8 @@ export namespace Prisma {
 
 
   export type AccountSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    account_id?: boolean
+    id?: boolean
+    connectionId?: boolean
     displayName?: boolean
     displayImage?: boolean
     neupId?: boolean
@@ -24301,7 +24309,8 @@ export namespace Prisma {
   }, ExtArgs["result"]["account"]>
 
   export type AccountSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    account_id?: boolean
+    id?: boolean
+    connectionId?: boolean
     displayName?: boolean
     displayImage?: boolean
     neupId?: boolean
@@ -24312,7 +24321,8 @@ export namespace Prisma {
   }, ExtArgs["result"]["account"]>
 
   export type AccountSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    account_id?: boolean
+    id?: boolean
+    connectionId?: boolean
     displayName?: boolean
     displayImage?: boolean
     neupId?: boolean
@@ -24323,7 +24333,8 @@ export namespace Prisma {
   }, ExtArgs["result"]["account"]>
 
   export type AccountSelectScalar = {
-    account_id?: boolean
+    id?: boolean
+    connectionId?: boolean
     displayName?: boolean
     displayImage?: boolean
     neupId?: boolean
@@ -24333,7 +24344,7 @@ export namespace Prisma {
     moreDetails?: boolean
   }
 
-  export type AccountOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"account_id" | "displayName" | "displayImage" | "neupId" | "type" | "createdOn" | "status" | "moreDetails", ExtArgs["result"]["account"]>
+  export type AccountOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "connectionId" | "displayName" | "displayImage" | "neupId" | "type" | "createdOn" | "status" | "moreDetails", ExtArgs["result"]["account"]>
   export type AccountInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     spaceAssets?: boolean | Account$spaceAssetsArgs<ExtArgs>
     _count?: boolean | AccountCountOutputTypeDefaultArgs<ExtArgs>
@@ -24347,7 +24358,8 @@ export namespace Prisma {
       spaceAssets: Prisma.$SpaceAssetPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
-      account_id: string
+      id: string
+      connectionId: string
       displayName: string
       displayImage: string
       neupId: string | null
@@ -24438,8 +24450,8 @@ export namespace Prisma {
      * // Get first 10 Accounts
      * const accounts = await prisma.account.findMany({ take: 10 })
      * 
-     * // Only select the `account_id`
-     * const accountWithAccount_idOnly = await prisma.account.findMany({ select: { account_id: true } })
+     * // Only select the `id`
+     * const accountWithIdOnly = await prisma.account.findMany({ select: { id: true } })
      * 
      */
     findMany<T extends AccountFindManyArgs>(args?: SelectSubset<T, AccountFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AccountPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
@@ -24483,9 +24495,9 @@ export namespace Prisma {
      *   ]
      * })
      * 
-     * // Create many Accounts and only return the `account_id`
-     * const accountWithAccount_idOnly = await prisma.account.createManyAndReturn({
-     *   select: { account_id: true },
+     * // Create many Accounts and only return the `id`
+     * const accountWithIdOnly = await prisma.account.createManyAndReturn({
+     *   select: { id: true },
      *   data: [
      *     // ... provide data here
      *   ]
@@ -24574,9 +24586,9 @@ export namespace Prisma {
      *   ]
      * })
      * 
-     * // Update zero or more Accounts and only return the `account_id`
-     * const accountWithAccount_idOnly = await prisma.account.updateManyAndReturn({
-     *   select: { account_id: true },
+     * // Update zero or more Accounts and only return the `id`
+     * const accountWithIdOnly = await prisma.account.updateManyAndReturn({
+     *   select: { id: true },
      *   where: {
      *     // ... provide filter here
      *   },
@@ -24779,7 +24791,8 @@ export namespace Prisma {
    * Fields of the Account model
    */
   interface AccountFieldRefs {
-    readonly account_id: FieldRef<"Account", 'String'>
+    readonly id: FieldRef<"Account", 'String'>
+    readonly connectionId: FieldRef<"Account", 'String'>
     readonly displayName: FieldRef<"Account", 'String'>
     readonly displayImage: FieldRef<"Account", 'String'>
     readonly neupId: FieldRef<"Account", 'String'>
@@ -25520,7 +25533,8 @@ export namespace Prisma {
 
 
   export const AccountScalarFieldEnum: {
-    account_id: 'account_id',
+    id: 'id',
+    connectionId: 'connectionId',
     displayName: 'displayName',
     displayImage: 'displayImage',
     neupId: 'neupId',
@@ -27049,7 +27063,8 @@ export namespace Prisma {
     AND?: AccountWhereInput | AccountWhereInput[]
     OR?: AccountWhereInput[]
     NOT?: AccountWhereInput | AccountWhereInput[]
-    account_id?: StringFilter<"Account"> | string
+    id?: StringFilter<"Account"> | string
+    connectionId?: StringFilter<"Account"> | string
     displayName?: StringFilter<"Account"> | string
     displayImage?: StringFilter<"Account"> | string
     neupId?: StringNullableFilter<"Account"> | string | null
@@ -27061,7 +27076,8 @@ export namespace Prisma {
   }
 
   export type AccountOrderByWithRelationInput = {
-    account_id?: SortOrder
+    id?: SortOrder
+    connectionId?: SortOrder
     displayName?: SortOrder
     displayImage?: SortOrder
     neupId?: SortOrderInput | SortOrder
@@ -27073,10 +27089,11 @@ export namespace Prisma {
   }
 
   export type AccountWhereUniqueInput = Prisma.AtLeast<{
-    account_id?: string
+    id?: string
     AND?: AccountWhereInput | AccountWhereInput[]
     OR?: AccountWhereInput[]
     NOT?: AccountWhereInput | AccountWhereInput[]
+    connectionId?: StringFilter<"Account"> | string
     displayName?: StringFilter<"Account"> | string
     displayImage?: StringFilter<"Account"> | string
     neupId?: StringNullableFilter<"Account"> | string | null
@@ -27085,10 +27102,11 @@ export namespace Prisma {
     status?: StringFilter<"Account"> | string
     moreDetails?: JsonNullableFilter<"Account">
     spaceAssets?: SpaceAssetListRelationFilter
-  }, "account_id">
+  }, "id">
 
   export type AccountOrderByWithAggregationInput = {
-    account_id?: SortOrder
+    id?: SortOrder
+    connectionId?: SortOrder
     displayName?: SortOrder
     displayImage?: SortOrder
     neupId?: SortOrderInput | SortOrder
@@ -27105,7 +27123,8 @@ export namespace Prisma {
     AND?: AccountScalarWhereWithAggregatesInput | AccountScalarWhereWithAggregatesInput[]
     OR?: AccountScalarWhereWithAggregatesInput[]
     NOT?: AccountScalarWhereWithAggregatesInput | AccountScalarWhereWithAggregatesInput[]
-    account_id?: StringWithAggregatesFilter<"Account"> | string
+    id?: StringWithAggregatesFilter<"Account"> | string
+    connectionId?: StringWithAggregatesFilter<"Account"> | string
     displayName?: StringWithAggregatesFilter<"Account"> | string
     displayImage?: StringWithAggregatesFilter<"Account"> | string
     neupId?: StringNullableWithAggregatesFilter<"Account"> | string | null
@@ -28685,7 +28704,8 @@ export namespace Prisma {
   }
 
   export type AccountCreateInput = {
-    account_id: string
+    id: string
+    connectionId: string
     displayName?: string
     displayImage?: string
     neupId?: string | null
@@ -28697,7 +28717,8 @@ export namespace Prisma {
   }
 
   export type AccountUncheckedCreateInput = {
-    account_id: string
+    id: string
+    connectionId: string
     displayName?: string
     displayImage?: string
     neupId?: string | null
@@ -28709,7 +28730,8 @@ export namespace Prisma {
   }
 
   export type AccountUpdateInput = {
-    account_id?: StringFieldUpdateOperationsInput | string
+    id?: StringFieldUpdateOperationsInput | string
+    connectionId?: StringFieldUpdateOperationsInput | string
     displayName?: StringFieldUpdateOperationsInput | string
     displayImage?: StringFieldUpdateOperationsInput | string
     neupId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -28721,7 +28743,8 @@ export namespace Prisma {
   }
 
   export type AccountUncheckedUpdateInput = {
-    account_id?: StringFieldUpdateOperationsInput | string
+    id?: StringFieldUpdateOperationsInput | string
+    connectionId?: StringFieldUpdateOperationsInput | string
     displayName?: StringFieldUpdateOperationsInput | string
     displayImage?: StringFieldUpdateOperationsInput | string
     neupId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -28733,7 +28756,8 @@ export namespace Prisma {
   }
 
   export type AccountCreateManyInput = {
-    account_id: string
+    id: string
+    connectionId: string
     displayName?: string
     displayImage?: string
     neupId?: string | null
@@ -28744,7 +28768,8 @@ export namespace Prisma {
   }
 
   export type AccountUpdateManyMutationInput = {
-    account_id?: StringFieldUpdateOperationsInput | string
+    id?: StringFieldUpdateOperationsInput | string
+    connectionId?: StringFieldUpdateOperationsInput | string
     displayName?: StringFieldUpdateOperationsInput | string
     displayImage?: StringFieldUpdateOperationsInput | string
     neupId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -28755,7 +28780,8 @@ export namespace Prisma {
   }
 
   export type AccountUncheckedUpdateManyInput = {
-    account_id?: StringFieldUpdateOperationsInput | string
+    id?: StringFieldUpdateOperationsInput | string
+    connectionId?: StringFieldUpdateOperationsInput | string
     displayName?: StringFieldUpdateOperationsInput | string
     displayImage?: StringFieldUpdateOperationsInput | string
     neupId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -29743,7 +29769,8 @@ export namespace Prisma {
   }
 
   export type AccountCountOrderByAggregateInput = {
-    account_id?: SortOrder
+    id?: SortOrder
+    connectionId?: SortOrder
     displayName?: SortOrder
     displayImage?: SortOrder
     neupId?: SortOrder
@@ -29754,7 +29781,8 @@ export namespace Prisma {
   }
 
   export type AccountMaxOrderByAggregateInput = {
-    account_id?: SortOrder
+    id?: SortOrder
+    connectionId?: SortOrder
     displayName?: SortOrder
     displayImage?: SortOrder
     neupId?: SortOrder
@@ -29764,7 +29792,8 @@ export namespace Prisma {
   }
 
   export type AccountMinOrderByAggregateInput = {
-    account_id?: SortOrder
+    id?: SortOrder
+    connectionId?: SortOrder
     displayName?: SortOrder
     displayImage?: SortOrder
     neupId?: SortOrder
@@ -30360,7 +30389,8 @@ export namespace Prisma {
   }
 
   export type AccountCreateWithoutSpaceAssetsInput = {
-    account_id: string
+    id: string
+    connectionId: string
     displayName?: string
     displayImage?: string
     neupId?: string | null
@@ -30371,7 +30401,8 @@ export namespace Prisma {
   }
 
   export type AccountUncheckedCreateWithoutSpaceAssetsInput = {
-    account_id: string
+    id: string
+    connectionId: string
     displayName?: string
     displayImage?: string
     neupId?: string | null
@@ -30413,7 +30444,8 @@ export namespace Prisma {
   }
 
   export type AccountUpdateWithoutSpaceAssetsInput = {
-    account_id?: StringFieldUpdateOperationsInput | string
+    id?: StringFieldUpdateOperationsInput | string
+    connectionId?: StringFieldUpdateOperationsInput | string
     displayName?: StringFieldUpdateOperationsInput | string
     displayImage?: StringFieldUpdateOperationsInput | string
     neupId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -30424,7 +30456,8 @@ export namespace Prisma {
   }
 
   export type AccountUncheckedUpdateWithoutSpaceAssetsInput = {
-    account_id?: StringFieldUpdateOperationsInput | string
+    id?: StringFieldUpdateOperationsInput | string
+    connectionId?: StringFieldUpdateOperationsInput | string
     displayName?: StringFieldUpdateOperationsInput | string
     displayImage?: StringFieldUpdateOperationsInput | string
     neupId?: NullableStringFieldUpdateOperationsInput | string | null

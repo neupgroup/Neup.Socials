@@ -94,7 +94,7 @@ Fields:
 > id: string, cuid;
 > spaceId: string, references space.id;
 > platform: string;
-> assetId: string, references accounts.account_id;
+> assetId: string, references accounts.id;
 .. Account references this
 
 Table: conversations, Model: Conversation
@@ -227,7 +227,8 @@ Fields:
 
 Table: accounts, Model: Account
 Fields:
-> account_id: string;
+> id: string;
+> connectionId: string;
 > displayName: string, default: empty;
 > displayImage: string, default: empty;
 > neupId: string, nullable;

@@ -1,0 +1,2 @@
+ALTER TABLE "accounts" ADD COLUMN "connectionId" TEXT NOT NULL DEFAULT '';
+ALTER TABLE "accounts" ALTER COLUMN "connectionId" DROP DEFAULT;

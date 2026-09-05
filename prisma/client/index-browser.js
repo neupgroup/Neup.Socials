@@ -344,7 +344,8 @@ exports.Prisma.InstagramMessageScalarFieldEnum = {
 };
 
 exports.Prisma.AccountScalarFieldEnum = {
-  account_id: 'account_id',
+  id: 'id',
+  connectionId: 'connectionId',
   displayName: 'displayName',
   displayImage: 'displayImage',
   neupId: 'neupId',

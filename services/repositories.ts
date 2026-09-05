@@ -39,8 +39,8 @@ const stores: Record<string, Record<string, (...args: any[]) => Promise<any>>> =
   },
   localAccounts: {
     list: () => model('account').findMany({ orderBy: { createdOn: 'desc' } }),
-    getById: (accountId) => model('account').findUnique({ where: { account_id: accountId } }),
-    update: (accountId, data) => model('account').update({ where: { account_id: accountId }, data }),
+    getById: (accountId) => model('account').findUnique({ where: { id: accountId } }),
+    update: (accountId, data) => model('account').update({ where: { id: accountId }, data }),
   },
   posts: {
     list: (args = {}) => model('post').findMany({

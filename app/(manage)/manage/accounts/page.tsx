@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '#/components/ui/avatar';
 import { listLocalAccountsAction } from '@/services/accounts/actions';
 
 type LocalAccount = {
-  account_id: string;
+  id: string;
   displayName: string;
   displayImage: string;
   neupId: string | null;
@@ -35,12 +35,12 @@ export default async function ManageAccountsPage() {
           ) : (
             <div className="overflow-hidden rounded-b-xl border-t border-border">
               {accounts.map((account) => (
-                <Link key={account.account_id} href={`/manage/accounts/${account.account_id}`} className="group block border-b border-border bg-card p-5 transition-colors last:border-b-0 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring">
+                <Link key={account.id} href={`/manage/accounts/${account.id}`} className="group block border-b border-border bg-card p-5 transition-colors last:border-b-0 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring">
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex min-w-0 items-center gap-4">
                       <Avatar className="h-12 w-12 shrink-0 border">
                         <AvatarImage src={account.displayImage || undefined} alt={account.displayName || 'Account'} />
-                        <AvatarFallback>{(account.displayName || account.account_id).slice(0, 2).toUpperCase()}</AvatarFallback>
+                        <AvatarFallback>{(account.displayName || account.id).slice(0, 2).toUpperCase()}</AvatarFallback>
                       </Avatar>
                       <div className="min-w-0">
                         <p className="truncate font-semibold group-hover:text-primary">{account.displayName || 'Unnamed account'}</p>

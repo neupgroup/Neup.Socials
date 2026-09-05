@@ -21,17 +21,17 @@ import { usePathname } from 'next/navigation';
 import {
     Sidebar,
     SidebarProvider,
-    SidebarHeader,
-    SidebarContent,
-    SidebarMenu,
-    SidebarMenuItem,
+
+
+
+
     SidebarMenuButton,
-    SidebarFooter,
+
     SidebarTrigger,
-    SidebarInset,
-    SidebarGroup,
-    SidebarGroupLabel,
-    SidebarGroupContent,
+
+
+
+
 } from '#/components/ui/sidebar';
 import { Button } from '#/components/ui/button';
 import {
@@ -106,16 +106,16 @@ function InboxSidebarContent({
 }) {
     return (
         <>
-            <SidebarHeader className="border-b p-4">
+            <div className="border-b p-4">
                 <Link href="/" className="flex items-center gap-2">
                     <div className="flex items-center justify-center size-8 bg-primary rounded-lg text-primary-foreground">
                         <MessageSquareText className="size-5" />
                     </div>
                     <span className="font-semibold text-lg">{application.appName}</span>
                 </Link>
-            </SidebarHeader>
+            </div>
 
-            <SidebarContent>
+            <div>
                 {/* Search Bar */}
                 <div className="px-3 py-2">
                     <div className="relative">
@@ -129,12 +129,12 @@ function InboxSidebarContent({
                 </div>
 
                 {/* Navigation Items */}
-                <SidebarGroup>
-                    <SidebarGroupLabel>Messages</SidebarGroupLabel>
-                    <SidebarGroupContent>
-                        <SidebarMenu>
+                <div>
+                    <div>Messages</div>
+                    <div>
+                        <div>
                             {inboxNavItems.map((item) => (
-                                <SidebarMenuItem key={item.href}>
+                                <li key={item.href}>
                                     <Link href={item.href}>
                                         <SidebarMenuButton
                                             isActive={pathname === item.href}
@@ -152,16 +152,16 @@ function InboxSidebarContent({
                                             )}
                                         </SidebarMenuButton>
                                     </Link>
-                                </SidebarMenuItem>
+                                </li>
                             ))}
-                        </SidebarMenu>
-                    </SidebarGroupContent>
-                </SidebarGroup>
+                        </div>
+                    </div>
+                </div>
 
                 {/* Filter Tags */}
-                <SidebarGroup>
-                    <SidebarGroupLabel>Filters</SidebarGroupLabel>
-                    <SidebarGroupContent>
+                <div>
+                    <div>Filters</div>
+                    <div>
                         <div className="flex flex-wrap gap-1.5 px-2">
                             {filterTags.map((tag) => (
                                 <Link key={tag.href} href={tag.href}>
@@ -176,13 +176,13 @@ function InboxSidebarContent({
                                 </Link>
                             ))}
                         </div>
-                    </SidebarGroupContent>
-                </SidebarGroup>
+                    </div>
+                </div>
 
                 {/* Channel Tags */}
-                <SidebarGroup>
-                    <SidebarGroupLabel>Channels</SidebarGroupLabel>
-                    <SidebarGroupContent>
+                <div>
+                    <div>Channels</div>
+                    <div>
                         <div className="flex flex-wrap gap-1.5 px-2">
                             {channelTags.map((tag) => (
                                 <Link key={tag.href} href={tag.href}>
@@ -196,13 +196,13 @@ function InboxSidebarContent({
                                 </Link>
                             ))}
                         </div>
-                    </SidebarGroupContent>
-                </SidebarGroup>
+                    </div>
+                </div>
 
                 {/* Conversations List */}
-                <SidebarGroup>
-                    <SidebarGroupLabel>Conversations</SidebarGroupLabel>
-                    <SidebarGroupContent>
+                <div>
+                    <div>Conversations</div>
+                    <div>
                         {loading ? (
                             <div className="px-3 py-4 text-center text-sm text-muted-foreground">
                                 Loading...
@@ -256,11 +256,11 @@ function InboxSidebarContent({
                                 ))}
                             </div>
                         )}
-                    </SidebarGroupContent>
-                </SidebarGroup>
-            </SidebarContent>
+                    </div>
+                </div>
+            </div>
 
-            <SidebarFooter className="border-t p-4">
+            <div className="border-t p-4">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="w-full justify-start px-2 hover:bg-accent">
@@ -295,7 +295,7 @@ function InboxSidebarContent({
                         <DropdownMenuItem>Log out</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
-            </SidebarFooter>
+            </div>
         </>
     );
 }
@@ -364,7 +364,7 @@ export default function InboxLayout({
                 </Sheet>
 
                 {/* Main Content */}
-                <SidebarInset className="flex-1">
+                <main className="flex-1">
                     {/* Mobile Header */}
                     <header className="sticky top-0 z-10 flex md:hidden h-14 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4">
                         <Button
@@ -411,7 +411,7 @@ export default function InboxLayout({
 
                     {/* Page Content */}
                     <div className="flex-1">{children}</div>
-                </SidebarInset>
+                </main>
                 </div>
             </SidebarProvider>
         </RootLayout>

@@ -18,14 +18,14 @@ import { cn } from '#/core/utils';
 import {
   Sidebar,
   SidebarProvider,
-  SidebarHeader,
-  SidebarContent,
-  SidebarMenu,
-  SidebarMenuItem,
+
+
+
+
   SidebarMenuButton,
-  SidebarFooter,
+
   SidebarTrigger,
-  SidebarInset,
+
 } from '#/components/ui/sidebar';
 import { Button } from '#/components/ui/button';
 import {
@@ -58,18 +58,18 @@ export default function MainLayout({
   return (
     <SidebarProvider>
       <Sidebar>
-        <SidebarHeader>
+        <div>
           <div className="flex items-center gap-2 p-2 pr-0">
             <div className="flex items-center justify-center size-8 bg-primary rounded-lg text-primary-foreground">
               <MessageSquareText className="size-5" />
             </div>
             <span className="font-semibold text-lg">TeamSocial</span>
           </div>
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarMenu>
+        </div>
+        <div>
+          <div>
             {navItems.map((item) => (
-              <SidebarMenuItem key={item.href}>
+              <li key={item.href}>
                 <Link href={item.href}>
                   <SidebarMenuButton
                     isActive={pathname.startsWith(item.href)}
@@ -79,11 +79,11 @@ export default function MainLayout({
                     <span>{item.label}</span>
                   </SidebarMenuButton>
                 </Link>
-              </SidebarMenuItem>
+              </li>
             ))}
-          </SidebarMenu>
-        </SidebarContent>
-        <SidebarFooter className="p-4">
+          </div>
+        </div>
+        <div className="p-4">
           <div className="flex items-center gap-3">
              <Avatar className="h-9 w-9">
                 <AvatarImage src="https://placehold.co/40x40" alt="@shadcn" />
@@ -94,9 +94,9 @@ export default function MainLayout({
                 <span className="text-muted-foreground">admin@teamsocial.com</span>
               </div>
           </div>
-        </SidebarFooter>
+        </div>
       </Sidebar>
-      <SidebarInset>
+      <main>
         <header className="flex h-14 items-center justify-between border-b bg-background/80 backdrop-blur-sm px-6 sticky top-0 z-10">
           <SidebarTrigger className="md:hidden" />
           <div className="flex items-center gap-4 ml-auto">
@@ -130,7 +130,7 @@ export default function MainLayout({
           </div>
         </header>
         <main className="flex-1 p-6">{children}</main>
-      </SidebarInset>
+      </main>
     </SidebarProvider>
   );
 }

@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#/com
 import { getLocalAccountAction, syncLocalAccountAction } from '@/services/accounts/actions';
 
 type Account = {
-  account_id: string;
+  id: string;
   displayName: string;
   displayImage: string;
   neupId: string | null;
@@ -60,7 +60,7 @@ export default function ManageAccountDetailPage() {
   if (!account) return <div className="space-y-4"><p className="text-sm text-destructive">{error || `Account ${params.id} was not found in the local accounts table.`}</p><Button variant="outline" onClick={() => router.push('/manage/accounts')}><ArrowLeft className="mr-2 h-4 w-4" />Back to accounts</Button></div>;
 
   return <div className="space-y-6">
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div><Button variant="ghost" className="mb-2 -ml-3" onClick={() => router.push('/manage/accounts')}><ArrowLeft className="mr-2 h-4 w-4" />Back to accounts</Button><h1 className="text-3xl font-bold">{account.displayName || 'Account details'}</h1><p className="font-mono text-xs text-muted-foreground">{account.account_id}</p></div><Button onClick={syncAccount} disabled={syncing}><RefreshCw className={`mr-2 h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />{syncing ? 'Syncing…' : 'Sync from Neup server'}</Button></div>
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div><Button variant="ghost" className="mb-2 -ml-3" onClick={() => router.push('/manage/accounts')}><ArrowLeft className="mr-2 h-4 w-4" />Back to accounts</Button><h1 className="text-3xl font-bold">{account.displayName || 'Account details'}</h1><p className="font-mono text-xs text-muted-foreground">{account.id}</p></div><Button onClick={syncAccount} disabled={syncing}><RefreshCw className={`mr-2 h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />{syncing ? 'Syncing…' : 'Sync from Neup server'}</Button></div>
     {error && <p className="text-sm text-destructive">{error}</p>}
     {syncedAt && <p className="text-sm text-muted-foreground">Synced at {new Date(syncedAt).toLocaleString()}.</p>}
     <Card><CardHeader><CardTitle>Account information</CardTitle><CardDescription>Current data stored in the local accounts table.</CardDescription></CardHeader><CardContent className="grid gap-5 sm:grid-cols-2">

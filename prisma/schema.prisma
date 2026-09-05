@@ -129,7 +129,7 @@ model SpaceAsset {
   spaceId  String  @map("space_id")
   platform String
   assetId  String  @map("asset_id")
-  account  Account @relation(fields: [assetId], references: [account_id], onDelete: Cascade)
+  account  Account @relation(fields: [assetId], references: [id], onDelete: Cascade)
   space    Space   @relation(fields: [spaceId], references: [id], onDelete: Cascade)
 
   @@unique([spaceId, platform, assetId])
@@ -312,7 +312,8 @@ model InstagramMessage {
 }
 
 model Account {
-  account_id   String       @id
+  id           String       @id
+  connectionId String
   displayName  String       @default("") @map("display_name")
   displayImage String       @default("") @map("display_image")
   neupId       String?      @map("neupid")
