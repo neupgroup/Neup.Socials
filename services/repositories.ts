@@ -115,6 +115,17 @@ const stores: Record<string, Record<string, (...args: any[]) => Promise<any>>> =
     findByPlatformMessageId: (platformMessageId) => model('conversationMessage').findUnique({ where: { platformMessageId } }),
     create: (data) => model('conversationMessage').create({ data }),
   },
+  systemConfig: {
+    getByKey: (key) => model('systemConfig').findUnique({ where: { key } }),
+    upsert: (data) => model('systemConfig').upsert({
+      where: { key: data.key },
+      create: data,
+      update: data,
+    }),
+  },
+  systemAlerts: {
+    create: (data) => model('systemAlert').create({ data }),
+  },
 };
 
 const generic = new Proxy({}, {

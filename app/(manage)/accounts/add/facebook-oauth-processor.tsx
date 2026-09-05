@@ -4,6 +4,7 @@ import * as React from 'react';
 import { useSearchParams } from 'next/navigation';
 import { CheckCircle2, Loader2, XCircle } from 'lucide-react';
 import { Card, CardContent } from '#/components/ui/card';
+import { application } from '@/base/application';
 
 export default function FacebookOAuthProcessor() {
   const params = useSearchParams();
@@ -16,7 +17,7 @@ export default function FacebookOAuthProcessor() {
     if (!code || !state || processed.current) return;
     processed.current = true;
     setResult({ state: 'processing', message: 'We are exchanging your authorization and saving the connected accounts.' });
-    fetch('/api/accounts/facebook/callback', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code, state }) })
+    fetch(`${application.appBasePath}/bridge/api.v1/accounts/facebook/callback`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code, state }) })
       .then(async (response) => { const data = await response.json(); if (!response.ok || !data.success) throw new Error(data.error || 'Authorization processing failed.'); setResult({ state: 'success', message: data.message || 'Account information was saved successfully.' }); window.history.replaceState(null, '', '/socials/accounts/add'); })
       .catch((error: Error) => setResult({ state: 'error', message: error.message }));
   }, [params]);
