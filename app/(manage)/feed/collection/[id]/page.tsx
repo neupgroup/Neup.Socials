@@ -11,7 +11,7 @@ import { Badge } from '#/components/ui/badge';
 import { Edit, Trash, ArrowLeft, Loader2, Repeat, Link2 } from 'lucide-react';
 import { useToast } from '#/core/hooks/useToast';
 import { format } from 'date-fns';
-import { repostAction } from '@/services/feed/repost';
+import { repostAction } from '@/services/content/repost';
 import { PublicationStatus } from '@/components/publication-status';
 import {
   cancelScheduledPostCollectionAction,
