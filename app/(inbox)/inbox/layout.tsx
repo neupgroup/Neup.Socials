@@ -25,26 +25,14 @@ import {
 
 
 
-    SidebarTrigger,
-
-
-
-
 } from '#/components/ui/sidebar';
 import { NavButton } from '#/components/ui/navbutton';
 import { Button } from '#/components/ui/button';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '#/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '#/components/ui/avatar';
 import { Input } from '#/components/ui/input';
 import { Badge } from '#/components/ui/badge';
-import { Sheet, SheetContent, SheetTrigger } from '#/components/ui/sheet';
+import { Sheet, SheetContent } from '#/components/ui/sheet';
+import { Userbar } from '#/components/element/userbar';
 import { formatDistanceToNow } from 'date-fns';
 import { listConversationsAction } from '@/services/conversations/actions';
 import { application } from '@/base/application';
@@ -105,8 +93,8 @@ function InboxSidebarContent({
     const router = useRouter();
 
     return (
-        <>
-            <div className="border-b p-4">
+        <div className="flex h-full flex-col bg-background">
+            <div className="border-b border-border p-5">
                 <Link href="/" className="flex items-center gap-2">
                     <div className="flex items-center justify-center size-8 bg-primary rounded-lg text-primary-foreground">
                         <MessageSquareText className="size-5" />
@@ -115,7 +103,7 @@ function InboxSidebarContent({
                 </Link>
             </div>
 
-            <div>
+            <div className="flex-1 space-y-6 overflow-y-auto p-3">
                 {/* Search Bar */}
                 <div className="px-3 py-2">
                     <div className="relative">
@@ -129,10 +117,9 @@ function InboxSidebarContent({
                 </div>
 
                 {/* Navigation Items */}
-                <div>
-                    <div>Messages</div>
-                    <div>
-                        <div>
+                <section className="space-y-2">
+                    <p className="px-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Messages</p>
+                    <div className="space-y-1">
                             {inboxNavItems.map((item) => (
                                 <li key={item.href}>
                                     <NavButton
@@ -156,12 +143,11 @@ function InboxSidebarContent({
                                 </li>
                             ))}
                         </div>
-                    </div>
-                </div>
+                </section>
 
                 {/* Filter Tags */}
-                <div>
-                    <div>Filters</div>
+                <section className="space-y-2">
+                    <p className="px-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Filters</p>
                     <div>
                         <div className="flex flex-wrap gap-1.5 px-2">
                             {filterTags.map((tag) => (
@@ -178,11 +164,11 @@ function InboxSidebarContent({
                             ))}
                         </div>
                     </div>
-                </div>
+                </section>
 
                 {/* Channel Tags */}
-                <div>
-                    <div>Channels</div>
+                <section className="space-y-2">
+                    <p className="px-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Channels</p>
                     <div>
                         <div className="flex flex-wrap gap-1.5 px-2">
                             {channelTags.map((tag) => (
@@ -198,11 +184,11 @@ function InboxSidebarContent({
                             ))}
                         </div>
                     </div>
-                </div>
+                </section>
 
                 {/* Conversations List */}
-                <div>
-                    <div>Conversations</div>
+                <section className="space-y-2">
+                    <p className="px-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Conversations</p>
                     <div>
                         {loading ? (
                             <div className="px-3 py-4 text-center text-sm text-muted-foreground">
@@ -258,46 +244,13 @@ function InboxSidebarContent({
                             </div>
                         )}
                     </div>
-                </div>
+                </section>
             </div>
 
-            <div className="border-t p-4">
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="w-full justify-start px-2 hover:bg-accent">
-                            <div className="flex items-center gap-3 w-full">
-                                <Avatar className="h-9 w-9">
-                                    <AvatarImage src="https://placehold.co/40x40" alt="Neup Admin" />
-                                    <AvatarFallback>NS</AvatarFallback>
-                                </Avatar>
-                                <div className="flex flex-col text-sm text-left group-data-[collapsible=icon]:hidden">
-                                    <span className="font-medium">Neup Admin</span>
-                                    <span className="text-muted-foreground text-xs">Online</span>
-                                </div>
-                            </div>
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56" align="end" side="top">
-                        <DropdownMenuLabel className="font-normal">
-                            <div className="flex flex-col space-y-1">
-                                <p className="text-sm font-medium leading-none">Neup Admin</p>
-                                <p className="text-xs leading-none text-muted-foreground">
-                                    admin@neup.socials
-                                </p>
-                            </div>
-                        </DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild>
-                            <Link href="/">Go to Dashboard</Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>Profile</DropdownMenuItem>
-                        <DropdownMenuItem>Settings</DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem>Log out</DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+            <div className="border-t border-border p-4">
+                <Userbar displayName="Neup Admin" neupid="neupkishor" className="w-full justify-end" />
             </div>
-        </>
+        </div>
     );
 }
 
@@ -380,32 +333,7 @@ export default function InboxLayout({
                             <Button variant="ghost" size="icon">
                                 <Search className="h-4 w-4" />
                             </Button>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="rounded-full">
-                                        <Avatar className="h-8 w-8">
-                                            <AvatarImage src="https://placehold.co/40x40" alt="User" />
-                                            <AvatarFallback>NS</AvatarFallback>
-                                        </Avatar>
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuLabel>
-                                        <div className="flex flex-col space-y-1">
-                                            <p className="text-sm font-medium">Neup Admin</p>
-                                            <p className="text-xs text-muted-foreground">admin@neup.socials</p>
-                                        </div>
-                                    </DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem asChild>
-                                        <Link href="/">Go to Dashboard</Link>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem>Profile</DropdownMenuItem>
-                                    <DropdownMenuItem>Settings</DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem>Log out</DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                            <Userbar displayName="Neup Admin" neupid="neupkishor" />
                         </div>
                     </header>
 
