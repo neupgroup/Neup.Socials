@@ -20,7 +20,6 @@ import { FACEBOOK_AUTH_INTENTS } from '@/services/facebook/auth-intents';
 import { getInstagramAuthUrl } from '@/services/instagram/auth';
 import { getLinkedInAuthUrl } from '@/services/linkedin/auth';
 import { encrypt } from '@/core/lib/crypto';
-import { toAppUrl } from '@/core/lib/app-url';
 import { getWhatsAppAccountName } from '@/services/whatsapp/api.get-account-name';
 import { createConnectedAccountAction } from '@/services/accounts/actions';
 import {

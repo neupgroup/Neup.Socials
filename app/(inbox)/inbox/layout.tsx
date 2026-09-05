@@ -43,10 +43,10 @@ import {
     DropdownMenuTrigger,
 } from '#/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '#/components/ui/avatar';
-import { Toaster } from "@/components/ui/toaster";
 import { Input } from '#/components/ui/input';
 import { Badge } from '#/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '#/components/ui/sheet';
+import RootLayout from '#/components/layout/RootLayout';
 import { formatDistanceToNow } from 'date-fns';
 import { listConversationsAction } from '@/services/conversations/actions';
 import { application } from '@/base/application';
@@ -338,8 +338,9 @@ export default function InboxLayout({
     }, []);
 
     return (
-        <SidebarProvider>
-            <div className="flex min-h-screen w-full">
+        <RootLayout>
+            <SidebarProvider>
+                <div className="flex min-h-screen w-full">
                 {/* Desktop Sidebar */}
                 <Sidebar className="hidden md:flex border-r">
                     <InboxSidebarContent
@@ -411,8 +412,8 @@ export default function InboxLayout({
                     {/* Page Content */}
                     <div className="flex-1">{children}</div>
                 </SidebarInset>
-            </div>
-            <Toaster />
-        </SidebarProvider>
+                </div>
+            </SidebarProvider>
+        </RootLayout>
     );
 }

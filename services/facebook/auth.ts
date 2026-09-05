@@ -16,7 +16,7 @@
 
 import { generateRandomState } from '#/core/helpers/crypto';
 import { logError } from '@/services/error-logging';
-import { toAppUrl } from '@/core/lib/app-url';
+import { Link } from '#/components/ui/link';
 import { FACEBOOK_AUTH_INTENTS, type FacebookAuthIntent } from './auth-intents';
 
 const FB_OAUTH_BASE_URL = 'https://www.facebook.com/v25.0/dialog/oauth';
@@ -96,7 +96,7 @@ export async function getFacebookAuthUrl(userId: string, intents?: FacebookAuthI
 
     const params = new URLSearchParams({
       client_id: process.env.SOCIALS_FACEBOOK_APP_ID!,
-      redirect_uri: toAppUrl('/bridge/callback.v1/auth.meta'),
+      redirect_uri: Link.takesTo('/bridge/callback.v1/auth.meta').get(),
       state: encodeURIComponent(state),
       scope,
       response_type: 'code',

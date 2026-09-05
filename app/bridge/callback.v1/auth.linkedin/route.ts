@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { handleLinkedInCallback } from '@/services/linkedin/callback';
 import { logError } from '@/services/error-logging';
-import { toAppUrl } from '@/core/lib/app-url';
+import { Link } from '#/components/ui/link';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
       errorMessage: errorDescription || 'User denied the request or an error occurred.',
       context: { error, errorDescription },
     });
-    return NextResponse.redirect(toAppUrl('/accounts/add?error=linkedin-denied'));
+    return NextResponse.redirect(Link.takesTo('/accounts/add?error=linkedin-denied').get());
   }
 
   if (!code || !state) {
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
       location: 'GET /bridge/callback.v1/auth.linkedin',
       errorMessage: 'Missing code or state parameter in callback.',
     });
-    return NextResponse.redirect(toAppUrl('/accounts/add?error=invalid-callback'));
+    return NextResponse.redirect(Link.takesTo('/accounts/add?error=invalid-callback').get());
   }
 
   state = decodeURIComponent(state);
@@ -34,8 +34,8 @@ export async function GET(request: NextRequest) {
   const result = await handleLinkedInCallback(code, state);
 
   if (result.success) {
-    return NextResponse.redirect(toAppUrl('/bridge/success?status=success&platform=LinkedIn'));
+    return NextResponse.redirect(Link.takesTo('/bridge/success?status=success&platform=LinkedIn').get());
   }
 
-  return NextResponse.redirect(toAppUrl(`/bridge/success?error=${encodeURIComponent(result.error ?? 'callback-failed')}&platform=LinkedIn`));
+  return NextResponse.redirect(Link.takesTo(`/bridge/success?error=${encodeURIComponent(result.error ?? 'callback-failed')}&platform=LinkedIn`).get());
 }

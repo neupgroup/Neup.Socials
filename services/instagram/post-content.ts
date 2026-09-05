@@ -2,7 +2,7 @@
 
 import * as mime from 'mime-types';
 
-import { getAppBaseUrl } from '@/core/lib/app-url';
+import { Link } from '#/components/ui/link';
 
 const INSTAGRAM_GRAPH_API_BASE_URL = 'https://graph.instagram.com/v25.0';
 
@@ -92,7 +92,7 @@ function getFullMediaUrl(url: string): string {
     return url;
   }
 
-  const baseUrl = getAppBaseUrl();
+  const baseUrl = Link.takesTo('/').get();
   return `${baseUrl}${url.startsWith('/') ? url : `/${url}`}`;
 }
 

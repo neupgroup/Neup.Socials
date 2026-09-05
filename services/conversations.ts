@@ -1,6 +1,6 @@
 'use server';
 
-import { prisma } from '@/core/database/prisma';
+import { prisma } from '#/core/database/prisma';
 
 export const listConversations = async ({ take = 20 }: { take?: number } = {}) =>
   prisma.conversation.findMany({

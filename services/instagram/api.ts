@@ -4,7 +4,7 @@
  */
 'use server';
 
-import { toAppUrl } from '@/core/lib/app-url';
+import { Link } from '#/components/ui/link';
 
 const API_BASE_URL = 'https://api.instagram.com';
 const GRAPH_API_BASE_URL = 'https://graph.instagram.com';
@@ -58,7 +58,7 @@ export async function exchangeCodeForToken(
     client_id: process.env.SOCIALS_INSTAGRAM_APP_ID!,
     client_secret: process.env.SOCIALS_INSTAGRAM_APP_SECRET!,
     grant_type: 'authorization_code',
-    redirect_uri: redirectUri ?? toAppUrl('/bridge/callback.v1/auth.meta'),
+    redirect_uri: redirectUri ?? Link.takesTo('/bridge/callback.v1/auth.meta').get(),
     code,
   });
 

@@ -1,4 +1,4 @@
-import { prisma } from '@/core.v2/lib/prisma';
+import { prisma } from '#/core/database/prisma';
 
 type InstagramLiveCommentPayload = {
   from?: {

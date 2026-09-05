@@ -8,7 +8,7 @@ import { Button } from '#/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '#/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '#/components/ui/avatar';
 import { Toaster } from '@/components/ui/toaster';
-import { cn } from '#/core/hooks/utils';
+import { cn } from '#/core/utils';
 
 const navItems = [
   { href: '/', icon: LayoutGrid, label: 'Dashboard' }, { href: '/analytics', icon: LayoutGrid, label: 'Analytics' },

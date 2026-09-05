@@ -1,6 +1,6 @@
 'use server';
 
-import { prisma } from '@/core/database/prisma';
+import { prisma } from '#/core/database/prisma';
 
 export const listFacebookInsightsAccounts = async (owner: string, take = 100) =>
   prisma.connectedAccount.findMany({

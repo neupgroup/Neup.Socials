@@ -1,6 +1,6 @@
 'use server';
 
-import { Prisma, prisma } from '@/core/database/prisma';
+import { Prisma, prisma } from '#/core/database/prisma';
 
 export type FacebookInboxComment = {
   id: string;

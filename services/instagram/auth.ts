@@ -6,7 +6,7 @@
 
 import { generateRandomState } from '#/core/helpers/crypto';
 import { logError } from '@/services/error-logging';
-import { getAppBaseUrl, buildUrlFromBase } from '@/core/lib/app-url';
+import { Link } from '#/components/ui/link';
 
 const INSTAGRAM_OAUTH_BASE_URL = 'https://www.instagram.com/oauth/authorize';
 const INSTAGRAM_AUTH_SCOPES = [
@@ -40,10 +40,7 @@ export async function getInstagramAuthUrl(userId: string): Promise<string> {
       throw new Error('Instagram App ID environment variable is not set.');
     }
 
-    const redirectUri = buildUrlFromBase(
-      getAppBaseUrl(),
-      '/bridge/callback.v1/auth.meta'
-    );
+    const redirectUri = Link.takesTo('/bridge/callback.v1/auth.meta').get();
 
     const params = new URLSearchParams({
       force_reauth: 'true',

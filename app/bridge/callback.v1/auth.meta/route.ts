@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { handleFacebookCallback } from '@/services/facebook/callback';
 import { handleInstagramCallback } from '@/services/instagram/callback';
 import { logError } from '@/services/error-logging';
-import { toAppUrl } from '@/core/lib/app-url';
+import { Link } from '#/components/ui/link';
 
 function escapeHtml(value: string) {
   return value
@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
       errorMessage: errorDescription || 'User denied the request or an error occurred.',
       context: { error, errorDescription },
     });
-    return NextResponse.redirect(toAppUrl('/accounts/add?error=meta-denied'));
+    return NextResponse.redirect(Link.takesTo('/accounts/add?error=meta-denied').get());
   }
 
   if (!code || !state) {
@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
       location: 'GET /bridge/callback.v1/auth.meta',
       errorMessage: 'Missing code or state parameter in callback.',
     });
-    return NextResponse.redirect(toAppUrl('/accounts/add?error=invalid-callback'));
+    return NextResponse.redirect(Link.takesTo('/accounts/add?error=invalid-callback').get());
   }
 
   state = decodeURIComponent(state);
@@ -132,18 +132,18 @@ export async function GET(request: NextRequest) {
       location: 'GET /bridge/callback.v1/auth.meta',
       errorMessage: 'Missing platform in state payload.',
     });
-    return NextResponse.redirect(toAppUrl('/accounts/add?error=invalid-callback'));
+    return NextResponse.redirect(Link.takesTo('/accounts/add?error=invalid-callback').get());
   }
 
   if (platform === 'Facebook') {
     const result = await handleFacebookCallback(code, state);
 
     if (result.success) {
-      return NextResponse.redirect(toAppUrl('/bridge/success?status=success&platform=Facebook'));
+      return NextResponse.redirect(Link.takesTo('/bridge/success?status=success&platform=Facebook').get());
     }
 
     return NextResponse.redirect(
-      toAppUrl(`/bridge/success?error=${encodeURIComponent(result.error ?? 'callback-failed')}&platform=Facebook`)
+      Link.takesTo(`/bridge/success?error=${encodeURIComponent(result.error ?? 'callback-failed')}&platform=Facebook`).get()
     );
   }
 
@@ -151,11 +151,11 @@ export async function GET(request: NextRequest) {
     const result = await handleInstagramCallback(code, state);
 
     if (result.success) {
-      return NextResponse.redirect(toAppUrl('/bridge/success?status=success&platform=Instagram'));
+      return NextResponse.redirect(Link.takesTo('/bridge/success?status=success&platform=Instagram').get());
     }
 
     return NextResponse.redirect(
-      toAppUrl(`/bridge/success?error=${encodeURIComponent(result.error ?? 'callback-failed')}&platform=Instagram`)
+      Link.takesTo(`/bridge/success?error=${encodeURIComponent(result.error ?? 'callback-failed')}&platform=Instagram`).get()
     );
   }
 
@@ -164,5 +164,5 @@ export async function GET(request: NextRequest) {
     location: 'GET /bridge/callback.v1/auth.meta',
     errorMessage: `Unsupported platform in state: ${platform}`,
   });
-  return NextResponse.redirect(toAppUrl('/accounts/add?error=unsupported-platform'));
+  return NextResponse.redirect(Link.takesTo('/accounts/add?error=unsupported-platform').get());
 }
