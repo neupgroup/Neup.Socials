@@ -16,7 +16,7 @@ import {
     Bell,
     Menu,
 } from 'lucide-react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 import {
     Sidebar,
@@ -25,14 +25,13 @@ import {
 
 
 
-    SidebarMenuButton,
-
     SidebarTrigger,
 
 
 
 
 } from '#/components/ui/sidebar';
+import { NavButton } from '#/components/ui/navbutton';
 import { Button } from '#/components/ui/button';
 import {
     DropdownMenu,
@@ -103,6 +102,8 @@ function InboxSidebarContent({
     conversations: Conversation[];
     loading: boolean;
 }) {
+    const router = useRouter();
+
     return (
         <>
             <div className="border-b p-4">
@@ -134,23 +135,24 @@ function InboxSidebarContent({
                         <div>
                             {inboxNavItems.map((item) => (
                                 <li key={item.href}>
-                                    <Link href={item.href}>
-                                        <SidebarMenuButton
-                                            isActive={pathname === item.href}
-                                            tooltip={item.label}
-                                        >
-                                            <item.icon className="h-4 w-4" />
-                                            <span>{item.label}</span>
-                                            {item.count !== undefined && (
-                                                <Badge
-                                                    variant="secondary"
-                                                    className="ml-auto h-5 px-1.5 text-xs"
-                                                >
-                                                    {item.count}
-                                                </Badge>
-                                            )}
-                                        </SidebarMenuButton>
-                                    </Link>
+                                    <NavButton
+                                        type="button"
+                                        active={pathname === item.href}
+                                        variant="text"
+                                        className="w-full justify-start hover:!bg-transparent hover:!text-foreground active:!bg-transparent active:!text-foreground data-[active=true]:!bg-primary/20 data-[active=true]:!text-primary data-[active=true]:hover:!bg-primary/30"
+                                        onClick={() => router.push(item.href)}
+                                    >
+                                        <item.icon className="h-4 w-4" />
+                                        <span>{item.label}</span>
+                                        {item.count !== undefined && (
+                                            <Badge
+                                                variant="secondary"
+                                                className="ml-auto h-5 px-1.5 text-xs"
+                                            >
+                                                {item.count}
+                                            </Badge>
+                                        )}
+                                    </NavButton>
                                 </li>
                             ))}
                         </div>

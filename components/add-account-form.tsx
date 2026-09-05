@@ -453,26 +453,7 @@ export function AddAccountForm({ embeddedSignupConfigId, oauthStatus }: AddAccou
           ? await getInstagramAuthUrl(userId)
           : await platform.handler!(userId);
       
-      const width = 600;
-      const height = 700;
-      const left = window.screenX + (window.outerWidth - width) / 2;
-      const top = window.screenY + (window.outerHeight - height) / 2;
-      
-      const popup = window.open(
-        authUrl,
-        `Connect${selectedPlatform}`,
-        `width=${width},height=${height},left=${left},top=${top},status=no,location=no,toolbar=no,menubar=no`
-      );
-
-      if (popup) {
-        popup.focus();
-      } else {
-        toast({
-          title: 'Popup blocked',
-          description: `Please allow popups to connect your ${selectedPlatform} account.`,
-          variant: 'destructive',
-        });
-      }
+      window.location.assign(authUrl);
       setIsSubmitting(false);
     } catch (error) {
       console.error(`Error getting ${selectedPlatform} auth URL: `, error);
