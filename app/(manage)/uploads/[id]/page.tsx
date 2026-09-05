@@ -9,7 +9,7 @@ import { Button } from '#/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '#/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '#/components/ui/table';
 import { Loader2, ArrowLeft, Edit, File, Video, FileText } from 'lucide-react';
-import { useToast } from '@/core/hooks/useToast';
+import { useToast } from '#/core/hooks/useToast';
 import { getPostCollectionsByMediaUrlAction } from '@/services/posts/actions';
 import { getUploadAction } from '@/services/uploads/actions';
 

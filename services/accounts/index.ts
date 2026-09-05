@@ -2,7 +2,7 @@
 
 import { dataStore } from '@/services/repositories';
 import { logError } from '@/services/error-logging';
-import { encrypt } from '@/core/helpers/crypto';
+import { encrypt } from '#/core/helpers/crypto';
 import { revalidatePath } from 'next/cache';
 
 export const listAccounts = dataStore.accounts.list;

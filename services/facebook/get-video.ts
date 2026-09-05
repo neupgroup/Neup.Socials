@@ -1,6 +1,6 @@
 'use server';
 
-import { decrypt } from '@/core/helpers/crypto';
+import { decrypt } from '#/core/helpers/crypto';
 import { dataStore } from '@/services/repositories';
 import { logError } from '@/services/error-logging';
 import {

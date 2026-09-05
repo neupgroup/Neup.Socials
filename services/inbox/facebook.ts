@@ -3,7 +3,7 @@
 
 import { dataStore } from '@/services/repositories';
 import { logError } from '@/services/error-logging';
-import { decrypt } from '@/core/helpers/crypto';
+import { decrypt } from '#/core/helpers/crypto';
 import { getPageCommentById } from '@/services/facebook/comments-api';
 import { getPageScopedProfile } from '@/services/facebook/comments-api';
 

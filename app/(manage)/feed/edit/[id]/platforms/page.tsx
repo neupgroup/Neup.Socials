@@ -8,7 +8,7 @@ import { Button } from '#/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '#/components/ui/card';
 import { Checkbox } from '#/components/ui/checkbox';
 import { Facebook, Instagram, Twitter, Linkedin, Loader2 } from 'lucide-react';
-import { useToast } from '@/core/hooks/useToast';
+import { useToast } from '#/core/hooks/useToast';
 import { Avatar, AvatarFallback } from '#/components/ui/avatar';
 import { listAccountsAction } from '@/services/accounts/actions';
 import { getPostCollectionAction, updatePostCollectionAction } from '@/services/posts/actions';

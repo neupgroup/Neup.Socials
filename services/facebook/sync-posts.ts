@@ -2,7 +2,7 @@
 'use server';
 
 import { dataStore } from '@/services/repositories';
-import { decrypt } from '@/core/helpers/crypto';
+import { decrypt } from '#/core/helpers/crypto';
 import { getPosts } from '@/services/facebook/api';
 import { logError } from '@/services/error-logging';
 import { subDays } from 'date-fns';

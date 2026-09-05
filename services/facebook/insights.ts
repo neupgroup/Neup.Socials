@@ -3,7 +3,7 @@
  */
 'use server';
 
-import { decrypt } from '@/core/helpers/crypto';
+import { decrypt } from '#/core/helpers/crypto';
 import { getPageInsights, InsightValue, PageInsightsQueryContext } from '@/services/facebook/api';
 import { subDays, format } from 'date-fns';
 import { logError } from '@/services/error-logging';

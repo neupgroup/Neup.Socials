@@ -4,7 +4,7 @@
  */
 'use server';
 
-import { generateRandomState } from '@/core/helpers/crypto';
+import { generateRandomState } from '#/core/helpers/crypto';
 import { logError } from '@/services/error-logging';
 
 const LINKEDIN_OAUTH_BASE_URL = 'https://www.linkedin.com/oauth/v2/authorization';

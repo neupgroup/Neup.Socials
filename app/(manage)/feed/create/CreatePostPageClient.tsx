@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '#/com
 import { Textarea } from '#/components/ui/textarea';
 import { UploadCloud, Loader2, Search, CheckCircle, Facebook } from 'lucide-react';
 import { Label } from '#/components/ui/label';
-import { useToast } from '@/core/hooks/useToast';
+import { useToast } from '#/core/hooks/useToast';
 import { recordUpload, UploadRecord } from '@/services/uploads/recordUpload';
 import { Progress } from '#/components/ui/progress';
 import Image from 'next/image';

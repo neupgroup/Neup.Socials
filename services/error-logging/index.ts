@@ -1,17 +1,21 @@
 'use server';
 
 /**
- * @fileoverview Application error logging adapter backed by Logica logger.
+ * @fileoverview Application error logging adapter backed by Logica's logger object.
  */
 
-import { logger } from '@/logica/logger';
+import { logger } from '#/logica/logger';
 
 export type ErrorLog = {
   timestamp: any;
-  source: string; // e.g., 'handleFacebookCallback', 'generatePostVariationsAction'
-  message: string;
+  source?: string; // e.g., 'handleFacebookCallback', 'generatePostVariationsAction'
+  process?: string;
+  message?: string;
+  errorMessage?: string;
   stack?: string;
   userId?: string;
+  user?: string;
+  location?: string;
   request?: {
     url?: string;
     method?: string;
@@ -22,19 +26,21 @@ export type ErrorLog = {
 };
 
 /**
- * Sends an application error through the existing Logica logger API.
+ * Sends an application error through the Logica logger object API.
  * Logging failures are swallowed so they never hide the original application
  * error or change the response status.
  */
 export async function logError(errorLog: Omit<ErrorLog, 'timestamp'>): Promise<string> {
   try {
+    const process = errorLog.process || errorLog.source || 'application-error';
     const response = await logger
       .type('error')
       .data({
-        source: errorLog.source,
-        message: errorLog.message,
+        process,
+        location: errorLog.location,
+        message: errorLog.message || errorLog.errorMessage || 'Unknown error',
         stack: errorLog.stack,
-        userId: errorLog.userId,
+        userId: errorLog.userId || errorLog.user,
         request: errorLog.request,
         context: errorLog.context,
       })

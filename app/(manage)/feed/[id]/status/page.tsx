@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '#/com
 import { ArrowLeft, CheckCircle, Clock, BarChart2, Loader2, FileText } from 'lucide-react';
 import { Progress } from '#/components/ui/progress';
 import { Label } from '#/components/ui/label';
-import { useToast } from '@/core/hooks/useToast';
+import { useToast } from '#/core/hooks/useToast';
 import { format } from 'date-fns';
 import { getPostCollectionAction } from '@/services/posts/actions';
 

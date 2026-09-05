@@ -1,7 +1,7 @@
 'use server';
 
 import { dataStore } from '@/services/repositories';
-import { decrypt } from '@/core/helpers/crypto';
+import { decrypt } from '#/core/helpers/crypto';
 import { logError } from '@/services/error-logging';
 import {
 	blockPageUser,

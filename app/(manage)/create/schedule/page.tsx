@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
-import { cn } from '@/core/utils';
+import { cn } from '#/core/utils';
 import {
   Sidebar,
   SidebarProvider,

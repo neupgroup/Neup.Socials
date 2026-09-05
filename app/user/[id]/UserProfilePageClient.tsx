@@ -8,7 +8,7 @@ import { Loader2 } from 'lucide-react';
 import { getFacebookUserProfileAction, type FacebookUserProfile } from '@/services/facebook/user';
 import { sendReplyAction } from '@/services/inbox/sender';
 import { Button } from '#/components/ui/button';
-import { useToast } from '@/core/hooks/useToast';
+import { useToast } from '#/core/hooks/useToast';
 
 export default function UserProfilePageClient() {
   const params = useParams<{ id: string }>();

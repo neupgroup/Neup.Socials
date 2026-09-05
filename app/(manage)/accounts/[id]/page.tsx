@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '#/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '#/components/ui/table';
 import { Badge } from '#/components/ui/badge';
 import { Loader2, ArrowLeft, Users, ThumbsUp, Share2, ExternalLink, Twitter, Facebook, Linkedin, Instagram, RefreshCw, Heart, Laugh, Angry, Droplet, Annoyed, History } from 'lucide-react';
-import { useToast } from '@/core/hooks/useToast';
+import { useToast } from '#/core/hooks/useToast';
 import { getPageInsightsAction } from '@/services/facebook/insights';
 import { format } from 'date-fns';
 import { logError } from '@/services/error-logging';

@@ -1,4 +1,4 @@
-import { logger } from '@/logica/logger';
+import { logger } from '#/logica/logger';
 
 export async function POST(request: Request) {
   let payload: unknown;
