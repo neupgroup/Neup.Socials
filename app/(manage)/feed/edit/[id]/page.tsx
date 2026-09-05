@@ -22,6 +22,11 @@ const UPLOAD_ENDPOINT = 'https://neupgroup.com/usercontent/bridge/api/upload.php
 
 type Upload = UploadRecord & { id: string, uploadedOn: any };
 
+const getUploadImageUrl = (filePath: string) =>
+    filePath.startsWith('http://') || filePath.startsWith('https://')
+        ? filePath
+        : `https://neupgroup.com${filePath}`;
+
 export default function EditPostPage() {
   const params = useParams();
   const id = params.id as string; // This is now postCollectionId
@@ -241,7 +246,7 @@ export default function EditPostPage() {
                             onClick={() => handleMediaToggle(upload.filePath)}
                             className="relative aspect-square w-full rounded-md overflow-hidden border-2 border-transparent focus:outline-none focus:ring-2 focus:ring-ring"
                         >
-                            <Image src={`https://neupgroup.com${upload.filePath}`} alt={upload.fileName} layout="fill" objectFit="cover" className="hover:opacity-80 transition-opacity" />
+                            <Image src={getUploadImageUrl(upload.filePath)} alt={upload.fileName} layout="fill" objectFit="cover" className="hover:opacity-80 transition-opacity" />
                             {selectedMediaUrls.includes(upload.filePath) && (
                                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                                     <CheckCircle className="h-8 w-8 text-white" />

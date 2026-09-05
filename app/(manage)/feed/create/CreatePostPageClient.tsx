@@ -21,6 +21,11 @@ const UPLOAD_ENDPOINT = 'https://neupgroup.com/usercontent/bridge/api/upload.php
 
 type Upload = UploadRecord & { id: string; uploadedOn: any };
 
+const getUploadImageUrl = (filePath: string) =>
+  filePath.startsWith('http://') || filePath.startsWith('https://')
+    ? filePath
+    : `https://neupgroup.com${filePath}`;
+
 export default function CreatePostPageClient() {
   const [content, setContent] = React.useState('');
   const [selectedMediaUrls, setSelectedMediaUrls] = React.useState<string[]>([]);
@@ -304,7 +309,7 @@ export default function CreatePostPageClient() {
                     className="relative aspect-square w-full rounded-md overflow-hidden border-2 border-transparent focus:outline-none focus:ring-2 focus:ring-ring"
                   >
                     <Image
-                      src={`https://neupgroup.com${upload.filePath}`}
+                      src={getUploadImageUrl(upload.filePath)}
                       alt={upload.fileName}
                       layout="fill"
                       objectFit="cover"

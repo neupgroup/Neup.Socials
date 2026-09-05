@@ -16,12 +16,21 @@ export async function publishContent(postCollectionId: string) {
   let postCollectionData: Awaited<ReturnType<typeof dataStore.postCollections.getById>> | null = null;
 
   try {
+    console.info('[Publishing] Starting post collection publish', { postCollectionId });
     const postCollection = await dataStore.postCollections.getById(postCollectionId);
     if (!postCollection) {
       throw new Error(`Post Collection with ID ${postCollectionId} not found.`);
     }
     const collectionData = postCollection;
     postCollectionData = collectionData;
+    console.info('[Publishing] Loaded post collection', {
+      postCollectionId,
+      contentLength: collectionData.content?.length ?? 0,
+      mediaUrls: collectionData.mediaUrls,
+      accountIds: collectionData.accountIds,
+      platforms: collectionData.platforms,
+      status: collectionData.status,
+    });
 
     if (!collectionData.accountIds || collectionData.accountIds.length === 0) {
       throw new Error(`Post Collection ${postCollectionId} has no accounts selected for publishing.`);
@@ -41,6 +50,14 @@ export async function publishContent(postCollectionId: string) {
 
       try {
         const token = await decrypt(encryptedToken);
+        console.info('[Publishing] Publishing to account', {
+          postCollectionId,
+          accountId,
+          platform: account.platform,
+          accountName: account.name,
+          platformId: pageId,
+          mediaCount: collectionData.mediaUrls?.length ?? 0,
+        });
         
         let response = null;
         let postLink = '';
@@ -94,9 +111,25 @@ export async function publishContent(postCollectionId: string) {
             mediaUrls: collectionData.mediaUrls,
         };
         const individualPost = await dataStore.posts.create(postData);
+        await dataStore.postCollections.appendPosts(postCollectionId, [individualPost.id]);
+        console.info('[Publishing] Account publish completed', {
+          postCollectionId,
+          accountId,
+          platform: account.platform,
+          platformPostId,
+          postId: individualPost.id,
+        });
         return individualPost.id;
 
       } catch (error: any) {
+        console.error('[Publishing] Account publish failed', {
+          postCollectionId,
+          accountId,
+          platform: account.platform,
+          accountName: account.name,
+          errorMessage: error.message,
+          stack: error.stack,
+        });
         await logError({
           source: 'publishContent - Account Publishing',
           message: `Failed to publish to ${account.platform} account: ${account.name}`,
@@ -118,9 +151,19 @@ export async function publishContent(postCollectionId: string) {
       publishedAt: new Date(),
       scheduledAt: null,
     });
-    await dataStore.postCollections.appendPosts(postCollectionId, successfulPostIds);
+    console.info('[Publishing] Post collection publish completed', {
+      postCollectionId,
+      successfulPostIds,
+      successfulCount: successfulPostIds.length,
+      attemptedCount: collectionData.accountIds.length,
+    });
 
   } catch (error: any) {
+    console.error('[Publishing] Post collection publish failed', {
+      postCollectionId,
+      errorMessage: error.message,
+      stack: error.stack,
+    });
     await logError({
       source: 'publishContent - Main',
       message: 'One or more publications failed during the process.',

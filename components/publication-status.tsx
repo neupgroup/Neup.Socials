@@ -10,6 +10,7 @@ import { Twitter, Linkedin, Facebook, Instagram, Youtube, Loader2, ExternalLink,
 import { Badge } from '#/components/ui/badge';
 import { getPostAnalyticsAction } from '@/services/facebook/post-insights';
 import { getAccountsByIdsAction } from '@/services/accounts/actions';
+import { checkInstagramPostExists, deleteInstagramPost } from '@/services/instagram/delete-post';
 
 type ConnectedAccount = {
   id: string;
@@ -85,6 +86,9 @@ const PostAnalytics = ({ postId }: { postId: string }) => {
 export const PublicationStatus: React.FC<PublicationStatusProps> = ({ accountIds, posts = [], postStatus, publishedAt, scheduledAt, postCollectionId }) => {
   const [accounts, setAccounts] = React.useState<ConnectedAccount[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [deletingPostId, setDeletingPostId] = React.useState<string | null>(null);
+  const [deletedPostIds, setDeletedPostIds] = React.useState<Set<string>>(() => new Set());
+  const [missingPostIds, setMissingPostIds] = React.useState<Set<string>>(() => new Set());
 
   React.useEffect(() => {
     const fetchAccounts = async () => {
@@ -101,6 +105,23 @@ export const PublicationStatus: React.FC<PublicationStatusProps> = ({ accountIds
     }
   }, [accountIds]);
 
+  React.useEffect(() => {
+    let active = true;
+    const checkPosts = async () => {
+      const instagramPosts = posts.filter((post) => post.platform?.toLowerCase() === 'instagram' && post.platformPostId);
+      const results = await Promise.all(instagramPosts.map(async (post) => ({
+        postId: post.id,
+        result: await checkInstagramPostExists(post.id),
+      })));
+
+      if (!active) return;
+      setMissingPostIds(new Set(results.filter(({ result }) => !result.exists).map(({ postId }) => postId)));
+    };
+
+    if (posts.length > 0) checkPosts();
+    return () => { active = false; };
+  }, [posts]);
+
   if (loading) {
     return <div className="flex justify-center items-center h-24"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
   }
@@ -109,13 +130,39 @@ export const PublicationStatus: React.FC<PublicationStatusProps> = ({ accountIds
     return <p className="text-muted-foreground text-center">No platforms selected for this post.</p>;
   }
 
+  const handleDeleteInstagramPost = async (post: Post) => {
+    if (!post.id || post.platform?.toLowerCase() !== 'instagram') return;
+    if (missingPostIds.has(post.id)) {
+      window.alert('This content could not be found on Instagram. It may already have been deleted there or only removed from this application.');
+      return;
+    }
+    if (!window.confirm('Delete this Instagram post? This removes it from Instagram.')) return;
+
+    setDeletingPostId(post.id);
+    try {
+      const result = await deleteInstagramPost(post.id);
+      if (!result.success) {
+        throw new Error(result.error || 'Instagram post deletion failed.');
+      }
+
+      setDeletedPostIds((current) => new Set(current).add(post.id));
+    } catch (error) {
+      console.error('Failed to delete Instagram post', error);
+      window.alert(error instanceof Error ? error.message : 'Failed to delete Instagram post.');
+    } finally {
+      setDeletingPostId(null);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {accounts.map(account => {
         const individualPost = posts.find(p => p.accountId === account.id);
         const date = postStatus === 'Published' ? publishedAt : (postStatus === 'Scheduled' ? scheduledAt : 'Not yet scheduled');
         const postUrl = individualPost?.postLink;
-        const status = postStatus === 'Published' ? (individualPost ? 'Published' : 'Failed') : postStatus;
+        const isDeleted = individualPost ? deletedPostIds.has(individualPost.id) : false;
+        const isMissing = individualPost ? missingPostIds.has(individualPost.id) : false;
+        const status = isDeleted ? 'Deleted' : isMissing ? 'Not found on Instagram' : postStatus === 'Published' ? (individualPost ? 'Published' : 'Failed') : postStatus;
 
         return (
           <Card key={account.id} className="overflow-hidden">
@@ -141,7 +188,7 @@ export const PublicationStatus: React.FC<PublicationStatusProps> = ({ accountIds
                  )}
 
                  <div className="flex items-center gap-2">
-                    <Button size="sm" variant="ghost" disabled={!postUrl} asChild>
+                    <Button size="sm" variant="ghost" disabled={!postUrl || isDeleted || isMissing} asChild>
                        {postUrl ? (
                          <a href={postUrl} target="_blank" rel="noopener noreferrer">
                            <ExternalLink className="mr-2 h-4 w-4" /> View Post
@@ -155,8 +202,14 @@ export const PublicationStatus: React.FC<PublicationStatusProps> = ({ accountIds
                     <Button size="sm" variant="ghost" asChild>
                         <Link href={`/feed/edit/${postCollectionId}`}><Edit className="h-4 w-4"/></Link>
                     </Button>
-                    <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive">
-                        <Trash2 className="h-4 w-4" />
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-destructive hover:text-destructive"
+                      disabled={!individualPost || account.platform?.toLowerCase() !== 'instagram' || isDeleted || deletingPostId === individualPost?.id}
+                      onClick={() => individualPost && handleDeleteInstagramPost(individualPost)}
+                    >
+                        {deletingPostId === individualPost?.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                     </Button>
                  </div>
               </div>

@@ -131,6 +131,19 @@ const stores: Record<string, Record<string, (...args: any[]) => Promise<any>>> =
     }),
     create: (data) => model('syncLogEntry').create({ data }),
   },
+  uploads: {
+    list: (args = {}) => model('upload').findMany({
+      where: args.searchFilter ?? {},
+      skip: args.skip,
+      take: args.take,
+      orderBy: args.orderBy ?? { uploadedOn: 'desc' },
+    }),
+    count: (args = {}) => model('upload').count({ where: args.searchFilter ?? {} }),
+    listForLibrary: () => model('upload').findMany({ orderBy: { uploadedOn: 'desc' } }),
+    getById: (id) => model('upload').findUnique(byId(id)),
+    create: (data) => model('upload').create({ data }),
+    update: (id, data) => model('upload').update({ where: { id }, data }),
+  },
   systemConfig: {
     getByKey: (key) => model('systemConfig').findUnique({ where: { key } }),
     upsert: (data) => model('systemConfig').upsert({

@@ -83,6 +83,10 @@ type InstagramApiErrorResponse = {
 const DEFAULT_POLL_INTERVAL_MS = 60_000;
 const DEFAULT_MAX_POLL_ATTEMPTS = 5;
 
+function logInstagram(event: string, details: Record<string, unknown> = {}) {
+  console.info(`[Instagram Publishing] ${event}`, details);
+}
+
 function getFullMediaUrl(url: string): string {
   if (!url) {
     return url;
@@ -143,14 +147,37 @@ async function instagramRequest<T>(
 ): Promise<T> {
   const url = `${INSTAGRAM_GRAPH_API_BASE_URL}${path}`;
 
+  const form = new URLSearchParams();
+  for (const [key, value] of Object.entries(body ?? {})) {
+    if (value === undefined || value === null) {
+      continue;
+    }
+
+    if (Array.isArray(value)) {
+      form.set(key, value.join(','));
+    } else if (typeof value === 'object') {
+      form.set(key, JSON.stringify(value));
+    } else {
+      form.set(key, String(value));
+    }
+  }
+
   const res = await fetch(url, {
     method,
     headers: {
       Authorization: `Bearer ${accessToken}`,
-      ...(body ? { 'Content-Type': 'application/json' } : {}),
+      ...(body ? { 'Content-Type': 'application/x-www-form-urlencoded' } : {}),
     },
-    ...(body ? { body: JSON.stringify(body) } : {}),
+    ...(body ? { body: form } : {}),
     cache: 'no-store',
+  });
+
+  logInstagram('API response', {
+    method,
+    path,
+    status: res.status,
+    ok: res.ok,
+    body: body ? Object.fromEntries(form.entries()) : undefined,
   });
 
   return handleInstagramApiResponse<T>(res);
@@ -225,6 +252,11 @@ export async function createInstagramMediaContainer(
   options: InstagramCreateMediaContainerOptions
 ): Promise<InstagramCreateMediaContainerResponse> {
   const payload = createMediaPayload(options);
+  logInstagram('Creating media container', {
+    instagramAccountId,
+    options: payload,
+  });
+
   return instagramRequest<InstagramCreateMediaContainerResponse>(`/${instagramAccountId}/media`, {
     method: 'POST',
     accessToken,
@@ -259,6 +291,14 @@ export async function waitForInstagramMediaContainer(
     const status = await getInstagramMediaContainerStatus(containerId, accessToken);
     const statusCode = status.status_code;
 
+    logInstagram('Media container status', {
+      containerId,
+      attempt,
+      maxPollAttempts,
+      statusCode,
+      status: status.status,
+    });
+
     if (!statusCode || statusCode === 'FINISHED' || statusCode === 'PUBLISHED') {
       return status;
     }
@@ -280,6 +320,11 @@ export async function publishInstagramMediaContainer(
   accessToken: string,
   creationId: string
 ): Promise<InstagramPublishMediaResponse> {
+  logInstagram('Publishing media container', {
+    instagramAccountId,
+    creationId,
+  });
+
   return instagramRequest<InstagramPublishMediaResponse>(`/${instagramAccountId}/media_publish`, {
     method: 'POST',
     accessToken,
@@ -382,6 +427,14 @@ export async function publishToInstagramAccount(
   mediaUrls?: string[],
   options: InstagramPublishOptions = {}
 ): Promise<InstagramPublishMediaResponse> {
+  logInstagram('Starting Instagram publish', {
+    instagramAccountId,
+    caption,
+    mediaUrls,
+    mediaCount: mediaUrls?.length ?? 0,
+    options,
+  });
+
   if (!Array.isArray(mediaUrls) || mediaUrls.length === 0) {
     throw new Error('Instagram publishing requires at least one public image or video URL.');
   }
@@ -408,5 +461,12 @@ export async function publishToInstagramAccount(
     maxPollAttempts: options.maxPollAttempts,
   });
 
-  return publishInstagramMediaContainer(instagramAccountId, accessToken, creationId);
+  const published = await publishInstagramMediaContainer(instagramAccountId, accessToken, creationId);
+  logInstagram('Instagram publish completed', {
+    instagramAccountId,
+    creationId,
+    publishedMediaId: published.id,
+  });
+
+  return published;
 }
