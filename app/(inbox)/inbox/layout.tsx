@@ -93,14 +93,29 @@ function InboxSidebarContent({
     pathname,
     conversations,
     loading,
+    loadingMore,
+    hasMore,
     account,
+    onLoadMore,
 }: {
     pathname: string;
     conversations: Conversation[];
     loading: boolean;
+    loadingMore: boolean;
+    hasMore: boolean;
     account: CurrentAccount;
+    onLoadMore: () => void;
 }) {
     const router = useRouter();
+    const scrollRef = React.useRef<HTMLDivElement>(null);
+
+    const handleScroll = () => {
+        const element = scrollRef.current;
+        if (!element || loading || loadingMore || !hasMore) return;
+
+        const scrollProgress = (element.scrollTop + element.clientHeight) / element.scrollHeight;
+        if (scrollProgress >= 0.7) onLoadMore();
+    };
 
     return (
         <div className="flex h-full flex-col bg-background">
@@ -113,7 +128,7 @@ function InboxSidebarContent({
                 </Link>
             </div>
 
-            <div className="flex-1 space-y-6 overflow-y-auto p-3">
+            <div ref={scrollRef} onScroll={handleScroll} className="flex-1 space-y-6 overflow-y-auto p-3">
                 {/* Search Bar */}
                 <div className="px-3 py-2">
                     <div className="relative">
@@ -251,6 +266,11 @@ function InboxSidebarContent({
                                         </div>
                                     </Link>
                                 ))}
+                                {loadingMore && (
+                                    <div className="px-3 py-3 text-center text-xs text-muted-foreground">
+                                        Loading more...
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
@@ -277,6 +297,8 @@ export default function InboxLayout({
     const pathname = usePathname();
     const [conversations, setConversations] = React.useState<Conversation[]>([]);
     const [loading, setLoading] = React.useState(true);
+    const [loadingMore, setLoadingMore] = React.useState(false);
+    const [hasMore, setHasMore] = React.useState(true);
     const [mobileOpen, setMobileOpen] = React.useState(false);
     const [account, setAccount] = React.useState<CurrentAccount>(null);
 
@@ -290,37 +312,67 @@ export default function InboxLayout({
         };
     }, []);
 
+    const fetchConversations = React.useCallback(async () => {
+        try {
+            const result = await listConversationsAction({ skip: 0, take: 10 });
+            setConversations(result.items as Conversation[]);
+            setHasMore(result.hasMore);
+        } catch (error) {
+            console.error('Error fetching conversations:', error);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const loadMoreConversations = React.useCallback(async () => {
+        if (loadingMore || !hasMore) return;
+        setLoadingMore(true);
+        try {
+            const result = await listConversationsAction({ skip: conversations.length, take: 10 });
+            setConversations((current) => [...current, ...(result.items as Conversation[])]);
+            setHasMore(result.hasMore);
+        } catch (error) {
+            console.error('Error loading more conversations:', error);
+        } finally {
+            setLoadingMore(false);
+        }
+    }, [conversations.length, hasMore, loadingMore]);
+
     React.useEffect(() => {
+        // Instagram must sync first so the initial list cannot race the database update.
+        if (pathname === '/inbox/instagram') return;
+
+        void fetchConversations();
+        const interval = window.setInterval(() => {
+            void fetchConversations();
+        }, 10000);
+
+        return () => {
+            window.clearInterval(interval);
+        };
+    }, [pathname, fetchConversations]);
+
+    React.useEffect(() => {
+        if (pathname !== '/inbox/instagram') return;
         let active = true;
 
-        const fetchConversations = async () => {
+        const syncInstagramConversations = async () => {
             try {
-                const convos = await listConversationsAction();
+                await listInstagramConversationsAction();
+            } finally {
+                // Refresh even when syncing fails, so existing local conversations remain visible.
                 if (active) {
-                    setConversations(convos as Conversation[]);
-                    setLoading(false);
-                }
-            } catch (error) {
-                console.error('Error fetching conversations:', error);
-                if (active) {
-                    setLoading(false);
+                    await fetchConversations();
                 }
             }
         };
 
-        fetchConversations();
-        const interval = window.setInterval(fetchConversations, 10000);
+        void syncInstagramConversations();
 
         return () => {
             active = false;
-            window.clearInterval(interval);
         };
-    }, []);
-
-    React.useEffect(() => {
-        if (pathname !== '/inbox/instagram') return;
-        void listInstagramConversationsAction();
-    }, [pathname]);
+    }, [pathname, fetchConversations]);
 
     return (
         <SidebarProvider>
@@ -331,7 +383,10 @@ export default function InboxLayout({
                         pathname={pathname}
                         conversations={conversations}
                         loading={loading}
+                        loadingMore={loadingMore}
+                        hasMore={hasMore}
                         account={account}
+                        onLoadMore={() => void loadMoreConversations()}
                     />
                 </Sidebar>
 
@@ -343,7 +398,10 @@ export default function InboxLayout({
                                 pathname={pathname}
                                 conversations={conversations}
                                 loading={loading}
+                                loadingMore={loadingMore}
+                                hasMore={hasMore}
                                 account={account}
+                                onLoadMore={() => void loadMoreConversations()}
                             />
                         </div>
                     </SheetContent>

@@ -2,9 +2,10 @@
 
 import { prisma } from '#/core/database/prisma';
 
-export const listConversations = async ({ take = 20 }: { take?: number } = {}) =>
+export const listConversations = async ({ skip = 0, take = 10 }: { skip?: number; take?: number } = {}) =>
   prisma.conversation.findMany({
     orderBy: [{ lastMessageAt: 'desc' }, { id: 'desc' }],
+    skip,
     take,
   });
 

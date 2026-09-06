@@ -13,7 +13,13 @@ const toIso = (value?: Date | null) => (value ? value.toISOString() : null);
 const serializeConversation = (conversation: Awaited<ReturnType<typeof getConversation>>) => conversation ? { ...conversation, lastMessageAt: toIso(conversation.lastMessageAt), createdAt: toIso(conversation.createdAt) } : null;
 const serializeMessage = (message: Awaited<ReturnType<typeof listMessagesByConversationId>>[number]) => message ? { ...message, timestamp: toIso(message.timestamp) } : null;
 
-export async function listConversationsAction() { return (await listConversations()).map((conversation) => serializeConversation(conversation)!); }
+export async function listConversationsAction({ skip = 0, take = 10 }: { skip?: number; take?: number } = {}) {
+  const conversations = await listConversations({ skip, take });
+  return {
+    items: conversations.map((conversation) => serializeConversation(conversation)!),
+    hasMore: conversations.length === take,
+  };
+}
 export async function getConversationAction(id: string) { return serializeConversation(await getConversation(id)); }
 export async function listConversationMessagesAction(conversationId: string) { return (await listMessagesByConversationId(conversationId)).map((message) => serializeMessage(message)!); }
 
