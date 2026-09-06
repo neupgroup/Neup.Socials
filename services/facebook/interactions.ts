@@ -35,7 +35,7 @@ export async function getFacebookInteractions(limit = 100): Promise<InteractionI
       title: isReply
         ? `${commenterName} replied on the comment by ${commenter.parentCommenterName ?? commenterName}.`
         : commenterName === pageName
-          ? `${commenterName} commented on their own Post.`
+          ? `${commenterName} commented on their own Facebook Post.`
           : `${commenterName} commented on ${pageName}'s post.`,
       content: comment.commentText ?? 'Commented on a post',
       postId: comment.postId,
