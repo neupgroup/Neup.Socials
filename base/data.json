@@ -1,0 +1,32 @@
+{
+    "instagram" : {
+        "redirect_uri" : "https://localhost:7624/socials/platform/instagram/add",
+        "handler_url" : "https://localhost:7624/socials/bridge/api.v1/auth/instagram",
+        "added_from" : "https://developers.facebook.com/apps/{{application_id}}/use_cases/customize/API-Setup/?business_id={{business_id}}&use_case_enum=INSTAGRAM_BUSINESS&selected_tab=API-Setup&product_route=instagram-business"
+    },
+    "facebook" : {
+        "redirect_uri" : "https://localhost:7624/socials/platform/facebook/add",
+        "handler_url" : "https://localhost:7624/socials/bridge/api.v1/auth/facebook",
+        "added_from" : ""
+    },
+    "whatsapp" : {
+        "redirect_uri" : "https://localhost:7624/socials/platform/whatsapp/add",
+        "handler_url" : "https://localhost:7624/socials/bridge/api.v1/auth/whatsapp"
+    },
+    "linkedin" : {
+        "redirect_uri" : "https://localhost:7624/socials/platform/linkedin/add",
+        "handler_url" : "https://localhost:7624/socials/bridge/api.v1/auth/linkedin"
+    },
+    "twitter" : {
+        "redirect_uri" : "https://localhost:7624/socials/platform/twitter/add",
+        "handler_url" : "https://localhost:7624/socials/bridge/api.v1/auth/twitter"
+    },
+    "tiktok" : {
+        "redirect_uri" : "https://localhost:7624/socials/platform/tiktok/add",
+        "handler_url" : "https://localhost:7624/socials/bridge/api.v1/auth/tiktok",
+        "organization_url" : "https://developers.tiktok.com/organizations",
+        "oauth_url" : "https://www.tiktok.com/v2/auth/authorize/",
+        "organization_portal_url" : "https://developers.tiktok.com/portal/organization/{{organization_id}}",
+        "take_to_production_url" : "https://developers.tiktok.com/app/{{application_id}}/pending"
+    }
+}
