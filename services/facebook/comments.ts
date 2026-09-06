@@ -24,6 +24,7 @@ export type FetchCommentsResult = {
     from?: {
       id: string;
       name: string;
+      picture?: { data?: { url?: string } };
     };
     parentId?: string;
   }>;
@@ -160,8 +161,9 @@ export async function fetchPostCommentsAction(
             id: string;
             message?: string;
             created_time?: string;
-            from?: { id: string; name: string };
+            from?: { id: string; name: string; picture?: { data?: { url?: string } } };
             parentId?: string;
+            commenter?: { id: string; name: string; image: string | null };
           }> = [];
 
           if (comment.id) {
@@ -170,6 +172,11 @@ export async function fetchPostCommentsAction(
               message: comment.message,
               created_time: comment.created_time,
               from: comment.from,
+              commenter: {
+                id: comment.from?.id ?? '',
+                name: comment.from?.name ?? 'Facebook User',
+                image: comment.from?.picture?.data?.url ?? null,
+              },
             });
           }
 
@@ -189,6 +196,11 @@ export async function fetchPostCommentsAction(
               created_time: reply.created_time,
               from: reply.from,
               parentId: comment.id,
+              commenter: {
+                id: reply.from?.id ?? '',
+                name: reply.from?.name ?? 'Facebook User',
+                image: reply.from?.picture?.data?.url ?? null,
+              },
             });
           }
 

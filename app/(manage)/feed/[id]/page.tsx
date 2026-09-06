@@ -51,6 +51,11 @@ type Comment = {
     name: string;
   };
   parentId?: string;
+  commenter?: {
+    id?: string;
+    name?: string;
+    image?: string | null;
+  };
 };
 
 type FacebookVideo = {
@@ -244,7 +249,15 @@ const PostComments = ({ postId, platform, accountId }: { postId: string; platfor
           rootComments.map((comment) => (
             <div key={comment.id} className="border rounded-lg p-4 bg-muted/30 space-y-2">
               <div className="flex items-start justify-between">
-                <div>
+                <div className="flex items-center gap-3">
+                  {comment.commenter?.image ? (
+                    <img src={comment.commenter.image} alt={comment.commenter.name || comment.from?.name || 'Facebook User'} className="h-9 w-9 rounded-full border object-cover" />
+                  ) : (
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full border bg-muted text-xs font-semibold">
+                      {(comment.commenter?.name || comment.from?.name || 'Facebook User').split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase()}
+                    </div>
+                  )}
+                  <div>
                   <p className="font-semibold text-sm">
                     {comment.from?.id ? (
                       <Link
@@ -260,6 +273,7 @@ const PostComments = ({ postId, platform, accountId }: { postId: string; platfor
                   {comment.created_time && (
                     <p className="text-xs text-muted-foreground">{format(new Date(comment.created_time), 'PPp')}</p>
                   )}
+                  </div>
                 </div>
               </div>
               <p className="text-sm whitespace-pre-wrap">{comment.message}</p>
@@ -317,7 +331,16 @@ const PostComments = ({ postId, platform, accountId }: { postId: string; platfor
                   {repliesByParent[comment.id].map((reply) => (
                     <div key={reply.id} className="rounded-md border bg-background p-3 space-y-1">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="font-semibold text-sm">{reply.from?.name || 'Facebook User'}</p>
+                        <div className="flex items-center gap-2">
+                          {reply.commenter?.image ? (
+                            <img src={reply.commenter.image} alt={reply.commenter.name || reply.from?.name || 'Facebook User'} className="h-7 w-7 rounded-full border object-cover" />
+                          ) : (
+                            <div className="flex h-7 w-7 items-center justify-center rounded-full border bg-muted text-[10px] font-semibold">
+                              {(reply.commenter?.name || reply.from?.name || 'Facebook User').split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase()}
+                            </div>
+                          )}
+                          <p className="font-semibold text-sm">{reply.commenter?.name || reply.from?.name || 'Facebook User'}</p>
+                        </div>
                         {reply.created_time ? (
                           <p className="text-xs text-muted-foreground">{format(new Date(reply.created_time), 'PPp')}</p>
                         ) : null}

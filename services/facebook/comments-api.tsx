@@ -9,7 +9,7 @@
  */
 'use server';
 
-const API_VERSION = 'v25.0';
+const API_VERSION = 'v26.0';
 const GRAPH_API_BASE_URL = `https://graph.facebook.com/${API_VERSION}`;
 
 type ErrorResponse = {
@@ -31,7 +31,9 @@ type FacebookPostsWithCommentsResponse = {
         from?: {
           id: string;
           name: string;
+          picture?: { data?: { url?: string } };
         };
+        attachment?: { media?: { image?: { src?: string } } };
       }>;
     };
   }>;
@@ -44,7 +46,9 @@ type FacebookCommentDetailResponse = {
   from?: {
     id: string;
     name: string;
+    picture?: { data?: { url?: string } };
   };
+  attachment?: { media?: { image?: { src?: string } } };
 };
 
 export type FacebookPageScopedProfile = {
@@ -66,7 +70,9 @@ type FacebookCommentWithRepliesResponse = {
     from?: {
       id: string;
       name: string;
+      picture?: { data?: { url?: string } };
     };
+    attachment?: { media?: { image?: { src?: string } } };
     comments?: {
       data?: Array<{
         id: string;
@@ -75,7 +81,9 @@ type FacebookCommentWithRepliesResponse = {
         from?: {
           id: string;
           name: string;
+          picture?: { data?: { url?: string } };
         };
+        attachment?: { media?: { image?: { src?: string } } };
       }>;
     };
   }>;
@@ -96,6 +104,8 @@ export type FacebookPostCommentItem = {
   createdTime: string;
   commenterId: string;
   commenterName: string;
+  profileImage?: string | null;
+  commentImage?: string | null;
 };
 
 async function handleApiResponse<T>(res: Response): Promise<T> {
@@ -126,7 +136,7 @@ export async function getPagePostComments(
   const params = new URLSearchParams({
     access_token: pageToken,
     limit: String(postLimit),
-    fields: `id,message,permalink_url,comments.limit(${commentLimit}){id,message,created_time,from}`,
+    fields: `id,message,permalink_url,comments.limit(${commentLimit}){id,message,created_time,attachment,from{id,name,picture}}`,
   });
 
   const res = await fetch(`${GRAPH_API_BASE_URL}/${pageId}/feed?${params.toString()}`);
@@ -154,6 +164,8 @@ export async function getPagePostComments(
         createdTime: comment.created_time ?? new Date().toISOString(),
         commenterId: comment.from.id,
         commenterName: comment.from.name,
+        profileImage: comment.from.picture?.data?.url ?? null,
+        commentImage: comment.attachment?.media?.image?.src ?? null,
       });
     }
   }
@@ -170,7 +182,7 @@ export async function getPageCommentById(
 ): Promise<FacebookCommentDetailResponse> {
   const params = new URLSearchParams({
     access_token: pageToken,
-    fields: 'id,message,created_time,from',
+    fields: 'id,message,created_time,attachment,from{id,name,picture}',
   });
 
   const res = await fetch(`${GRAPH_API_BASE_URL}/${commentId}?${params.toString()}`);
@@ -179,7 +191,7 @@ export async function getPageCommentById(
 
 /**
  * Fetches comments on a specific post with optional replies.
- * Aligned with Pages API v25.0
+ * Aligned with Pages API v26.0
  * @see https://developers.facebook.com/docs/pages-api/posts
  */
 export async function getPostComments(
@@ -191,9 +203,9 @@ export async function getPostComments(
   }
 ): Promise<FacebookCommentWithRepliesResponse> {
   const limit = options?.limit ?? 25;
-  const fields = options?.includeReplies 
-    ? `id,message,created_time,from,comments.limit(10){id,message,created_time,from}` 
-    : 'id,message,created_time,from';
+  const fields = options?.includeReplies
+    ? `id,message,created_time,attachment,from{id,name,picture},comments.limit(10){id,message,created_time,attachment,from{id,name,picture}}`
+    : 'id,message,created_time,attachment,from{id,name,picture}';
 
   const params = new URLSearchParams({
     access_token: pageToken,
