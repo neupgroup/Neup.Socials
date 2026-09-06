@@ -5,7 +5,7 @@ import { prisma } from '#/core/database/prisma';
 export const listMessagesByConversationId = async (conversationId: string) =>
   prisma.message.findMany({
     where: { conversationId },
-    orderBy: [{ timestamp: 'asc' }, { id: 'asc' }],
+    orderBy: [{ messageTime: 'asc' }, { id: 'asc' }],
   });
 
 export const listMessagesByConversationIds = async ({
@@ -17,7 +17,7 @@ export const listMessagesByConversationIds = async ({
 }) =>
   prisma.message.findMany({
     where: { conversationId: { in: conversationIds } },
-    orderBy: [{ timestamp: 'desc' }, { id: 'desc' }],
+    orderBy: [{ messageTime: 'desc' }, { id: 'desc' }],
     take,
   });
 
@@ -28,9 +28,11 @@ export const createMessage = async (data: {
   conversationId: string;
   platformMessageId?: string | null;
   platform: string;
-  text: string;
-  sender: string;
-  timestamp?: Date;
+  content: string;
+  senderId?: string | null;
+  direction: 'system' | 'received' | 'sent';
+  messageTime?: Date;
+  platformInfo?: any;
   type?: string;
   callEvent?: string | null;
 }) =>
@@ -39,10 +41,11 @@ export const createMessage = async (data: {
       conversationId: data.conversationId,
       platform: data.platform,
       platformMessageId: data.platformMessageId ?? `local:${crypto.randomUUID()}`,
-      text: data.text,
-      sender: data.sender,
-      timestamp: data.timestamp ?? new Date(),
+      content: data.content,
+      senderId: data.senderId ?? null,
+      direction: data.direction,
+      messageTime: data.messageTime ?? new Date(),
       type: data.type ?? 'text',
-      moreDetails: data.callEvent ? { callEvent: data.callEvent } : undefined,
+      platformInfo: data.platformInfo ?? (data.callEvent ? { callEvent: data.callEvent } : undefined),
     },
   });

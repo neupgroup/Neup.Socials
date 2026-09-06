@@ -6,7 +6,7 @@ import { upsertCachedMessage } from '@/services/message-cache';
 
 const toIso = (value?: Date | null) => (value ? value.toISOString() : null);
 const serializeConversation = (conversation: Awaited<ReturnType<typeof getConversation>>) => conversation ? { ...conversation, lastMessageAt: toIso(conversation.lastMessageAt), createdAt: toIso(conversation.createdAt) } : null;
-const serializeMessage = (message: Awaited<ReturnType<typeof findMessageByPlatformMessageId>>) => message ? { ...message, timestamp: toIso(message.timestamp) } : null;
+const serializeMessage = (message: Awaited<ReturnType<typeof findMessageByPlatformMessageId>>) => message ? { ...message, messageTime: toIso(message.messageTime) } : null;
 
 export async function recordOutgoingMessageAction({ conversationId, channelId, contactId, contactName, platform, text, avatar, platformMessageId }: { conversationId?: string; channelId: string; contactId: string; contactName: string; platform: string; text: string; avatar?: string | null; platformMessageId?: string }) {
   let conversation = conversationId ? await getConversation(conversationId) : null;
@@ -18,7 +18,7 @@ export async function recordOutgoingMessageAction({ conversationId, channelId, c
   } else {
     conversation = await updateConversation(conversation.id, { contactName, lastMessage: text, lastMessageAt: new Date(), unread: false, avatar: avatar ?? conversation.avatar });
   }
-  const message = await createMessage({ conversationId: conversation.id, platform, text, sender: 'agent', timestamp: new Date(), platformMessageId });
+  const message = await createMessage({ conversationId: conversation.id, platform, content: text, senderId: channelId, direction: 'sent', messageTime: new Date(), platformMessageId, platformInfo: { sender: channelId, receiver: contactId } });
   if (platformMessageId) {
     await upsertCachedMessage({ conversationId: conversation.id, platform, platformMessageId, text, sender: channelId, timestamp: new Date() });
   }

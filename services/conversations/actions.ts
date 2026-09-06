@@ -11,7 +11,7 @@ import { upsertCachedMessage } from '@/services/message-cache';
 
 const toIso = (value?: Date | null) => (value ? value.toISOString() : null);
 const serializeConversation = (conversation: Awaited<ReturnType<typeof getConversation>>) => conversation ? { ...conversation, lastMessageAt: toIso(conversation.lastMessageAt), createdAt: toIso(conversation.createdAt) } : null;
-const serializeMessage = (message: Awaited<ReturnType<typeof listMessagesByConversationId>>[number]) => message ? { ...message, timestamp: toIso(message.timestamp) } : null;
+const serializeMessage = (message: Awaited<ReturnType<typeof listMessagesByConversationId>>[number]) => message ? { ...message, messageTime: toIso(message.messageTime) } : null;
 
 export async function listConversationsAction({ skip = 0, take = 10, platform, filter }: { skip?: number; take?: number; platform?: string; filter?: ConversationFilter } = {}) {
   const conversations = await listConversations({ skip, take, platform, filter });
@@ -27,7 +27,7 @@ export async function listConversationsAction({ skip = 0, take = 10, platform, f
   };
 }
 export async function getConversationAction(id: string) { return serializeConversation(await getConversation(id)); }
-export async function updateConversationFetchMetadataAction(id: string, metadata: { conversationStart?: string; fetchedSince?: string; fetchedUpto?: string }) {
+export async function updateConversationFetchMetadataAction(id: string, metadata: { messageSince?: string; messageUpto?: string; firstMessageOn?: string }) {
   const conversation = await getConversation(id);
   if (!conversation) return null;
   return serializeConversation(await updateConversation(id, {

@@ -105,6 +105,24 @@ export type InstagramLiveComment = $Result.DefaultSelection<Prisma.$InstagramLiv
 export type Account = $Result.DefaultSelection<Prisma.$AccountPayload>
 
 /**
+ * Enums
+ */
+export namespace $Enums {
+  export const MessageDirection: {
+  system: 'system',
+  received: 'received',
+  sent: 'sent'
+};
+
+export type MessageDirection = (typeof MessageDirection)[keyof typeof MessageDirection]
+
+}
+
+export type MessageDirection = $Enums.MessageDirection
+
+export const MessageDirection: typeof $Enums.MessageDirection
+
+/**
  * ##  Prisma Client ʲˢ
  *
  * Type-safe database client for TypeScript & Node.js
@@ -12252,11 +12270,11 @@ export namespace Prisma {
     conversationId: string | null
     platform: string | null
     platformMessageId: string | null
-    text: string | null
-    sender: string | null
-    timestamp: Date | null
+    content: string | null
+    senderId: string | null
+    direction: $Enums.MessageDirection | null
+    messageTime: Date | null
     type: string | null
-    createdAt: Date | null
     updatedAt: Date | null
   }
 
@@ -12265,11 +12283,11 @@ export namespace Prisma {
     conversationId: string | null
     platform: string | null
     platformMessageId: string | null
-    text: string | null
-    sender: string | null
-    timestamp: Date | null
+    content: string | null
+    senderId: string | null
+    direction: $Enums.MessageDirection | null
+    messageTime: Date | null
     type: string | null
-    createdAt: Date | null
     updatedAt: Date | null
   }
 
@@ -12278,12 +12296,12 @@ export namespace Prisma {
     conversationId: number
     platform: number
     platformMessageId: number
-    text: number
-    sender: number
-    timestamp: number
+    content: number
+    senderId: number
+    direction: number
+    messageTime: number
     type: number
-    moreDetails: number
-    createdAt: number
+    platformInfo: number
     updatedAt: number
     _all: number
   }
@@ -12294,11 +12312,11 @@ export namespace Prisma {
     conversationId?: true
     platform?: true
     platformMessageId?: true
-    text?: true
-    sender?: true
-    timestamp?: true
+    content?: true
+    senderId?: true
+    direction?: true
+    messageTime?: true
     type?: true
-    createdAt?: true
     updatedAt?: true
   }
 
@@ -12307,11 +12325,11 @@ export namespace Prisma {
     conversationId?: true
     platform?: true
     platformMessageId?: true
-    text?: true
-    sender?: true
-    timestamp?: true
+    content?: true
+    senderId?: true
+    direction?: true
+    messageTime?: true
     type?: true
-    createdAt?: true
     updatedAt?: true
   }
 
@@ -12320,12 +12338,12 @@ export namespace Prisma {
     conversationId?: true
     platform?: true
     platformMessageId?: true
-    text?: true
-    sender?: true
-    timestamp?: true
+    content?: true
+    senderId?: true
+    direction?: true
+    messageTime?: true
     type?: true
-    moreDetails?: true
-    createdAt?: true
+    platformInfo?: true
     updatedAt?: true
     _all?: true
   }
@@ -12407,12 +12425,12 @@ export namespace Prisma {
     conversationId: string
     platform: string
     platformMessageId: string
-    text: string
-    sender: string
-    timestamp: Date
+    content: string
+    senderId: string | null
+    direction: $Enums.MessageDirection
+    messageTime: Date
     type: string
-    moreDetails: JsonValue | null
-    createdAt: Date
+    platformInfo: JsonValue | null
     updatedAt: Date
     _count: MessageCountAggregateOutputType | null
     _min: MessageMinAggregateOutputType | null
@@ -12438,12 +12456,12 @@ export namespace Prisma {
     conversationId?: boolean
     platform?: boolean
     platformMessageId?: boolean
-    text?: boolean
-    sender?: boolean
-    timestamp?: boolean
+    content?: boolean
+    senderId?: boolean
+    direction?: boolean
+    messageTime?: boolean
     type?: boolean
-    moreDetails?: boolean
-    createdAt?: boolean
+    platformInfo?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["message"]>
 
@@ -12452,12 +12470,12 @@ export namespace Prisma {
     conversationId?: boolean
     platform?: boolean
     platformMessageId?: boolean
-    text?: boolean
-    sender?: boolean
-    timestamp?: boolean
+    content?: boolean
+    senderId?: boolean
+    direction?: boolean
+    messageTime?: boolean
     type?: boolean
-    moreDetails?: boolean
-    createdAt?: boolean
+    platformInfo?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["message"]>
 
@@ -12466,12 +12484,12 @@ export namespace Prisma {
     conversationId?: boolean
     platform?: boolean
     platformMessageId?: boolean
-    text?: boolean
-    sender?: boolean
-    timestamp?: boolean
+    content?: boolean
+    senderId?: boolean
+    direction?: boolean
+    messageTime?: boolean
     type?: boolean
-    moreDetails?: boolean
-    createdAt?: boolean
+    platformInfo?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["message"]>
 
@@ -12480,16 +12498,16 @@ export namespace Prisma {
     conversationId?: boolean
     platform?: boolean
     platformMessageId?: boolean
-    text?: boolean
-    sender?: boolean
-    timestamp?: boolean
+    content?: boolean
+    senderId?: boolean
+    direction?: boolean
+    messageTime?: boolean
     type?: boolean
-    moreDetails?: boolean
-    createdAt?: boolean
+    platformInfo?: boolean
     updatedAt?: boolean
   }
 
-  export type MessageOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "conversationId" | "platform" | "platformMessageId" | "text" | "sender" | "timestamp" | "type" | "moreDetails" | "createdAt" | "updatedAt", ExtArgs["result"]["message"]>
+  export type MessageOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "conversationId" | "platform" | "platformMessageId" | "content" | "senderId" | "direction" | "messageTime" | "type" | "platformInfo" | "updatedAt", ExtArgs["result"]["message"]>
 
   export type $MessagePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Message"
@@ -12499,12 +12517,12 @@ export namespace Prisma {
       conversationId: string
       platform: string
       platformMessageId: string
-      text: string
-      sender: string
-      timestamp: Date
+      content: string
+      senderId: string | null
+      direction: $Enums.MessageDirection
+      messageTime: Date
       type: string
-      moreDetails: Prisma.JsonValue | null
-      createdAt: Date
+      platformInfo: Prisma.JsonValue | null
       updatedAt: Date
     }, ExtArgs["result"]["message"]>
     composites: {}
@@ -12933,12 +12951,12 @@ export namespace Prisma {
     readonly conversationId: FieldRef<"Message", 'String'>
     readonly platform: FieldRef<"Message", 'String'>
     readonly platformMessageId: FieldRef<"Message", 'String'>
-    readonly text: FieldRef<"Message", 'String'>
-    readonly sender: FieldRef<"Message", 'String'>
-    readonly timestamp: FieldRef<"Message", 'DateTime'>
+    readonly content: FieldRef<"Message", 'String'>
+    readonly senderId: FieldRef<"Message", 'String'>
+    readonly direction: FieldRef<"Message", 'MessageDirection'>
+    readonly messageTime: FieldRef<"Message", 'DateTime'>
     readonly type: FieldRef<"Message", 'String'>
-    readonly moreDetails: FieldRef<"Message", 'Json'>
-    readonly createdAt: FieldRef<"Message", 'DateTime'>
+    readonly platformInfo: FieldRef<"Message", 'Json'>
     readonly updatedAt: FieldRef<"Message", 'DateTime'>
   }
     
@@ -22059,12 +22077,12 @@ export namespace Prisma {
     conversationId: 'conversationId',
     platform: 'platform',
     platformMessageId: 'platformMessageId',
-    text: 'text',
-    sender: 'sender',
-    timestamp: 'timestamp',
+    content: 'content',
+    senderId: 'senderId',
+    direction: 'direction',
+    messageTime: 'messageTime',
     type: 'type',
-    moreDetails: 'moreDetails',
-    createdAt: 'createdAt',
+    platformInfo: 'platformInfo',
     updatedAt: 'updatedAt'
   };
 
@@ -22285,6 +22303,20 @@ export namespace Prisma {
    * Reference to a field of type 'Boolean'
    */
   export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+  /**
+   * Reference to a field of type 'MessageDirection'
+   */
+  export type EnumMessageDirectionFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'MessageDirection'>
+    
+
+
+  /**
+   * Reference to a field of type 'MessageDirection[]'
+   */
+  export type ListEnumMessageDirectionFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'MessageDirection[]'>
     
 
 
@@ -22991,12 +23023,12 @@ export namespace Prisma {
     conversationId?: StringFilter<"Message"> | string
     platform?: StringFilter<"Message"> | string
     platformMessageId?: StringFilter<"Message"> | string
-    text?: StringFilter<"Message"> | string
-    sender?: StringFilter<"Message"> | string
-    timestamp?: DateTimeFilter<"Message"> | Date | string
+    content?: StringFilter<"Message"> | string
+    senderId?: StringNullableFilter<"Message"> | string | null
+    direction?: EnumMessageDirectionFilter<"Message"> | $Enums.MessageDirection
+    messageTime?: DateTimeFilter<"Message"> | Date | string
     type?: StringFilter<"Message"> | string
-    moreDetails?: JsonNullableFilter<"Message">
-    createdAt?: DateTimeFilter<"Message"> | Date | string
+    platformInfo?: JsonNullableFilter<"Message">
     updatedAt?: DateTimeFilter<"Message"> | Date | string
   }
 
@@ -23005,12 +23037,12 @@ export namespace Prisma {
     conversationId?: SortOrder
     platform?: SortOrder
     platformMessageId?: SortOrder
-    text?: SortOrder
-    sender?: SortOrder
-    timestamp?: SortOrder
+    content?: SortOrder
+    senderId?: SortOrderInput | SortOrder
+    direction?: SortOrder
+    messageTime?: SortOrder
     type?: SortOrder
-    moreDetails?: SortOrderInput | SortOrder
-    createdAt?: SortOrder
+    platformInfo?: SortOrderInput | SortOrder
     updatedAt?: SortOrder
   }
 
@@ -23022,12 +23054,12 @@ export namespace Prisma {
     NOT?: MessageWhereInput | MessageWhereInput[]
     conversationId?: StringFilter<"Message"> | string
     platform?: StringFilter<"Message"> | string
-    text?: StringFilter<"Message"> | string
-    sender?: StringFilter<"Message"> | string
-    timestamp?: DateTimeFilter<"Message"> | Date | string
+    content?: StringFilter<"Message"> | string
+    senderId?: StringNullableFilter<"Message"> | string | null
+    direction?: EnumMessageDirectionFilter<"Message"> | $Enums.MessageDirection
+    messageTime?: DateTimeFilter<"Message"> | Date | string
     type?: StringFilter<"Message"> | string
-    moreDetails?: JsonNullableFilter<"Message">
-    createdAt?: DateTimeFilter<"Message"> | Date | string
+    platformInfo?: JsonNullableFilter<"Message">
     updatedAt?: DateTimeFilter<"Message"> | Date | string
   }, "id" | "platformMessageId">
 
@@ -23036,12 +23068,12 @@ export namespace Prisma {
     conversationId?: SortOrder
     platform?: SortOrder
     platformMessageId?: SortOrder
-    text?: SortOrder
-    sender?: SortOrder
-    timestamp?: SortOrder
+    content?: SortOrder
+    senderId?: SortOrderInput | SortOrder
+    direction?: SortOrder
+    messageTime?: SortOrder
     type?: SortOrder
-    moreDetails?: SortOrderInput | SortOrder
-    createdAt?: SortOrder
+    platformInfo?: SortOrderInput | SortOrder
     updatedAt?: SortOrder
     _count?: MessageCountOrderByAggregateInput
     _max?: MessageMaxOrderByAggregateInput
@@ -23056,12 +23088,12 @@ export namespace Prisma {
     conversationId?: StringWithAggregatesFilter<"Message"> | string
     platform?: StringWithAggregatesFilter<"Message"> | string
     platformMessageId?: StringWithAggregatesFilter<"Message"> | string
-    text?: StringWithAggregatesFilter<"Message"> | string
-    sender?: StringWithAggregatesFilter<"Message"> | string
-    timestamp?: DateTimeWithAggregatesFilter<"Message"> | Date | string
+    content?: StringWithAggregatesFilter<"Message"> | string
+    senderId?: StringNullableWithAggregatesFilter<"Message"> | string | null
+    direction?: EnumMessageDirectionWithAggregatesFilter<"Message"> | $Enums.MessageDirection
+    messageTime?: DateTimeWithAggregatesFilter<"Message"> | Date | string
     type?: StringWithAggregatesFilter<"Message"> | string
-    moreDetails?: JsonNullableWithAggregatesFilter<"Message">
-    createdAt?: DateTimeWithAggregatesFilter<"Message"> | Date | string
+    platformInfo?: JsonNullableWithAggregatesFilter<"Message">
     updatedAt?: DateTimeWithAggregatesFilter<"Message"> | Date | string
   }
 
@@ -24382,12 +24414,12 @@ export namespace Prisma {
     conversationId: string
     platform: string
     platformMessageId: string
-    text: string
-    sender: string
-    timestamp: Date | string
+    content: string
+    senderId?: string | null
+    direction: $Enums.MessageDirection
+    messageTime: Date | string
     type?: string
-    moreDetails?: NullableJsonNullValueInput | InputJsonValue
-    createdAt?: Date | string
+    platformInfo?: NullableJsonNullValueInput | InputJsonValue
     updatedAt?: Date | string
   }
 
@@ -24396,12 +24428,12 @@ export namespace Prisma {
     conversationId: string
     platform: string
     platformMessageId: string
-    text: string
-    sender: string
-    timestamp: Date | string
+    content: string
+    senderId?: string | null
+    direction: $Enums.MessageDirection
+    messageTime: Date | string
     type?: string
-    moreDetails?: NullableJsonNullValueInput | InputJsonValue
-    createdAt?: Date | string
+    platformInfo?: NullableJsonNullValueInput | InputJsonValue
     updatedAt?: Date | string
   }
 
@@ -24410,12 +24442,12 @@ export namespace Prisma {
     conversationId?: StringFieldUpdateOperationsInput | string
     platform?: StringFieldUpdateOperationsInput | string
     platformMessageId?: StringFieldUpdateOperationsInput | string
-    text?: StringFieldUpdateOperationsInput | string
-    sender?: StringFieldUpdateOperationsInput | string
-    timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
+    content?: StringFieldUpdateOperationsInput | string
+    senderId?: NullableStringFieldUpdateOperationsInput | string | null
+    direction?: EnumMessageDirectionFieldUpdateOperationsInput | $Enums.MessageDirection
+    messageTime?: DateTimeFieldUpdateOperationsInput | Date | string
     type?: StringFieldUpdateOperationsInput | string
-    moreDetails?: NullableJsonNullValueInput | InputJsonValue
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    platformInfo?: NullableJsonNullValueInput | InputJsonValue
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -24424,12 +24456,12 @@ export namespace Prisma {
     conversationId?: StringFieldUpdateOperationsInput | string
     platform?: StringFieldUpdateOperationsInput | string
     platformMessageId?: StringFieldUpdateOperationsInput | string
-    text?: StringFieldUpdateOperationsInput | string
-    sender?: StringFieldUpdateOperationsInput | string
-    timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
+    content?: StringFieldUpdateOperationsInput | string
+    senderId?: NullableStringFieldUpdateOperationsInput | string | null
+    direction?: EnumMessageDirectionFieldUpdateOperationsInput | $Enums.MessageDirection
+    messageTime?: DateTimeFieldUpdateOperationsInput | Date | string
     type?: StringFieldUpdateOperationsInput | string
-    moreDetails?: NullableJsonNullValueInput | InputJsonValue
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    platformInfo?: NullableJsonNullValueInput | InputJsonValue
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -24438,12 +24470,12 @@ export namespace Prisma {
     conversationId: string
     platform: string
     platformMessageId: string
-    text: string
-    sender: string
-    timestamp: Date | string
+    content: string
+    senderId?: string | null
+    direction: $Enums.MessageDirection
+    messageTime: Date | string
     type?: string
-    moreDetails?: NullableJsonNullValueInput | InputJsonValue
-    createdAt?: Date | string
+    platformInfo?: NullableJsonNullValueInput | InputJsonValue
     updatedAt?: Date | string
   }
 
@@ -24452,12 +24484,12 @@ export namespace Prisma {
     conversationId?: StringFieldUpdateOperationsInput | string
     platform?: StringFieldUpdateOperationsInput | string
     platformMessageId?: StringFieldUpdateOperationsInput | string
-    text?: StringFieldUpdateOperationsInput | string
-    sender?: StringFieldUpdateOperationsInput | string
-    timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
+    content?: StringFieldUpdateOperationsInput | string
+    senderId?: NullableStringFieldUpdateOperationsInput | string | null
+    direction?: EnumMessageDirectionFieldUpdateOperationsInput | $Enums.MessageDirection
+    messageTime?: DateTimeFieldUpdateOperationsInput | Date | string
     type?: StringFieldUpdateOperationsInput | string
-    moreDetails?: NullableJsonNullValueInput | InputJsonValue
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    platformInfo?: NullableJsonNullValueInput | InputJsonValue
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -24466,12 +24498,12 @@ export namespace Prisma {
     conversationId?: StringFieldUpdateOperationsInput | string
     platform?: StringFieldUpdateOperationsInput | string
     platformMessageId?: StringFieldUpdateOperationsInput | string
-    text?: StringFieldUpdateOperationsInput | string
-    sender?: StringFieldUpdateOperationsInput | string
-    timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
+    content?: StringFieldUpdateOperationsInput | string
+    senderId?: NullableStringFieldUpdateOperationsInput | string | null
+    direction?: EnumMessageDirectionFieldUpdateOperationsInput | $Enums.MessageDirection
+    messageTime?: DateTimeFieldUpdateOperationsInput | Date | string
     type?: StringFieldUpdateOperationsInput | string
-    moreDetails?: NullableJsonNullValueInput | InputJsonValue
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    platformInfo?: NullableJsonNullValueInput | InputJsonValue
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -25675,17 +25707,24 @@ export namespace Prisma {
     _max?: NestedBoolFilter<$PrismaModel>
   }
 
+  export type EnumMessageDirectionFilter<$PrismaModel = never> = {
+    equals?: $Enums.MessageDirection | EnumMessageDirectionFieldRefInput<$PrismaModel>
+    in?: $Enums.MessageDirection[] | ListEnumMessageDirectionFieldRefInput<$PrismaModel>
+    notIn?: $Enums.MessageDirection[] | ListEnumMessageDirectionFieldRefInput<$PrismaModel>
+    not?: NestedEnumMessageDirectionFilter<$PrismaModel> | $Enums.MessageDirection
+  }
+
   export type MessageCountOrderByAggregateInput = {
     id?: SortOrder
     conversationId?: SortOrder
     platform?: SortOrder
     platformMessageId?: SortOrder
-    text?: SortOrder
-    sender?: SortOrder
-    timestamp?: SortOrder
+    content?: SortOrder
+    senderId?: SortOrder
+    direction?: SortOrder
+    messageTime?: SortOrder
     type?: SortOrder
-    moreDetails?: SortOrder
-    createdAt?: SortOrder
+    platformInfo?: SortOrder
     updatedAt?: SortOrder
   }
 
@@ -25694,11 +25733,11 @@ export namespace Prisma {
     conversationId?: SortOrder
     platform?: SortOrder
     platformMessageId?: SortOrder
-    text?: SortOrder
-    sender?: SortOrder
-    timestamp?: SortOrder
+    content?: SortOrder
+    senderId?: SortOrder
+    direction?: SortOrder
+    messageTime?: SortOrder
     type?: SortOrder
-    createdAt?: SortOrder
     updatedAt?: SortOrder
   }
 
@@ -25707,12 +25746,22 @@ export namespace Prisma {
     conversationId?: SortOrder
     platform?: SortOrder
     platformMessageId?: SortOrder
-    text?: SortOrder
-    sender?: SortOrder
-    timestamp?: SortOrder
+    content?: SortOrder
+    senderId?: SortOrder
+    direction?: SortOrder
+    messageTime?: SortOrder
     type?: SortOrder
-    createdAt?: SortOrder
     updatedAt?: SortOrder
+  }
+
+  export type EnumMessageDirectionWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.MessageDirection | EnumMessageDirectionFieldRefInput<$PrismaModel>
+    in?: $Enums.MessageDirection[] | ListEnumMessageDirectionFieldRefInput<$PrismaModel>
+    notIn?: $Enums.MessageDirection[] | ListEnumMessageDirectionFieldRefInput<$PrismaModel>
+    not?: NestedEnumMessageDirectionWithAggregatesFilter<$PrismaModel> | $Enums.MessageDirection
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumMessageDirectionFilter<$PrismaModel>
+    _max?: NestedEnumMessageDirectionFilter<$PrismaModel>
   }
 
   export type CommentListRelationFilter = {
@@ -26158,6 +26207,10 @@ export namespace Prisma {
     set?: boolean
   }
 
+  export type EnumMessageDirectionFieldUpdateOperationsInput = {
+    set?: $Enums.MessageDirection
+  }
+
   export type CommentCreateNestedManyWithoutCommentorInput = {
     create?: XOR<CommentCreateWithoutCommentorInput, CommentUncheckedCreateWithoutCommentorInput> | CommentCreateWithoutCommentorInput[] | CommentUncheckedCreateWithoutCommentorInput[]
     connectOrCreate?: CommentCreateOrConnectWithoutCommentorInput | CommentCreateOrConnectWithoutCommentorInput[]
@@ -26534,6 +26587,23 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedBoolFilter<$PrismaModel>
     _max?: NestedBoolFilter<$PrismaModel>
+  }
+
+  export type NestedEnumMessageDirectionFilter<$PrismaModel = never> = {
+    equals?: $Enums.MessageDirection | EnumMessageDirectionFieldRefInput<$PrismaModel>
+    in?: $Enums.MessageDirection[] | ListEnumMessageDirectionFieldRefInput<$PrismaModel>
+    notIn?: $Enums.MessageDirection[] | ListEnumMessageDirectionFieldRefInput<$PrismaModel>
+    not?: NestedEnumMessageDirectionFilter<$PrismaModel> | $Enums.MessageDirection
+  }
+
+  export type NestedEnumMessageDirectionWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.MessageDirection | EnumMessageDirectionFieldRefInput<$PrismaModel>
+    in?: $Enums.MessageDirection[] | ListEnumMessageDirectionFieldRefInput<$PrismaModel>
+    notIn?: $Enums.MessageDirection[] | ListEnumMessageDirectionFieldRefInput<$PrismaModel>
+    not?: NestedEnumMessageDirectionWithAggregatesFilter<$PrismaModel> | $Enums.MessageDirection
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumMessageDirectionFilter<$PrismaModel>
+    _max?: NestedEnumMessageDirectionFilter<$PrismaModel>
   }
 
   export type SpaceAssetCreateWithoutSpaceInput = {

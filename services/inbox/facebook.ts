@@ -165,9 +165,10 @@ async function saveIncomingFacebookItem(params: {
         conversationId: conversation.id,
         platform: 'Facebook',
         platformMessageId,
-        text,
-        sender: 'user',
-        timestamp,
+        content: text,
+        senderId: null,
+        direction: 'received',
+        messageTime: timestamp,
         type,
         moreDetails,
     });

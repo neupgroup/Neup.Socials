@@ -117,12 +117,12 @@ Fields:
 > conversationId: string;
 > platform: string;
 > platformMessageId: string, unique;
-> text: string;
-> sender: string;
-> timestamp: timestamp;
+> content: string;
+> senderId: string, references accounts.id, nullable;
+> direction: enum(system, received, sent);
+> messageTime: timestamp;
 > type: string, default: text;
-> moreDetails: json, nullable;
-> createdAt: timestamp, default: now;
+> platformInfo: jsonb, nullable; includes sender and receiver;
 > updatedAt: timestamp, default: auto update;
 > type: string, default: text;
 > callEvent: string, nullable;

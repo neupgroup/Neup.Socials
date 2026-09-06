@@ -213,19 +213,19 @@ export default function ConversationPage() {
                     const msgs = await listConversationMessagesAction(conversationId);
                     if (active) {
                         const sortedMessages = [...msgs]
-                            .sort((a, b) => timestampValue(a.timestamp) - timestampValue(b.timestamp))
+                            .sort((a, b) => timestampValue(a.messageTime) - timestampValue(b.messageTime))
                             .map((message) => ({
                                 id: message.id,
-                                text: message.text ?? '',
-                                sender: message.sender === 'agent' ? 'agent' as const : 'user' as const,
-                                timestamp: message.timestamp ?? null,
+                                text: message.content ?? '',
+                                sender: message.direction === 'sent' || message.direction === 'system' ? 'agent' as const : 'user' as const,
+                                timestamp: message.messageTime ?? null,
                             }));
                         setMessages(sortedMessages);
                         const timestamps = sortedMessages.map((message) => message.timestamp).filter(Boolean) as string[];
                         if (timestamps.length) {
                             void updateConversationFetchMetadataAction(conversationId, {
-                                fetchedSince: timestamps[0],
-                                fetchedUpto: timestamps[timestamps.length - 1],
+                                messageSince: timestamps[0],
+                                messageUpto: timestamps[timestamps.length - 1],
                             });
                         }
                     }
@@ -237,7 +237,15 @@ export default function ConversationPage() {
 
                 try {
                     const msgs = await listConversationMessagesAction(conversationId);
-                    if (active) setMessages(msgs as Message[]);
+                    if (active) {
+                        setMessages(msgs.map((message) => ({
+                            id: message.id,
+                            text: message.content,
+                            sender: message.direction === 'sent' || message.direction === 'system' ? 'agent' : 'user',
+                            timestamp: message.messageTime,
+                            attachments: (message.platformInfo as { attachments?: Message['attachments'] } | null)?.attachments,
+                        })));
+                    }
                 } finally {
                     if (active) setMessagesLoading(false);
                 }
@@ -283,8 +291,8 @@ export default function ConversationPage() {
             const oldest = olderMessages[0]?.created_time;
             if (oldest) {
                 void updateConversationFetchMetadataAction(conversationId, {
-                    fetchedSince: oldest,
-                    ...(result?.messages?.paging?.next ? {} : { conversationStart: oldest }),
+                    messageSince: oldest,
+                    ...(result?.messages?.paging?.next ? {} : { firstMessageOn: oldest }),
                 });
             }
             requestAnimationFrame(() => {
@@ -363,10 +371,7 @@ export default function ConversationPage() {
                     setConversation(saved.conversation as Conversation);
                 }
                 if (saved.message) {
-                    setMessages((prev) => [
-                        ...prev.filter((message) => message.id !== tempId),
-                        saved.message as Message,
-                    ]);
+                    setMessages((prev) => prev.filter((message) => message.id !== tempId));
                 }
             } else {
                 setMessages((prev) => prev.filter((message) => message.id !== tempId));

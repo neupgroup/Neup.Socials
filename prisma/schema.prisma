@@ -159,15 +159,15 @@ model Conversation {
 /* removed ConversationMessage table */
 /*
   id                String   @id @default(cuid())
-  conversationId    String
+  conversationId    String   @map("conversation_id")
   platformMessageId String?  @unique
-  text              String
+  content           String
   sender            String
   timestamp         DateTime @default(now())
   type              String   @default("text")
   callEvent         String?
 
-  @@index([conversationId, timestamp])
+  @@index([conversationId, messageTime])
   @@map("conversation_messages")
 }
 */
@@ -176,18 +176,24 @@ model Message {
   id                String   @id @default(cuid())
   conversationId    String
   platform          String
-  platformMessageId String   @unique
-  text              String
-  sender            String
-  timestamp         DateTime
+  platformMessageId String   @unique @map("platform_message_id")
+  content           String
+  senderId          String?  @map("sender_id")
+  direction         MessageDirection
+  messageTime       DateTime @map("message_time")
   type              String   @default("text")
-  moreDetails       Json?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  platformInfo      Json?    @map("platform_info")
+  updatedAt         DateTime @updatedAt @map("updated_at")
 
-  @@index([conversationId, timestamp])
+  @@index([conversationId, messageTime])
   @@index([platform, conversationId])
   @@map("messages")
+}
+
+enum MessageDirection {
+  system
+  received
+  sent
 }
 
 model Commentor {

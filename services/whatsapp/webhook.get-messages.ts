@@ -88,11 +88,12 @@ async function saveMessageToConversation(context: MessageContext) {
     conversationId: conversation.id,
     platform: 'WhatsApp',
     platformMessageId: platformMessageId,
-    text: text,
-    sender: 'user',
-    timestamp: msgTimestamp,
+    content: text,
+    senderId: null,
+    direction: 'received',
+    messageTime: msgTimestamp,
     type: type,
-    callEvent: callEvent ?? null,
+    platformInfo: { sender: fromPhoneNumber, receiver: conversation.channelId, ...(callEvent ? { callEvent } : {}) },
   });
   console.log(`✅ [Service] Successfully processed ${type}`);
 }

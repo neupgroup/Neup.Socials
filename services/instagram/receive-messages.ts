@@ -29,7 +29,7 @@ export async function receiveInstagramMessages(payload: any) {
       ?? await findConversationByContactAndChannel(senderId, account.id)
       ?? await createConversation({ contactId: senderId, contactName: senderId, channelId: account.id, platform: 'Instagram', lastMessage: event.message.text, lastMessageAt: new Date(Number(event.timestamp ?? Date.now()) * 1000), unread: true, avatar: senderId.slice(-2) });
 
-    await createMessage({ conversationId: conversation.id, platform: 'Instagram', platformMessageId: messageId, text: event.message.text, sender: 'user', timestamp: new Date(Number(event.timestamp ?? Date.now()) * 1000) });
+    await createMessage({ conversationId: conversation.id, platform: 'Instagram', platformMessageId: messageId, content: event.message.text, direction: 'received', senderId: null, messageTime: new Date(Number(event.timestamp ?? Date.now()) * 1000), platformInfo: { sender: senderId, receiver: igUserId } });
     stored += 1;
   }
   return { stored };

@@ -236,12 +236,12 @@ exports.Prisma.MessageScalarFieldEnum = {
   conversationId: 'conversationId',
   platform: 'platform',
   platformMessageId: 'platformMessageId',
-  text: 'text',
-  sender: 'sender',
-  timestamp: 'timestamp',
+  content: 'content',
+  senderId: 'senderId',
+  direction: 'direction',
+  messageTime: 'messageTime',
   type: 'type',
-  moreDetails: 'moreDetails',
-  createdAt: 'createdAt',
+  platformInfo: 'platformInfo',
   updatedAt: 'updatedAt'
 };
 
@@ -354,7 +354,11 @@ exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
 };
-
+exports.MessageDirection = exports.$Enums.MessageDirection = {
+  system: 'system',
+  received: 'received',
+  sent: 'sent'
+};
 
 exports.Prisma.ModelName = {
   ConnectedAccount: 'ConnectedAccount',

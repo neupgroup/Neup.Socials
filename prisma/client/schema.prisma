@@ -163,32 +163,38 @@ model Conversation {
  * id                String   @id @default(cuid())
  * conversationId    String
  * platformMessageId String?  @unique
- * text              String
+ * content           String
  * sender            String
  * timestamp         DateTime @default(now())
  * type              String   @default("text")
  * callEvent         String?
- * @@index([conversationId, timestamp])
+ * @@index([conversationId, messageTime])
  * @@map("conversation_messages")
  * }
  */
 
 model Message {
-  id                String   @id @default(cuid())
+  id                String           @id @default(cuid())
   conversationId    String
   platform          String
-  platformMessageId String   @unique
-  text              String
-  sender            String
-  timestamp         DateTime
-  type              String   @default("text")
-  moreDetails       Json?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  platformMessageId String           @unique
+  content           String
+  senderId          String?
+  direction         MessageDirection
+  messageTime       DateTime
+  type              String           @default("text")
+  platformInfo      Json?
+  updatedAt         DateTime         @updatedAt
 
-  @@index([conversationId, timestamp])
+  @@index([conversationId, messageTime])
   @@index([platform, conversationId])
   @@map("messages")
+}
+
+enum MessageDirection {
+  system
+  received
+  sent
 }
 
 model Commentor {
