@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { Calendar, Inbox, LayoutGrid, Settings, Users, PlusSquare, FileText, Upload, ArrowRightLeft, Boxes } from 'lucide-react';
+import { Calendar, Inbox, LayoutGrid, Settings, Users, PlusSquare, FileText, Upload, ArrowRightLeft, Boxes, Activity } from 'lucide-react';
 import { usePathname, notFound } from 'next/navigation';
 import { Userbar } from '#/components/element/userbar';
 import { cn } from '#/core/utils';
@@ -10,7 +10,7 @@ import { cn } from '#/core/utils';
 const navItems = [
   { href: '/home', icon: LayoutGrid, label: 'Dashboard' }, { href: '/analytics', icon: LayoutGrid, label: 'Analytics' },
   { href: '/schedule', icon: Calendar, label: 'Schedule' }, { href: '/feed', icon: PlusSquare, label: 'Feed' },
-  { href: '/content', icon: FileText, label: 'Content' }, { href: '/inbox', icon: Inbox, label: 'Inbox' },
+  { href: '/content', icon: FileText, label: 'Content' }, { href: '/interactions', icon: Activity, label: 'Interactions' }, { href: '/inbox', icon: Inbox, label: 'Inbox' },
   { href: '/uploads', icon: Upload, label: 'Uploads' }, { href: '/accounts', icon: Users, label: 'Accounts' },
   { href: '/space', icon: Boxes, label: 'Spaces' }, { href: '/switch', icon: ArrowRightLeft, label: 'Switch' },
   { href: '/settings', icon: Settings, label: 'Settings' },
