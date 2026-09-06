@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { processFacebookMessagesWebhook } from '@/services/inbox/facebook';
 import { verifyWebhookRequest } from '@/app/bridge/webhook.v1/_helpers';
 import { logError } from '@/services/error-logging';
+import { logger } from '#/logica/logger';
 
 const ENDPOINT = '/bridge/webhook.v1/platform/meta';
 
@@ -50,6 +51,21 @@ export async function POST(request: Request) {
   if (!isPageWebhook && !isMessageSample) {
     return new NextResponse('Not Found', { status: 404 });
   }
+
+  void logger
+    .type('facebook.webhook.received')
+    .data({
+      endpoint: ENDPOINT,
+      object: body?.object ?? null,
+      field: body?.field ?? body?.sample?.field ?? null,
+      pageId: body?.entry?.[0]?.id ?? body?.value?.recipient?.id ?? body?.sample?.value?.recipient?.id ?? null,
+      messageId: body?.entry?.[0]?.messaging?.[0]?.message?.mid
+        ?? body?.value?.message?.mid
+        ?? body?.sample?.value?.message?.mid
+        ?? null,
+    })
+    .log()
+    .catch(() => undefined);
 
   const processing = processFacebookMessagesWebhook(body).catch(async (error: any) => {
     await logError({

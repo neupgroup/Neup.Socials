@@ -6,6 +6,7 @@ import { logError } from '@/services/error-logging';
 import { decrypt } from '#/core/helpers/crypto';
 import { getPageCommentById } from '@/services/facebook/comments-api';
 import { getPageScopedProfile } from '@/services/facebook/comments-api';
+import { logger } from '#/logica/logger';
 
 /**
  * Processes the incoming webhook payload from Facebook.
@@ -224,7 +225,20 @@ async function handleMessagingEvent(pageId: string, event: any) {
                         senderName,
                         messageId: rawMessageId,
                     },
-                });
+                    });
+
+                void logger
+                    .type('facebook.webhook.message.saved')
+                    .data({
+                        pageId,
+                        accountId: account.id,
+                        senderId,
+                        messageId: rawMessageId,
+                        text: messageText,
+                        commands: event?.message?.commands ?? null,
+                    })
+                    .log()
+                    .catch(() => undefined);
             })
         );
     } catch (error: any) {
