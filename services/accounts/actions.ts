@@ -31,13 +31,13 @@ const serializeAccount = (account: Awaited<ReturnType<typeof getAccount>>) =>
     : null;
 
 export async function ensureCurrentAccountAction() {
-  const account = await self.ensureRecord();
-  if (!account) return null;
+  const basics = (await self.getBasics())[0] ?? null;
+  if (!basics) return null;
 
   return {
-    displayName: account.displayName,
-    displayImage: account.displayImage,
-    neupId: account.neupId,
+    displayName: basics.displayName,
+    displayImage: basics.displayImage,
+    neupId: basics.neupid,
   };
 }
 

@@ -35,6 +35,7 @@ import { Sheet, SheetContent } from '#/components/ui/sheet';
 import { Userbar } from '#/components/element/userbar';
 import { formatDistanceToNow } from 'date-fns';
 import { listConversationsAction } from '@/services/conversations/actions';
+import { ensureCurrentAccountAction } from '@/services/accounts/actions';
 import { listInstagramConversationsAction } from '@/services/conversations/actions';
 import { application } from '@/base/application';
 
@@ -71,6 +72,12 @@ type Conversation = {
     unread: boolean;
 };
 
+type CurrentAccount = {
+    displayName: string | null;
+    displayImage: string | null;
+    neupId: string | null;
+} | null;
+
 const getPlatformColor = (platform: string) => {
     const platformLower = platform.toLowerCase();
     if (platformLower === 'whatsapp') return 'bg-green-500';
@@ -85,11 +92,13 @@ const getPlatformColor = (platform: string) => {
 function InboxSidebarContent({
     pathname,
     conversations,
-    loading
+    loading,
+    account,
 }: {
     pathname: string;
     conversations: Conversation[];
     loading: boolean;
+    account: CurrentAccount;
 }) {
     const router = useRouter();
 
@@ -249,7 +258,12 @@ function InboxSidebarContent({
             </div>
 
             <div className="border-t border-border p-4">
-                <Userbar displayName="Neup Admin" neupid="neupkishor" className="w-full justify-end" />
+                <Userbar
+                    displayName={account?.displayName ?? ''}
+                    displayImage={account?.displayImage}
+                    neupid={account?.neupId ?? ''}
+                    className="w-full justify-end"
+                />
             </div>
         </div>
     );
@@ -264,6 +278,17 @@ export default function InboxLayout({
     const [conversations, setConversations] = React.useState<Conversation[]>([]);
     const [loading, setLoading] = React.useState(true);
     const [mobileOpen, setMobileOpen] = React.useState(false);
+    const [account, setAccount] = React.useState<CurrentAccount>(null);
+
+    React.useEffect(() => {
+        let active = true;
+        void ensureCurrentAccountAction().then((currentAccount) => {
+            if (active) setAccount(currentAccount);
+        });
+        return () => {
+            active = false;
+        };
+    }, []);
 
     React.useEffect(() => {
         let active = true;
@@ -306,6 +331,7 @@ export default function InboxLayout({
                         pathname={pathname}
                         conversations={conversations}
                         loading={loading}
+                        account={account}
                     />
                 </Sidebar>
 
@@ -317,6 +343,7 @@ export default function InboxLayout({
                                 pathname={pathname}
                                 conversations={conversations}
                                 loading={loading}
+                                account={account}
                             />
                         </div>
                     </SheetContent>
@@ -339,7 +366,11 @@ export default function InboxLayout({
                             <Button variant="ghost" size="icon">
                                 <Search className="h-4 w-4" />
                             </Button>
-                            <Userbar displayName="Neup Admin" neupid="neupkishor" />
+                            <Userbar
+                                displayName={account?.displayName ?? ''}
+                                displayImage={account?.displayImage}
+                                neupid={account?.neupId ?? ''}
+                            />
                         </div>
                     </header>
 
