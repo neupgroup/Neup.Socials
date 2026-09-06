@@ -44,7 +44,10 @@ export async function POST(request: Request) {
     return new NextResponse('Invalid payload', { status: 400 });
   }
 
-  if (body?.object !== 'page') {
+  const isPageWebhook = body?.object === 'page';
+  const isMessageSample = (body?.sample ?? body)?.field === 'messages';
+
+  if (!isPageWebhook && !isMessageSample) {
     return new NextResponse('Not Found', { status: 404 });
   }
 

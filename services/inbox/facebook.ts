@@ -19,6 +19,22 @@ export async function processFacebookWebhook(payload: any) {
 }
 
 export async function processFacebookMessagesWebhook(payload: any) {
+    // Meta's webhook tester sends a compact field/value payload rather than
+    // the normal { object: 'page', entry: [...] } Page Webhook envelope.
+    const messageSample = payload?.sample ?? payload;
+    if (messageSample?.field === 'messages' && messageSample?.value) {
+        const value = messageSample.value;
+        const timestamp = Number(value?.timestamp);
+
+        await handleMessagingEvent(String(value?.recipient?.id ?? ''), {
+            sender: value?.sender,
+            recipient: value?.recipient,
+            timestamp: Number.isFinite(timestamp) ? timestamp * 1000 : undefined,
+            message: value?.message,
+        });
+        return;
+    }
+
     return processFacebookWebhookByType(payload, {
         includeMessaging: true,
         includeFeedChanges: false,
@@ -92,6 +108,7 @@ async function saveIncomingFacebookItem(params: {
     platformMessageId: string;
     timestamp: Date;
     type?: string;
+    moreDetails?: Record<string, unknown>;
 }) {
     const {
         accountId,
@@ -101,6 +118,7 @@ async function saveIncomingFacebookItem(params: {
         platformMessageId,
         timestamp,
         type = 'text',
+        moreDetails,
     } = params;
 
     if (!text.trim()) {
@@ -149,6 +167,7 @@ async function saveIncomingFacebookItem(params: {
         sender: 'user',
         timestamp,
         type,
+        moreDetails,
     });
 }
 
@@ -186,6 +205,12 @@ async function handleMessagingEvent(pageId: string, event: any) {
                     platformMessageId: `fb_msg:${account.id}:${rawMessageId}`,
                     timestamp,
                     type: 'text',
+                    moreDetails: {
+                        commands: event?.message?.commands ?? null,
+                        source: 'facebook.webhook.messages',
+                        pageId,
+                        senderId,
+                    },
                 });
 
                 await dataStore.syncLogEntries.create({
