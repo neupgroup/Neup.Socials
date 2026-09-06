@@ -3,7 +3,7 @@ import { processFacebookMessagesWebhook } from '@/services/inbox/facebook';
 import { verifyWebhookRequest } from '@/app/bridge/webhook.v1/_helpers';
 import { logError } from '@/services/error-logging';
 
-const ENDPOINT = '/bridge/webhook.v1/platform/facebook/messages';
+const ENDPOINT = '/bridge/webhook.v1/platform/meta';
 
 /**
  * Meta calls this endpoint during Page Webhooks setup.
