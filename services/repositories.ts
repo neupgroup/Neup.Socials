@@ -127,6 +127,11 @@ const stores: Record<string, Record<string, (...args: any[]) => Promise<any>>> =
     findByContactAndChannel: (contactId, channelId) => model('conversation').findFirst({ where: { contactId, channelId } }),
     create: (data) => model('conversation').create({ data }),
     update: (id, data) => model('conversation').update({ where: { id }, data }),
+    listRecent: (args = {}) => model('conversation').findMany({
+      where: { ...(args.platform ? { platform: args.platform } : {}) },
+      take: args.take ?? 100,
+      orderBy: { lastMessageAt: 'desc' },
+    }),
   },
   messages: {
     findByPlatformMessageId: (platformMessageId) => model('conversationMessage').findUnique({ where: { platformMessageId } }),
