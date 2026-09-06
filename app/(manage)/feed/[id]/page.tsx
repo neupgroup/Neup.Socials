@@ -50,6 +50,7 @@ type Comment = {
     id: string;
     name: string;
   };
+  parentId?: string;
 };
 
 type FacebookVideo = {
@@ -117,7 +118,7 @@ const PostComments = ({ postId, platform, accountId }: { postId: string; platfor
   };
 
   React.useEffect(() => {
-    fetchComments();
+    fetchComments(true);
   }, [postId, platform]);
 
   React.useEffect(() => {
@@ -150,7 +151,7 @@ const PostComments = ({ postId, platform, accountId }: { postId: string; platfor
       if (result.success) {
         toast({ title: 'Comment posted successfully' });
         setNewComment('');
-        await fetchComments();
+        await fetchComments(true);
       } else {
         toast({ title: 'Failed to post comment', description: result.error, variant: 'destructive' });
       }
@@ -168,7 +169,7 @@ const PostComments = ({ postId, platform, accountId }: { postId: string; platfor
         toast({ title: 'Reply posted successfully' });
         setReplyText('');
         setReplyingToId(null);
-        await fetchComments();
+        await fetchComments(true);
       } else {
         toast({ title: 'Failed to post reply', description: result.error, variant: 'destructive' });
       }
@@ -178,21 +179,29 @@ const PostComments = ({ postId, platform, accountId }: { postId: string; platfor
   };
 
   const handleMessageUser = async (commentId: string) => {
-    if (!accountId || !pageId) {
+    if (!accountId) {
       toast({
-        title: 'Missing page ID',
-        description: 'This post is not linked to a connected Facebook page account.',
+        title: 'Missing Facebook account',
+        description: 'This post is not linked to a connected Facebook account.',
         variant: 'destructive',
       });
       return;
     }
 
-    router.push(`/inbox?type=facebookComment&post=${encodeURIComponent(postId)}&comment=${encodeURIComponent(commentId)}&page=${encodeURIComponent(pageId)}`);
+    router.push(`/inbox?type=facebookComment&post=${encodeURIComponent(postId)}&comment=${encodeURIComponent(commentId)}`);
   };
 
   if (!isFacebookPlatform(platform)) {
     return <p className="text-sm text-muted-foreground">Comments are only available for Facebook posts.</p>;
   }
+
+  const rootComments = comments.filter((comment) => !comment.parentId);
+  const repliesByParent = comments.reduce<Record<string, Comment[]>>((groups, comment) => {
+    if (comment.parentId) {
+      groups[comment.parentId] = [...(groups[comment.parentId] ?? []), comment];
+    }
+    return groups;
+  }, {});
 
   return (
     <div className="space-y-4">
@@ -232,7 +241,7 @@ const PostComments = ({ postId, platform, accountId }: { postId: string; platfor
         ) : comments.length === 0 ? (
           <p className="text-center text-muted-foreground py-8">No comments yet.</p>
         ) : (
-          comments.map((comment) => (
+          rootComments.map((comment) => (
             <div key={comment.id} className="border rounded-lg p-4 bg-muted/30 space-y-2">
               <div className="flex items-start justify-between">
                 <div>
@@ -302,6 +311,22 @@ const PostComments = ({ postId, platform, accountId }: { postId: string; platfor
                   </Button>
                 </div>
               )}
+
+              {repliesByParent[comment.id]?.length ? (
+                <div className="ml-6 space-y-3 border-l-2 border-border pl-4 pt-3">
+                  {repliesByParent[comment.id].map((reply) => (
+                    <div key={reply.id} className="rounded-md border bg-background p-3 space-y-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-semibold text-sm">{reply.from?.name || 'Facebook User'}</p>
+                        {reply.created_time ? (
+                          <p className="text-xs text-muted-foreground">{format(new Date(reply.created_time), 'PPp')}</p>
+                        ) : null}
+                      </div>
+                      <p className="text-sm whitespace-pre-wrap">{reply.message}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
             </div>
           ))
         )}

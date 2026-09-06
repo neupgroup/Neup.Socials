@@ -278,16 +278,15 @@ model FacebookComment {
 }
 
 model PostComment {
-  id            String   @id @default(cuid())
-  commentId     String   @unique @map("comment_id")
-  postId        String   @map("post_id")
-  platform      String
-  commentedOn   DateTime @map("commented_on")
-  commenterId   String?  @map("commenter_id")
-  commenterName String?  @map("commenter_name")
-  commentText   String?  @map("comment_text") @db.Text
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  id          String   @id @default(cuid())
+  commentId   String   @unique @map("comment_id")
+  postId      String   @map("post_id")
+  platform    String
+  commentedOn DateTime @map("commented_on")
+  commenter   Json?
+  commentText String?  @map("comment_text") @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@index([postId, commentedOn])
   @@index([platform, commentedOn])
@@ -328,6 +327,22 @@ model InstagramMessage {
   @@index([eventTimestamp])
   @@index([createdAt])
   @@map("instagram_messages")
+}
+
+model InstagramMessageAttachment {
+  id                   String   @id @default(cuid())
+  instagramMessageId   String   @map("instagram_message_id")
+  platformAttachmentId String?  @map("platform_attachment_id")
+  attachmentType       String   @map("attachment_type")
+  mediaUrl             String?  @map("media_url")
+  thumbnailUrl         String?  @map("thumbnail_url")
+  permalink            String?
+  metadata             Json?
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  @@index([instagramMessageId])
+  @@index([attachmentType])
+  @@map("instagram_message_attachments")
 }
 
 model Account {

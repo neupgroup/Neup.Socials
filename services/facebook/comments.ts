@@ -25,6 +25,7 @@ export type FetchCommentsResult = {
       id: string;
       name: string;
     };
+    parentId?: string;
   }>;
   error?: string;
 };
@@ -85,8 +86,8 @@ export async function fetchPostCommentsAction(
                 message: comment.commentText ?? '',
                 created_time: comment.commentedOn.toISOString(),
                 from: {
-                  id: comment.commenterId ?? '',
-                  name: comment.commenterName ?? 'Facebook User',
+                  id: String((comment.commenter as { id?: string } | null)?.id ?? ''),
+                  name: String((comment.commenter as { name?: string } | null)?.name ?? 'Facebook User'),
                 },
               })),
             };
@@ -160,6 +161,7 @@ export async function fetchPostCommentsAction(
             message?: string;
             created_time?: string;
             from?: { id: string; name: string };
+            parentId?: string;
           }> = [];
 
           if (comment.id) {
@@ -186,6 +188,7 @@ export async function fetchPostCommentsAction(
               message: reply.message,
               created_time: reply.created_time,
               from: reply.from,
+              parentId: comment.id,
             });
           }
 
@@ -208,10 +211,12 @@ export async function fetchPostCommentsAction(
             postId,
             platform: 'facebook',
             commentedOn,
-            commenterId: comment.from?.id ?? null,
-            commenterName: comment.from?.name ?? null,
+            commenter: {
+              id: comment.from?.id ?? '',
+              name: comment.from?.name ?? 'Facebook User',
+              image: null,
+            },
             commentText: comment.message ?? null,
-            seenAt: syncedAt,
           });
         })
       );
@@ -245,15 +250,7 @@ export async function fetchPostCommentsAction(
       if (refreshedCurrent.length > 0) {
         return {
           success: true,
-          comments: refreshedCurrent.map((comment) => ({
-            id: comment.commentId,
-            message: comment.commentText ?? '',
-            created_time: comment.commentedOn.toISOString(),
-            from: {
-              id: comment.commenterId ?? '',
-              name: comment.commenterName ?? 'Facebook User',
-            },
-          })),
+          comments: flattened,
         };
       }
     } catch (finalQueryError) {
@@ -263,12 +260,7 @@ export async function fetchPostCommentsAction(
     // Fallback: return the results from the API directly
     return {
       success: true,
-      comments: flattened.map((comment) => ({
-        id: comment.id,
-        message: comment.message ?? '',
-        created_time: comment.created_time,
-        from: comment.from,
-      })),
+      comments: flattened,
     };
   } catch (error) {
     const err = error as Error;

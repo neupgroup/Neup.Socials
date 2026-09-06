@@ -86,6 +86,23 @@ const stores: Record<string, Record<string, (...args: any[]) => Promise<any>>> =
     update: (id, data) => model('post').update({ where: { id }, data }),
     delete: (id) => model('post').delete(byId(id)),
   },
+  postComments: {
+    upsertByCommentId: (data) => model('postComment').upsert({
+      where: { commentId: data.commentId },
+      create: data,
+      update: data,
+    }),
+    listByPostId: ({ postId, take }: { postId: string; take?: number }) => model('postComment').findMany({
+      where: { postId },
+      orderBy: { commentedOn: 'asc' },
+      take,
+    }),
+    getByCommentId: (commentId) => model('postComment').findUnique({ where: { commentId } }),
+    listRecent: ({ take = 100 } = {}) => model('postComment').findMany({
+      orderBy: { commentedOn: 'desc' },
+      take,
+    }),
+  },
   postCollections: {
     getById: (id) => model('postCollection').findUnique(byId(id)),
     create: (data) => model('postCollection').create({ data }),

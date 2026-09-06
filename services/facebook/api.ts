@@ -737,7 +737,7 @@ export async function postReplyToComment(
     message,
   });
 
-  const res = await fetch(`${GRAPH_API_BASE_URL}/${commentId}`, {
+  const res = await fetch(`${GRAPH_API_BASE_URL}/${commentId}/comments`, {
     method: 'POST',
     body: params,
   });

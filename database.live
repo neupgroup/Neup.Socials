@@ -207,8 +207,7 @@ Fields:
 > postId: string;
 > platform: string;
 > commentedOn: timestamp;
-> commenterId: string, nullable;
-> commenterName: string, nullable;
+> commenter: json, nullable; includes id, name, image;
 > commentText: string, nullable;
 > createdAt: timestamp, default: now;
 > updatedAt: timestamp, auto-updated;

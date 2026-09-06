@@ -283,8 +283,7 @@ model PostComment {
   postId         String   @map("post_id")
   platform       String
   commentedOn    DateTime @map("commented_on")
-  commenterId    String?  @map("commenter_id")
-  commenterName  String?  @map("commenter_name")
+  commenter      Json?
   commentText    String?  @db.Text @map("comment_text")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")

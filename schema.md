@@ -212,8 +212,7 @@ This document summarizes tables, fields, and key constraints based on Prisma sch
 - postId: String, required, mapped column post_id
 - platform: String, required
 - commentedOn: DateTime, required, mapped column commented_on
-- commenterId: String, optional, mapped column commenter_id
-- commenterName: String, optional, mapped column commenter_name
+- commenter: Json, optional; includes id, name, image
 - commentText: String, optional, db type Text, mapped column comment_text
 - createdAt: DateTime, default now(), mapped column created_at
 - updatedAt: DateTime, updatedAt, mapped column updated_at

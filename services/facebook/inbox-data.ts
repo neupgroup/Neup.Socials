@@ -8,8 +8,7 @@ export type FacebookInboxComment = {
   postId: string;
   platform: string;
   commentedOn: Date;
-  commenterId: string | null;
-  commenterName: string | null;
+  commenter: { id?: string; name?: string; image?: string | null } | null;
   commentText: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -22,8 +21,7 @@ const selectCommentFields = Prisma.sql`
     post_id AS "postId",
     platform,
     commented_on AS "commentedOn",
-    commenter_id AS "commenterId",
-    commenter_name AS "commenterName",
+    commenter,
     comment_text AS "commentText",
     created_at AS "createdAt",
     updated_at AS "updatedAt"

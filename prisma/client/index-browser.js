@@ -324,8 +324,7 @@ exports.Prisma.PostCommentScalarFieldEnum = {
   postId: 'postId',
   platform: 'platform',
   commentedOn: 'commentedOn',
-  commenterId: 'commenterId',
-  commenterName: 'commenterName',
+  commenter: 'commenter',
   commentText: 'commentText',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -356,6 +355,18 @@ exports.Prisma.InstagramMessageScalarFieldEnum = {
   payload: 'payload',
   createdAt: 'createdAt',
   reactionSummary: 'reactionSummary'
+};
+
+exports.Prisma.InstagramMessageAttachmentScalarFieldEnum = {
+  id: 'id',
+  instagramMessageId: 'instagramMessageId',
+  platformAttachmentId: 'platformAttachmentId',
+  attachmentType: 'attachmentType',
+  mediaUrl: 'mediaUrl',
+  thumbnailUrl: 'thumbnailUrl',
+  permalink: 'permalink',
+  metadata: 'metadata',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.AccountScalarFieldEnum = {
@@ -419,6 +430,7 @@ exports.Prisma.ModelName = {
   PostComment: 'PostComment',
   InstagramLiveComment: 'InstagramLiveComment',
   InstagramMessage: 'InstagramMessage',
+  InstagramMessageAttachment: 'InstagramMessageAttachment',
   Account: 'Account'
 };
 

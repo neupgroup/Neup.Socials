@@ -119,6 +119,11 @@ export type InstagramLiveComment = $Result.DefaultSelection<Prisma.$InstagramLiv
  */
 export type InstagramMessage = $Result.DefaultSelection<Prisma.$InstagramMessagePayload>
 /**
+ * Model InstagramMessageAttachment
+ * 
+ */
+export type InstagramMessageAttachment = $Result.DefaultSelection<Prisma.$InstagramMessageAttachmentPayload>
+/**
  * Model Account
  * 
  */
@@ -454,6 +459,16 @@ export class PrismaClient<
     * ```
     */
   get instagramMessage(): Prisma.InstagramMessageDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.instagramMessageAttachment`: Exposes CRUD operations for the **InstagramMessageAttachment** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more InstagramMessageAttachments
+    * const instagramMessageAttachments = await prisma.instagramMessageAttachment.findMany()
+    * ```
+    */
+  get instagramMessageAttachment(): Prisma.InstagramMessageAttachmentDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.account`: Exposes CRUD operations for the **Account** model.
@@ -932,6 +947,7 @@ export namespace Prisma {
     PostComment: 'PostComment',
     InstagramLiveComment: 'InstagramLiveComment',
     InstagramMessage: 'InstagramMessage',
+    InstagramMessageAttachment: 'InstagramMessageAttachment',
     Account: 'Account'
   };
 
@@ -948,7 +964,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "connectedAccount" | "post" | "postCollection" | "upload" | "syncLog" | "syncLogEntry" | "space" | "spaceAsset" | "conversation" | "conversationMessage" | "message" | "systemAlert" | "systemConfig" | "commentor" | "comment" | "identityUnified" | "identityPlatform" | "facebookComment" | "postComment" | "instagramLiveComment" | "instagramMessage" | "account"
+      modelProps: "connectedAccount" | "post" | "postCollection" | "upload" | "syncLog" | "syncLogEntry" | "space" | "spaceAsset" | "conversation" | "conversationMessage" | "message" | "systemAlert" | "systemConfig" | "commentor" | "comment" | "identityUnified" | "identityPlatform" | "facebookComment" | "postComment" | "instagramLiveComment" | "instagramMessage" | "instagramMessageAttachment" | "account"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -2506,6 +2522,80 @@ export namespace Prisma {
           }
         }
       }
+      InstagramMessageAttachment: {
+        payload: Prisma.$InstagramMessageAttachmentPayload<ExtArgs>
+        fields: Prisma.InstagramMessageAttachmentFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.InstagramMessageAttachmentFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstagramMessageAttachmentPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.InstagramMessageAttachmentFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstagramMessageAttachmentPayload>
+          }
+          findFirst: {
+            args: Prisma.InstagramMessageAttachmentFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstagramMessageAttachmentPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.InstagramMessageAttachmentFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstagramMessageAttachmentPayload>
+          }
+          findMany: {
+            args: Prisma.InstagramMessageAttachmentFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstagramMessageAttachmentPayload>[]
+          }
+          create: {
+            args: Prisma.InstagramMessageAttachmentCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstagramMessageAttachmentPayload>
+          }
+          createMany: {
+            args: Prisma.InstagramMessageAttachmentCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.InstagramMessageAttachmentCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstagramMessageAttachmentPayload>[]
+          }
+          delete: {
+            args: Prisma.InstagramMessageAttachmentDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstagramMessageAttachmentPayload>
+          }
+          update: {
+            args: Prisma.InstagramMessageAttachmentUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstagramMessageAttachmentPayload>
+          }
+          deleteMany: {
+            args: Prisma.InstagramMessageAttachmentDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.InstagramMessageAttachmentUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.InstagramMessageAttachmentUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstagramMessageAttachmentPayload>[]
+          }
+          upsert: {
+            args: Prisma.InstagramMessageAttachmentUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$InstagramMessageAttachmentPayload>
+          }
+          aggregate: {
+            args: Prisma.InstagramMessageAttachmentAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateInstagramMessageAttachment>
+          }
+          groupBy: {
+            args: Prisma.InstagramMessageAttachmentGroupByArgs<ExtArgs>
+            result: $Utils.Optional<InstagramMessageAttachmentGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.InstagramMessageAttachmentCountArgs<ExtArgs>
+            result: $Utils.Optional<InstagramMessageAttachmentCountAggregateOutputType> | number
+          }
+        }
+      }
       Account: {
         payload: Prisma.$AccountPayload<ExtArgs>
         fields: Prisma.AccountFieldRefs
@@ -2724,6 +2814,7 @@ export namespace Prisma {
     postComment?: PostCommentOmit
     instagramLiveComment?: InstagramLiveCommentOmit
     instagramMessage?: InstagramMessageOmit
+    instagramMessageAttachment?: InstagramMessageAttachmentOmit
     account?: AccountOmit
   }
 
@@ -22072,8 +22163,6 @@ export namespace Prisma {
     postId: string | null
     platform: string | null
     commentedOn: Date | null
-    commenterId: string | null
-    commenterName: string | null
     commentText: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -22085,8 +22174,6 @@ export namespace Prisma {
     postId: string | null
     platform: string | null
     commentedOn: Date | null
-    commenterId: string | null
-    commenterName: string | null
     commentText: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -22098,8 +22185,7 @@ export namespace Prisma {
     postId: number
     platform: number
     commentedOn: number
-    commenterId: number
-    commenterName: number
+    commenter: number
     commentText: number
     createdAt: number
     updatedAt: number
@@ -22113,8 +22199,6 @@ export namespace Prisma {
     postId?: true
     platform?: true
     commentedOn?: true
-    commenterId?: true
-    commenterName?: true
     commentText?: true
     createdAt?: true
     updatedAt?: true
@@ -22126,8 +22210,6 @@ export namespace Prisma {
     postId?: true
     platform?: true
     commentedOn?: true
-    commenterId?: true
-    commenterName?: true
     commentText?: true
     createdAt?: true
     updatedAt?: true
@@ -22139,8 +22221,7 @@ export namespace Prisma {
     postId?: true
     platform?: true
     commentedOn?: true
-    commenterId?: true
-    commenterName?: true
+    commenter?: true
     commentText?: true
     createdAt?: true
     updatedAt?: true
@@ -22225,8 +22306,7 @@ export namespace Prisma {
     postId: string
     platform: string
     commentedOn: Date
-    commenterId: string | null
-    commenterName: string | null
+    commenter: JsonValue | null
     commentText: string | null
     createdAt: Date
     updatedAt: Date
@@ -22255,8 +22335,7 @@ export namespace Prisma {
     postId?: boolean
     platform?: boolean
     commentedOn?: boolean
-    commenterId?: boolean
-    commenterName?: boolean
+    commenter?: boolean
     commentText?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -22268,8 +22347,7 @@ export namespace Prisma {
     postId?: boolean
     platform?: boolean
     commentedOn?: boolean
-    commenterId?: boolean
-    commenterName?: boolean
+    commenter?: boolean
     commentText?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -22281,8 +22359,7 @@ export namespace Prisma {
     postId?: boolean
     platform?: boolean
     commentedOn?: boolean
-    commenterId?: boolean
-    commenterName?: boolean
+    commenter?: boolean
     commentText?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -22294,14 +22371,13 @@ export namespace Prisma {
     postId?: boolean
     platform?: boolean
     commentedOn?: boolean
-    commenterId?: boolean
-    commenterName?: boolean
+    commenter?: boolean
     commentText?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type PostCommentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "commentId" | "postId" | "platform" | "commentedOn" | "commenterId" | "commenterName" | "commentText" | "createdAt" | "updatedAt", ExtArgs["result"]["postComment"]>
+  export type PostCommentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "commentId" | "postId" | "platform" | "commentedOn" | "commenter" | "commentText" | "createdAt" | "updatedAt", ExtArgs["result"]["postComment"]>
 
   export type $PostCommentPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "PostComment"
@@ -22312,8 +22388,7 @@ export namespace Prisma {
       postId: string
       platform: string
       commentedOn: Date
-      commenterId: string | null
-      commenterName: string | null
+      commenter: Prisma.JsonValue | null
       commentText: string | null
       createdAt: Date
       updatedAt: Date
@@ -22745,8 +22820,7 @@ export namespace Prisma {
     readonly postId: FieldRef<"PostComment", 'String'>
     readonly platform: FieldRef<"PostComment", 'String'>
     readonly commentedOn: FieldRef<"PostComment", 'DateTime'>
-    readonly commenterId: FieldRef<"PostComment", 'String'>
-    readonly commenterName: FieldRef<"PostComment", 'String'>
+    readonly commenter: FieldRef<"PostComment", 'Json'>
     readonly commentText: FieldRef<"PostComment", 'String'>
     readonly createdAt: FieldRef<"PostComment", 'DateTime'>
     readonly updatedAt: FieldRef<"PostComment", 'DateTime'>
@@ -25287,6 +25361,1054 @@ export namespace Prisma {
 
 
   /**
+   * Model InstagramMessageAttachment
+   */
+
+  export type AggregateInstagramMessageAttachment = {
+    _count: InstagramMessageAttachmentCountAggregateOutputType | null
+    _min: InstagramMessageAttachmentMinAggregateOutputType | null
+    _max: InstagramMessageAttachmentMaxAggregateOutputType | null
+  }
+
+  export type InstagramMessageAttachmentMinAggregateOutputType = {
+    id: string | null
+    instagramMessageId: string | null
+    platformAttachmentId: string | null
+    attachmentType: string | null
+    mediaUrl: string | null
+    thumbnailUrl: string | null
+    permalink: string | null
+    createdAt: Date | null
+  }
+
+  export type InstagramMessageAttachmentMaxAggregateOutputType = {
+    id: string | null
+    instagramMessageId: string | null
+    platformAttachmentId: string | null
+    attachmentType: string | null
+    mediaUrl: string | null
+    thumbnailUrl: string | null
+    permalink: string | null
+    createdAt: Date | null
+  }
+
+  export type InstagramMessageAttachmentCountAggregateOutputType = {
+    id: number
+    instagramMessageId: number
+    platformAttachmentId: number
+    attachmentType: number
+    mediaUrl: number
+    thumbnailUrl: number
+    permalink: number
+    metadata: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type InstagramMessageAttachmentMinAggregateInputType = {
+    id?: true
+    instagramMessageId?: true
+    platformAttachmentId?: true
+    attachmentType?: true
+    mediaUrl?: true
+    thumbnailUrl?: true
+    permalink?: true
+    createdAt?: true
+  }
+
+  export type InstagramMessageAttachmentMaxAggregateInputType = {
+    id?: true
+    instagramMessageId?: true
+    platformAttachmentId?: true
+    attachmentType?: true
+    mediaUrl?: true
+    thumbnailUrl?: true
+    permalink?: true
+    createdAt?: true
+  }
+
+  export type InstagramMessageAttachmentCountAggregateInputType = {
+    id?: true
+    instagramMessageId?: true
+    platformAttachmentId?: true
+    attachmentType?: true
+    mediaUrl?: true
+    thumbnailUrl?: true
+    permalink?: true
+    metadata?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type InstagramMessageAttachmentAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which InstagramMessageAttachment to aggregate.
+     */
+    where?: InstagramMessageAttachmentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstagramMessageAttachments to fetch.
+     */
+    orderBy?: InstagramMessageAttachmentOrderByWithRelationInput | InstagramMessageAttachmentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: InstagramMessageAttachmentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstagramMessageAttachments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstagramMessageAttachments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned InstagramMessageAttachments
+    **/
+    _count?: true | InstagramMessageAttachmentCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: InstagramMessageAttachmentMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: InstagramMessageAttachmentMaxAggregateInputType
+  }
+
+  export type GetInstagramMessageAttachmentAggregateType<T extends InstagramMessageAttachmentAggregateArgs> = {
+        [P in keyof T & keyof AggregateInstagramMessageAttachment]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateInstagramMessageAttachment[P]>
+      : GetScalarType<T[P], AggregateInstagramMessageAttachment[P]>
+  }
+
+
+
+
+  export type InstagramMessageAttachmentGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InstagramMessageAttachmentWhereInput
+    orderBy?: InstagramMessageAttachmentOrderByWithAggregationInput | InstagramMessageAttachmentOrderByWithAggregationInput[]
+    by: InstagramMessageAttachmentScalarFieldEnum[] | InstagramMessageAttachmentScalarFieldEnum
+    having?: InstagramMessageAttachmentScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: InstagramMessageAttachmentCountAggregateInputType | true
+    _min?: InstagramMessageAttachmentMinAggregateInputType
+    _max?: InstagramMessageAttachmentMaxAggregateInputType
+  }
+
+  export type InstagramMessageAttachmentGroupByOutputType = {
+    id: string
+    instagramMessageId: string
+    platformAttachmentId: string | null
+    attachmentType: string
+    mediaUrl: string | null
+    thumbnailUrl: string | null
+    permalink: string | null
+    metadata: JsonValue | null
+    createdAt: Date
+    _count: InstagramMessageAttachmentCountAggregateOutputType | null
+    _min: InstagramMessageAttachmentMinAggregateOutputType | null
+    _max: InstagramMessageAttachmentMaxAggregateOutputType | null
+  }
+
+  type GetInstagramMessageAttachmentGroupByPayload<T extends InstagramMessageAttachmentGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<InstagramMessageAttachmentGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof InstagramMessageAttachmentGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], InstagramMessageAttachmentGroupByOutputType[P]>
+            : GetScalarType<T[P], InstagramMessageAttachmentGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type InstagramMessageAttachmentSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    instagramMessageId?: boolean
+    platformAttachmentId?: boolean
+    attachmentType?: boolean
+    mediaUrl?: boolean
+    thumbnailUrl?: boolean
+    permalink?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["instagramMessageAttachment"]>
+
+  export type InstagramMessageAttachmentSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    instagramMessageId?: boolean
+    platformAttachmentId?: boolean
+    attachmentType?: boolean
+    mediaUrl?: boolean
+    thumbnailUrl?: boolean
+    permalink?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["instagramMessageAttachment"]>
+
+  export type InstagramMessageAttachmentSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    instagramMessageId?: boolean
+    platformAttachmentId?: boolean
+    attachmentType?: boolean
+    mediaUrl?: boolean
+    thumbnailUrl?: boolean
+    permalink?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["instagramMessageAttachment"]>
+
+  export type InstagramMessageAttachmentSelectScalar = {
+    id?: boolean
+    instagramMessageId?: boolean
+    platformAttachmentId?: boolean
+    attachmentType?: boolean
+    mediaUrl?: boolean
+    thumbnailUrl?: boolean
+    permalink?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+  }
+
+  export type InstagramMessageAttachmentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "instagramMessageId" | "platformAttachmentId" | "attachmentType" | "mediaUrl" | "thumbnailUrl" | "permalink" | "metadata" | "createdAt", ExtArgs["result"]["instagramMessageAttachment"]>
+
+  export type $InstagramMessageAttachmentPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "InstagramMessageAttachment"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      instagramMessageId: string
+      platformAttachmentId: string | null
+      attachmentType: string
+      mediaUrl: string | null
+      thumbnailUrl: string | null
+      permalink: string | null
+      metadata: Prisma.JsonValue | null
+      createdAt: Date
+    }, ExtArgs["result"]["instagramMessageAttachment"]>
+    composites: {}
+  }
+
+  type InstagramMessageAttachmentGetPayload<S extends boolean | null | undefined | InstagramMessageAttachmentDefaultArgs> = $Result.GetResult<Prisma.$InstagramMessageAttachmentPayload, S>
+
+  type InstagramMessageAttachmentCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<InstagramMessageAttachmentFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: InstagramMessageAttachmentCountAggregateInputType | true
+    }
+
+  export interface InstagramMessageAttachmentDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['InstagramMessageAttachment'], meta: { name: 'InstagramMessageAttachment' } }
+    /**
+     * Find zero or one InstagramMessageAttachment that matches the filter.
+     * @param {InstagramMessageAttachmentFindUniqueArgs} args - Arguments to find a InstagramMessageAttachment
+     * @example
+     * // Get one InstagramMessageAttachment
+     * const instagramMessageAttachment = await prisma.instagramMessageAttachment.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends InstagramMessageAttachmentFindUniqueArgs>(args: SelectSubset<T, InstagramMessageAttachmentFindUniqueArgs<ExtArgs>>): Prisma__InstagramMessageAttachmentClient<$Result.GetResult<Prisma.$InstagramMessageAttachmentPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one InstagramMessageAttachment that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {InstagramMessageAttachmentFindUniqueOrThrowArgs} args - Arguments to find a InstagramMessageAttachment
+     * @example
+     * // Get one InstagramMessageAttachment
+     * const instagramMessageAttachment = await prisma.instagramMessageAttachment.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends InstagramMessageAttachmentFindUniqueOrThrowArgs>(args: SelectSubset<T, InstagramMessageAttachmentFindUniqueOrThrowArgs<ExtArgs>>): Prisma__InstagramMessageAttachmentClient<$Result.GetResult<Prisma.$InstagramMessageAttachmentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first InstagramMessageAttachment that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstagramMessageAttachmentFindFirstArgs} args - Arguments to find a InstagramMessageAttachment
+     * @example
+     * // Get one InstagramMessageAttachment
+     * const instagramMessageAttachment = await prisma.instagramMessageAttachment.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends InstagramMessageAttachmentFindFirstArgs>(args?: SelectSubset<T, InstagramMessageAttachmentFindFirstArgs<ExtArgs>>): Prisma__InstagramMessageAttachmentClient<$Result.GetResult<Prisma.$InstagramMessageAttachmentPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first InstagramMessageAttachment that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstagramMessageAttachmentFindFirstOrThrowArgs} args - Arguments to find a InstagramMessageAttachment
+     * @example
+     * // Get one InstagramMessageAttachment
+     * const instagramMessageAttachment = await prisma.instagramMessageAttachment.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends InstagramMessageAttachmentFindFirstOrThrowArgs>(args?: SelectSubset<T, InstagramMessageAttachmentFindFirstOrThrowArgs<ExtArgs>>): Prisma__InstagramMessageAttachmentClient<$Result.GetResult<Prisma.$InstagramMessageAttachmentPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more InstagramMessageAttachments that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstagramMessageAttachmentFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all InstagramMessageAttachments
+     * const instagramMessageAttachments = await prisma.instagramMessageAttachment.findMany()
+     * 
+     * // Get first 10 InstagramMessageAttachments
+     * const instagramMessageAttachments = await prisma.instagramMessageAttachment.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const instagramMessageAttachmentWithIdOnly = await prisma.instagramMessageAttachment.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends InstagramMessageAttachmentFindManyArgs>(args?: SelectSubset<T, InstagramMessageAttachmentFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstagramMessageAttachmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a InstagramMessageAttachment.
+     * @param {InstagramMessageAttachmentCreateArgs} args - Arguments to create a InstagramMessageAttachment.
+     * @example
+     * // Create one InstagramMessageAttachment
+     * const InstagramMessageAttachment = await prisma.instagramMessageAttachment.create({
+     *   data: {
+     *     // ... data to create a InstagramMessageAttachment
+     *   }
+     * })
+     * 
+     */
+    create<T extends InstagramMessageAttachmentCreateArgs>(args: SelectSubset<T, InstagramMessageAttachmentCreateArgs<ExtArgs>>): Prisma__InstagramMessageAttachmentClient<$Result.GetResult<Prisma.$InstagramMessageAttachmentPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many InstagramMessageAttachments.
+     * @param {InstagramMessageAttachmentCreateManyArgs} args - Arguments to create many InstagramMessageAttachments.
+     * @example
+     * // Create many InstagramMessageAttachments
+     * const instagramMessageAttachment = await prisma.instagramMessageAttachment.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends InstagramMessageAttachmentCreateManyArgs>(args?: SelectSubset<T, InstagramMessageAttachmentCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many InstagramMessageAttachments and returns the data saved in the database.
+     * @param {InstagramMessageAttachmentCreateManyAndReturnArgs} args - Arguments to create many InstagramMessageAttachments.
+     * @example
+     * // Create many InstagramMessageAttachments
+     * const instagramMessageAttachment = await prisma.instagramMessageAttachment.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many InstagramMessageAttachments and only return the `id`
+     * const instagramMessageAttachmentWithIdOnly = await prisma.instagramMessageAttachment.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends InstagramMessageAttachmentCreateManyAndReturnArgs>(args?: SelectSubset<T, InstagramMessageAttachmentCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstagramMessageAttachmentPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a InstagramMessageAttachment.
+     * @param {InstagramMessageAttachmentDeleteArgs} args - Arguments to delete one InstagramMessageAttachment.
+     * @example
+     * // Delete one InstagramMessageAttachment
+     * const InstagramMessageAttachment = await prisma.instagramMessageAttachment.delete({
+     *   where: {
+     *     // ... filter to delete one InstagramMessageAttachment
+     *   }
+     * })
+     * 
+     */
+    delete<T extends InstagramMessageAttachmentDeleteArgs>(args: SelectSubset<T, InstagramMessageAttachmentDeleteArgs<ExtArgs>>): Prisma__InstagramMessageAttachmentClient<$Result.GetResult<Prisma.$InstagramMessageAttachmentPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one InstagramMessageAttachment.
+     * @param {InstagramMessageAttachmentUpdateArgs} args - Arguments to update one InstagramMessageAttachment.
+     * @example
+     * // Update one InstagramMessageAttachment
+     * const instagramMessageAttachment = await prisma.instagramMessageAttachment.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends InstagramMessageAttachmentUpdateArgs>(args: SelectSubset<T, InstagramMessageAttachmentUpdateArgs<ExtArgs>>): Prisma__InstagramMessageAttachmentClient<$Result.GetResult<Prisma.$InstagramMessageAttachmentPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more InstagramMessageAttachments.
+     * @param {InstagramMessageAttachmentDeleteManyArgs} args - Arguments to filter InstagramMessageAttachments to delete.
+     * @example
+     * // Delete a few InstagramMessageAttachments
+     * const { count } = await prisma.instagramMessageAttachment.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends InstagramMessageAttachmentDeleteManyArgs>(args?: SelectSubset<T, InstagramMessageAttachmentDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more InstagramMessageAttachments.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstagramMessageAttachmentUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many InstagramMessageAttachments
+     * const instagramMessageAttachment = await prisma.instagramMessageAttachment.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends InstagramMessageAttachmentUpdateManyArgs>(args: SelectSubset<T, InstagramMessageAttachmentUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more InstagramMessageAttachments and returns the data updated in the database.
+     * @param {InstagramMessageAttachmentUpdateManyAndReturnArgs} args - Arguments to update many InstagramMessageAttachments.
+     * @example
+     * // Update many InstagramMessageAttachments
+     * const instagramMessageAttachment = await prisma.instagramMessageAttachment.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more InstagramMessageAttachments and only return the `id`
+     * const instagramMessageAttachmentWithIdOnly = await prisma.instagramMessageAttachment.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends InstagramMessageAttachmentUpdateManyAndReturnArgs>(args: SelectSubset<T, InstagramMessageAttachmentUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InstagramMessageAttachmentPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one InstagramMessageAttachment.
+     * @param {InstagramMessageAttachmentUpsertArgs} args - Arguments to update or create a InstagramMessageAttachment.
+     * @example
+     * // Update or create a InstagramMessageAttachment
+     * const instagramMessageAttachment = await prisma.instagramMessageAttachment.upsert({
+     *   create: {
+     *     // ... data to create a InstagramMessageAttachment
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the InstagramMessageAttachment we want to update
+     *   }
+     * })
+     */
+    upsert<T extends InstagramMessageAttachmentUpsertArgs>(args: SelectSubset<T, InstagramMessageAttachmentUpsertArgs<ExtArgs>>): Prisma__InstagramMessageAttachmentClient<$Result.GetResult<Prisma.$InstagramMessageAttachmentPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of InstagramMessageAttachments.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstagramMessageAttachmentCountArgs} args - Arguments to filter InstagramMessageAttachments to count.
+     * @example
+     * // Count the number of InstagramMessageAttachments
+     * const count = await prisma.instagramMessageAttachment.count({
+     *   where: {
+     *     // ... the filter for the InstagramMessageAttachments we want to count
+     *   }
+     * })
+    **/
+    count<T extends InstagramMessageAttachmentCountArgs>(
+      args?: Subset<T, InstagramMessageAttachmentCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], InstagramMessageAttachmentCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a InstagramMessageAttachment.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstagramMessageAttachmentAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends InstagramMessageAttachmentAggregateArgs>(args: Subset<T, InstagramMessageAttachmentAggregateArgs>): Prisma.PrismaPromise<GetInstagramMessageAttachmentAggregateType<T>>
+
+    /**
+     * Group by InstagramMessageAttachment.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {InstagramMessageAttachmentGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends InstagramMessageAttachmentGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: InstagramMessageAttachmentGroupByArgs['orderBy'] }
+        : { orderBy?: InstagramMessageAttachmentGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, InstagramMessageAttachmentGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetInstagramMessageAttachmentGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the InstagramMessageAttachment model
+   */
+  readonly fields: InstagramMessageAttachmentFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for InstagramMessageAttachment.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__InstagramMessageAttachmentClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the InstagramMessageAttachment model
+   */
+  interface InstagramMessageAttachmentFieldRefs {
+    readonly id: FieldRef<"InstagramMessageAttachment", 'String'>
+    readonly instagramMessageId: FieldRef<"InstagramMessageAttachment", 'String'>
+    readonly platformAttachmentId: FieldRef<"InstagramMessageAttachment", 'String'>
+    readonly attachmentType: FieldRef<"InstagramMessageAttachment", 'String'>
+    readonly mediaUrl: FieldRef<"InstagramMessageAttachment", 'String'>
+    readonly thumbnailUrl: FieldRef<"InstagramMessageAttachment", 'String'>
+    readonly permalink: FieldRef<"InstagramMessageAttachment", 'String'>
+    readonly metadata: FieldRef<"InstagramMessageAttachment", 'Json'>
+    readonly createdAt: FieldRef<"InstagramMessageAttachment", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * InstagramMessageAttachment findUnique
+   */
+  export type InstagramMessageAttachmentFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstagramMessageAttachment
+     */
+    select?: InstagramMessageAttachmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstagramMessageAttachment
+     */
+    omit?: InstagramMessageAttachmentOmit<ExtArgs> | null
+    /**
+     * Filter, which InstagramMessageAttachment to fetch.
+     */
+    where: InstagramMessageAttachmentWhereUniqueInput
+  }
+
+  /**
+   * InstagramMessageAttachment findUniqueOrThrow
+   */
+  export type InstagramMessageAttachmentFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstagramMessageAttachment
+     */
+    select?: InstagramMessageAttachmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstagramMessageAttachment
+     */
+    omit?: InstagramMessageAttachmentOmit<ExtArgs> | null
+    /**
+     * Filter, which InstagramMessageAttachment to fetch.
+     */
+    where: InstagramMessageAttachmentWhereUniqueInput
+  }
+
+  /**
+   * InstagramMessageAttachment findFirst
+   */
+  export type InstagramMessageAttachmentFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstagramMessageAttachment
+     */
+    select?: InstagramMessageAttachmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstagramMessageAttachment
+     */
+    omit?: InstagramMessageAttachmentOmit<ExtArgs> | null
+    /**
+     * Filter, which InstagramMessageAttachment to fetch.
+     */
+    where?: InstagramMessageAttachmentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstagramMessageAttachments to fetch.
+     */
+    orderBy?: InstagramMessageAttachmentOrderByWithRelationInput | InstagramMessageAttachmentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for InstagramMessageAttachments.
+     */
+    cursor?: InstagramMessageAttachmentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstagramMessageAttachments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstagramMessageAttachments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InstagramMessageAttachments.
+     */
+    distinct?: InstagramMessageAttachmentScalarFieldEnum | InstagramMessageAttachmentScalarFieldEnum[]
+  }
+
+  /**
+   * InstagramMessageAttachment findFirstOrThrow
+   */
+  export type InstagramMessageAttachmentFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstagramMessageAttachment
+     */
+    select?: InstagramMessageAttachmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstagramMessageAttachment
+     */
+    omit?: InstagramMessageAttachmentOmit<ExtArgs> | null
+    /**
+     * Filter, which InstagramMessageAttachment to fetch.
+     */
+    where?: InstagramMessageAttachmentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstagramMessageAttachments to fetch.
+     */
+    orderBy?: InstagramMessageAttachmentOrderByWithRelationInput | InstagramMessageAttachmentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for InstagramMessageAttachments.
+     */
+    cursor?: InstagramMessageAttachmentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstagramMessageAttachments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstagramMessageAttachments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InstagramMessageAttachments.
+     */
+    distinct?: InstagramMessageAttachmentScalarFieldEnum | InstagramMessageAttachmentScalarFieldEnum[]
+  }
+
+  /**
+   * InstagramMessageAttachment findMany
+   */
+  export type InstagramMessageAttachmentFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstagramMessageAttachment
+     */
+    select?: InstagramMessageAttachmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstagramMessageAttachment
+     */
+    omit?: InstagramMessageAttachmentOmit<ExtArgs> | null
+    /**
+     * Filter, which InstagramMessageAttachments to fetch.
+     */
+    where?: InstagramMessageAttachmentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of InstagramMessageAttachments to fetch.
+     */
+    orderBy?: InstagramMessageAttachmentOrderByWithRelationInput | InstagramMessageAttachmentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing InstagramMessageAttachments.
+     */
+    cursor?: InstagramMessageAttachmentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` InstagramMessageAttachments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` InstagramMessageAttachments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of InstagramMessageAttachments.
+     */
+    distinct?: InstagramMessageAttachmentScalarFieldEnum | InstagramMessageAttachmentScalarFieldEnum[]
+  }
+
+  /**
+   * InstagramMessageAttachment create
+   */
+  export type InstagramMessageAttachmentCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstagramMessageAttachment
+     */
+    select?: InstagramMessageAttachmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstagramMessageAttachment
+     */
+    omit?: InstagramMessageAttachmentOmit<ExtArgs> | null
+    /**
+     * The data needed to create a InstagramMessageAttachment.
+     */
+    data: XOR<InstagramMessageAttachmentCreateInput, InstagramMessageAttachmentUncheckedCreateInput>
+  }
+
+  /**
+   * InstagramMessageAttachment createMany
+   */
+  export type InstagramMessageAttachmentCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many InstagramMessageAttachments.
+     */
+    data: InstagramMessageAttachmentCreateManyInput | InstagramMessageAttachmentCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * InstagramMessageAttachment createManyAndReturn
+   */
+  export type InstagramMessageAttachmentCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstagramMessageAttachment
+     */
+    select?: InstagramMessageAttachmentSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstagramMessageAttachment
+     */
+    omit?: InstagramMessageAttachmentOmit<ExtArgs> | null
+    /**
+     * The data used to create many InstagramMessageAttachments.
+     */
+    data: InstagramMessageAttachmentCreateManyInput | InstagramMessageAttachmentCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * InstagramMessageAttachment update
+   */
+  export type InstagramMessageAttachmentUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstagramMessageAttachment
+     */
+    select?: InstagramMessageAttachmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstagramMessageAttachment
+     */
+    omit?: InstagramMessageAttachmentOmit<ExtArgs> | null
+    /**
+     * The data needed to update a InstagramMessageAttachment.
+     */
+    data: XOR<InstagramMessageAttachmentUpdateInput, InstagramMessageAttachmentUncheckedUpdateInput>
+    /**
+     * Choose, which InstagramMessageAttachment to update.
+     */
+    where: InstagramMessageAttachmentWhereUniqueInput
+  }
+
+  /**
+   * InstagramMessageAttachment updateMany
+   */
+  export type InstagramMessageAttachmentUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update InstagramMessageAttachments.
+     */
+    data: XOR<InstagramMessageAttachmentUpdateManyMutationInput, InstagramMessageAttachmentUncheckedUpdateManyInput>
+    /**
+     * Filter which InstagramMessageAttachments to update
+     */
+    where?: InstagramMessageAttachmentWhereInput
+    /**
+     * Limit how many InstagramMessageAttachments to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * InstagramMessageAttachment updateManyAndReturn
+   */
+  export type InstagramMessageAttachmentUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstagramMessageAttachment
+     */
+    select?: InstagramMessageAttachmentSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstagramMessageAttachment
+     */
+    omit?: InstagramMessageAttachmentOmit<ExtArgs> | null
+    /**
+     * The data used to update InstagramMessageAttachments.
+     */
+    data: XOR<InstagramMessageAttachmentUpdateManyMutationInput, InstagramMessageAttachmentUncheckedUpdateManyInput>
+    /**
+     * Filter which InstagramMessageAttachments to update
+     */
+    where?: InstagramMessageAttachmentWhereInput
+    /**
+     * Limit how many InstagramMessageAttachments to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * InstagramMessageAttachment upsert
+   */
+  export type InstagramMessageAttachmentUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstagramMessageAttachment
+     */
+    select?: InstagramMessageAttachmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstagramMessageAttachment
+     */
+    omit?: InstagramMessageAttachmentOmit<ExtArgs> | null
+    /**
+     * The filter to search for the InstagramMessageAttachment to update in case it exists.
+     */
+    where: InstagramMessageAttachmentWhereUniqueInput
+    /**
+     * In case the InstagramMessageAttachment found by the `where` argument doesn't exist, create a new InstagramMessageAttachment with this data.
+     */
+    create: XOR<InstagramMessageAttachmentCreateInput, InstagramMessageAttachmentUncheckedCreateInput>
+    /**
+     * In case the InstagramMessageAttachment was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<InstagramMessageAttachmentUpdateInput, InstagramMessageAttachmentUncheckedUpdateInput>
+  }
+
+  /**
+   * InstagramMessageAttachment delete
+   */
+  export type InstagramMessageAttachmentDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstagramMessageAttachment
+     */
+    select?: InstagramMessageAttachmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstagramMessageAttachment
+     */
+    omit?: InstagramMessageAttachmentOmit<ExtArgs> | null
+    /**
+     * Filter which InstagramMessageAttachment to delete.
+     */
+    where: InstagramMessageAttachmentWhereUniqueInput
+  }
+
+  /**
+   * InstagramMessageAttachment deleteMany
+   */
+  export type InstagramMessageAttachmentDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which InstagramMessageAttachments to delete
+     */
+    where?: InstagramMessageAttachmentWhereInput
+    /**
+     * Limit how many InstagramMessageAttachments to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * InstagramMessageAttachment without action
+   */
+  export type InstagramMessageAttachmentDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the InstagramMessageAttachment
+     */
+    select?: InstagramMessageAttachmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the InstagramMessageAttachment
+     */
+    omit?: InstagramMessageAttachmentOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Model Account
    */
 
@@ -26681,8 +27803,7 @@ export namespace Prisma {
     postId: 'postId',
     platform: 'platform',
     commentedOn: 'commentedOn',
-    commenterId: 'commenterId',
-    commenterName: 'commenterName',
+    commenter: 'commenter',
     commentText: 'commentText',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -26722,6 +27843,21 @@ export namespace Prisma {
   };
 
   export type InstagramMessageScalarFieldEnum = (typeof InstagramMessageScalarFieldEnum)[keyof typeof InstagramMessageScalarFieldEnum]
+
+
+  export const InstagramMessageAttachmentScalarFieldEnum: {
+    id: 'id',
+    instagramMessageId: 'instagramMessageId',
+    platformAttachmentId: 'platformAttachmentId',
+    attachmentType: 'attachmentType',
+    mediaUrl: 'mediaUrl',
+    thumbnailUrl: 'thumbnailUrl',
+    permalink: 'permalink',
+    metadata: 'metadata',
+    createdAt: 'createdAt'
+  };
+
+  export type InstagramMessageAttachmentScalarFieldEnum = (typeof InstagramMessageAttachmentScalarFieldEnum)[keyof typeof InstagramMessageAttachmentScalarFieldEnum]
 
 
   export const AccountScalarFieldEnum: {
@@ -28109,8 +29245,7 @@ export namespace Prisma {
     postId?: StringFilter<"PostComment"> | string
     platform?: StringFilter<"PostComment"> | string
     commentedOn?: DateTimeFilter<"PostComment"> | Date | string
-    commenterId?: StringNullableFilter<"PostComment"> | string | null
-    commenterName?: StringNullableFilter<"PostComment"> | string | null
+    commenter?: JsonNullableFilter<"PostComment">
     commentText?: StringNullableFilter<"PostComment"> | string | null
     createdAt?: DateTimeFilter<"PostComment"> | Date | string
     updatedAt?: DateTimeFilter<"PostComment"> | Date | string
@@ -28122,8 +29257,7 @@ export namespace Prisma {
     postId?: SortOrder
     platform?: SortOrder
     commentedOn?: SortOrder
-    commenterId?: SortOrderInput | SortOrder
-    commenterName?: SortOrderInput | SortOrder
+    commenter?: SortOrderInput | SortOrder
     commentText?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -28138,8 +29272,7 @@ export namespace Prisma {
     postId?: StringFilter<"PostComment"> | string
     platform?: StringFilter<"PostComment"> | string
     commentedOn?: DateTimeFilter<"PostComment"> | Date | string
-    commenterId?: StringNullableFilter<"PostComment"> | string | null
-    commenterName?: StringNullableFilter<"PostComment"> | string | null
+    commenter?: JsonNullableFilter<"PostComment">
     commentText?: StringNullableFilter<"PostComment"> | string | null
     createdAt?: DateTimeFilter<"PostComment"> | Date | string
     updatedAt?: DateTimeFilter<"PostComment"> | Date | string
@@ -28151,8 +29284,7 @@ export namespace Prisma {
     postId?: SortOrder
     platform?: SortOrder
     commentedOn?: SortOrder
-    commenterId?: SortOrderInput | SortOrder
-    commenterName?: SortOrderInput | SortOrder
+    commenter?: SortOrderInput | SortOrder
     commentText?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -28170,8 +29302,7 @@ export namespace Prisma {
     postId?: StringWithAggregatesFilter<"PostComment"> | string
     platform?: StringWithAggregatesFilter<"PostComment"> | string
     commentedOn?: DateTimeWithAggregatesFilter<"PostComment"> | Date | string
-    commenterId?: StringNullableWithAggregatesFilter<"PostComment"> | string | null
-    commenterName?: StringNullableWithAggregatesFilter<"PostComment"> | string | null
+    commenter?: JsonNullableWithAggregatesFilter<"PostComment">
     commentText?: StringNullableWithAggregatesFilter<"PostComment"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"PostComment"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"PostComment"> | Date | string
@@ -28336,6 +29467,78 @@ export namespace Prisma {
     payload?: JsonNullableWithAggregatesFilter<"InstagramMessage">
     createdAt?: DateTimeWithAggregatesFilter<"InstagramMessage"> | Date | string
     reactionSummary?: JsonNullableWithAggregatesFilter<"InstagramMessage">
+  }
+
+  export type InstagramMessageAttachmentWhereInput = {
+    AND?: InstagramMessageAttachmentWhereInput | InstagramMessageAttachmentWhereInput[]
+    OR?: InstagramMessageAttachmentWhereInput[]
+    NOT?: InstagramMessageAttachmentWhereInput | InstagramMessageAttachmentWhereInput[]
+    id?: StringFilter<"InstagramMessageAttachment"> | string
+    instagramMessageId?: StringFilter<"InstagramMessageAttachment"> | string
+    platformAttachmentId?: StringNullableFilter<"InstagramMessageAttachment"> | string | null
+    attachmentType?: StringFilter<"InstagramMessageAttachment"> | string
+    mediaUrl?: StringNullableFilter<"InstagramMessageAttachment"> | string | null
+    thumbnailUrl?: StringNullableFilter<"InstagramMessageAttachment"> | string | null
+    permalink?: StringNullableFilter<"InstagramMessageAttachment"> | string | null
+    metadata?: JsonNullableFilter<"InstagramMessageAttachment">
+    createdAt?: DateTimeFilter<"InstagramMessageAttachment"> | Date | string
+  }
+
+  export type InstagramMessageAttachmentOrderByWithRelationInput = {
+    id?: SortOrder
+    instagramMessageId?: SortOrder
+    platformAttachmentId?: SortOrderInput | SortOrder
+    attachmentType?: SortOrder
+    mediaUrl?: SortOrderInput | SortOrder
+    thumbnailUrl?: SortOrderInput | SortOrder
+    permalink?: SortOrderInput | SortOrder
+    metadata?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type InstagramMessageAttachmentWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: InstagramMessageAttachmentWhereInput | InstagramMessageAttachmentWhereInput[]
+    OR?: InstagramMessageAttachmentWhereInput[]
+    NOT?: InstagramMessageAttachmentWhereInput | InstagramMessageAttachmentWhereInput[]
+    instagramMessageId?: StringFilter<"InstagramMessageAttachment"> | string
+    platformAttachmentId?: StringNullableFilter<"InstagramMessageAttachment"> | string | null
+    attachmentType?: StringFilter<"InstagramMessageAttachment"> | string
+    mediaUrl?: StringNullableFilter<"InstagramMessageAttachment"> | string | null
+    thumbnailUrl?: StringNullableFilter<"InstagramMessageAttachment"> | string | null
+    permalink?: StringNullableFilter<"InstagramMessageAttachment"> | string | null
+    metadata?: JsonNullableFilter<"InstagramMessageAttachment">
+    createdAt?: DateTimeFilter<"InstagramMessageAttachment"> | Date | string
+  }, "id">
+
+  export type InstagramMessageAttachmentOrderByWithAggregationInput = {
+    id?: SortOrder
+    instagramMessageId?: SortOrder
+    platformAttachmentId?: SortOrderInput | SortOrder
+    attachmentType?: SortOrder
+    mediaUrl?: SortOrderInput | SortOrder
+    thumbnailUrl?: SortOrderInput | SortOrder
+    permalink?: SortOrderInput | SortOrder
+    metadata?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: InstagramMessageAttachmentCountOrderByAggregateInput
+    _max?: InstagramMessageAttachmentMaxOrderByAggregateInput
+    _min?: InstagramMessageAttachmentMinOrderByAggregateInput
+  }
+
+  export type InstagramMessageAttachmentScalarWhereWithAggregatesInput = {
+    AND?: InstagramMessageAttachmentScalarWhereWithAggregatesInput | InstagramMessageAttachmentScalarWhereWithAggregatesInput[]
+    OR?: InstagramMessageAttachmentScalarWhereWithAggregatesInput[]
+    NOT?: InstagramMessageAttachmentScalarWhereWithAggregatesInput | InstagramMessageAttachmentScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"InstagramMessageAttachment"> | string
+    instagramMessageId?: StringWithAggregatesFilter<"InstagramMessageAttachment"> | string
+    platformAttachmentId?: StringNullableWithAggregatesFilter<"InstagramMessageAttachment"> | string | null
+    attachmentType?: StringWithAggregatesFilter<"InstagramMessageAttachment"> | string
+    mediaUrl?: StringNullableWithAggregatesFilter<"InstagramMessageAttachment"> | string | null
+    thumbnailUrl?: StringNullableWithAggregatesFilter<"InstagramMessageAttachment"> | string | null
+    permalink?: StringNullableWithAggregatesFilter<"InstagramMessageAttachment"> | string | null
+    metadata?: JsonNullableWithAggregatesFilter<"InstagramMessageAttachment">
+    createdAt?: DateTimeWithAggregatesFilter<"InstagramMessageAttachment"> | Date | string
   }
 
   export type AccountWhereInput = {
@@ -29813,8 +31016,7 @@ export namespace Prisma {
     postId: string
     platform: string
     commentedOn: Date | string
-    commenterId?: string | null
-    commenterName?: string | null
+    commenter?: NullableJsonNullValueInput | InputJsonValue
     commentText?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -29826,8 +31028,7 @@ export namespace Prisma {
     postId: string
     platform: string
     commentedOn: Date | string
-    commenterId?: string | null
-    commenterName?: string | null
+    commenter?: NullableJsonNullValueInput | InputJsonValue
     commentText?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -29839,8 +31040,7 @@ export namespace Prisma {
     postId?: StringFieldUpdateOperationsInput | string
     platform?: StringFieldUpdateOperationsInput | string
     commentedOn?: DateTimeFieldUpdateOperationsInput | Date | string
-    commenterId?: NullableStringFieldUpdateOperationsInput | string | null
-    commenterName?: NullableStringFieldUpdateOperationsInput | string | null
+    commenter?: NullableJsonNullValueInput | InputJsonValue
     commentText?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -29852,8 +31052,7 @@ export namespace Prisma {
     postId?: StringFieldUpdateOperationsInput | string
     platform?: StringFieldUpdateOperationsInput | string
     commentedOn?: DateTimeFieldUpdateOperationsInput | Date | string
-    commenterId?: NullableStringFieldUpdateOperationsInput | string | null
-    commenterName?: NullableStringFieldUpdateOperationsInput | string | null
+    commenter?: NullableJsonNullValueInput | InputJsonValue
     commentText?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -29865,8 +31064,7 @@ export namespace Prisma {
     postId: string
     platform: string
     commentedOn: Date | string
-    commenterId?: string | null
-    commenterName?: string | null
+    commenter?: NullableJsonNullValueInput | InputJsonValue
     commentText?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -29878,8 +31076,7 @@ export namespace Prisma {
     postId?: StringFieldUpdateOperationsInput | string
     platform?: StringFieldUpdateOperationsInput | string
     commentedOn?: DateTimeFieldUpdateOperationsInput | Date | string
-    commenterId?: NullableStringFieldUpdateOperationsInput | string | null
-    commenterName?: NullableStringFieldUpdateOperationsInput | string | null
+    commenter?: NullableJsonNullValueInput | InputJsonValue
     commentText?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -29891,8 +31088,7 @@ export namespace Prisma {
     postId?: StringFieldUpdateOperationsInput | string
     platform?: StringFieldUpdateOperationsInput | string
     commentedOn?: DateTimeFieldUpdateOperationsInput | Date | string
-    commenterId?: NullableStringFieldUpdateOperationsInput | string | null
-    commenterName?: NullableStringFieldUpdateOperationsInput | string | null
+    commenter?: NullableJsonNullValueInput | InputJsonValue
     commentText?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -30085,6 +31281,90 @@ export namespace Prisma {
     payload?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     reactionSummary?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type InstagramMessageAttachmentCreateInput = {
+    id?: string
+    instagramMessageId: string
+    platformAttachmentId?: string | null
+    attachmentType: string
+    mediaUrl?: string | null
+    thumbnailUrl?: string | null
+    permalink?: string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type InstagramMessageAttachmentUncheckedCreateInput = {
+    id?: string
+    instagramMessageId: string
+    platformAttachmentId?: string | null
+    attachmentType: string
+    mediaUrl?: string | null
+    thumbnailUrl?: string | null
+    permalink?: string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type InstagramMessageAttachmentUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    instagramMessageId?: StringFieldUpdateOperationsInput | string
+    platformAttachmentId?: NullableStringFieldUpdateOperationsInput | string | null
+    attachmentType?: StringFieldUpdateOperationsInput | string
+    mediaUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    thumbnailUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    permalink?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstagramMessageAttachmentUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    instagramMessageId?: StringFieldUpdateOperationsInput | string
+    platformAttachmentId?: NullableStringFieldUpdateOperationsInput | string | null
+    attachmentType?: StringFieldUpdateOperationsInput | string
+    mediaUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    thumbnailUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    permalink?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstagramMessageAttachmentCreateManyInput = {
+    id?: string
+    instagramMessageId: string
+    platformAttachmentId?: string | null
+    attachmentType: string
+    mediaUrl?: string | null
+    thumbnailUrl?: string | null
+    permalink?: string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type InstagramMessageAttachmentUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    instagramMessageId?: StringFieldUpdateOperationsInput | string
+    platformAttachmentId?: NullableStringFieldUpdateOperationsInput | string | null
+    attachmentType?: StringFieldUpdateOperationsInput | string
+    mediaUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    thumbnailUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    permalink?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type InstagramMessageAttachmentUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    instagramMessageId?: StringFieldUpdateOperationsInput | string
+    platformAttachmentId?: NullableStringFieldUpdateOperationsInput | string | null
+    attachmentType?: StringFieldUpdateOperationsInput | string
+    mediaUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    thumbnailUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    permalink?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type AccountCreateInput = {
@@ -31077,8 +32357,7 @@ export namespace Prisma {
     postId?: SortOrder
     platform?: SortOrder
     commentedOn?: SortOrder
-    commenterId?: SortOrder
-    commenterName?: SortOrder
+    commenter?: SortOrder
     commentText?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -31090,8 +32369,6 @@ export namespace Prisma {
     postId?: SortOrder
     platform?: SortOrder
     commentedOn?: SortOrder
-    commenterId?: SortOrder
-    commenterName?: SortOrder
     commentText?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -31103,8 +32380,6 @@ export namespace Prisma {
     postId?: SortOrder
     platform?: SortOrder
     commentedOn?: SortOrder
-    commenterId?: SortOrder
-    commenterName?: SortOrder
     commentText?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -31191,6 +32466,40 @@ export namespace Prisma {
 
   export type InstagramMessageSumOrderByAggregateInput = {
     numEdit?: SortOrder
+  }
+
+  export type InstagramMessageAttachmentCountOrderByAggregateInput = {
+    id?: SortOrder
+    instagramMessageId?: SortOrder
+    platformAttachmentId?: SortOrder
+    attachmentType?: SortOrder
+    mediaUrl?: SortOrder
+    thumbnailUrl?: SortOrder
+    permalink?: SortOrder
+    metadata?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type InstagramMessageAttachmentMaxOrderByAggregateInput = {
+    id?: SortOrder
+    instagramMessageId?: SortOrder
+    platformAttachmentId?: SortOrder
+    attachmentType?: SortOrder
+    mediaUrl?: SortOrder
+    thumbnailUrl?: SortOrder
+    permalink?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type InstagramMessageAttachmentMinOrderByAggregateInput = {
+    id?: SortOrder
+    instagramMessageId?: SortOrder
+    platformAttachmentId?: SortOrder
+    attachmentType?: SortOrder
+    mediaUrl?: SortOrder
+    thumbnailUrl?: SortOrder
+    permalink?: SortOrder
+    createdAt?: SortOrder
   }
 
   export type AccountCountOrderByAggregateInput = {
