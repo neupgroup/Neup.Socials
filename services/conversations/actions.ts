@@ -1,6 +1,6 @@
 'use server';
 
-import { getConversation, listConversations } from '@/services/conversations';
+import { countConversations, getConversation, listConversations } from '@/services/conversations';
 import { listMessagesByConversationId } from '@/services/messages';
 import { listAccounts } from '@/services/accounts';
 import { decrypt } from '#/core/helpers/crypto';
@@ -13,11 +13,13 @@ const toIso = (value?: Date | null) => (value ? value.toISOString() : null);
 const serializeConversation = (conversation: Awaited<ReturnType<typeof getConversation>>) => conversation ? { ...conversation, lastMessageAt: toIso(conversation.lastMessageAt), createdAt: toIso(conversation.createdAt) } : null;
 const serializeMessage = (message: Awaited<ReturnType<typeof listMessagesByConversationId>>[number]) => message ? { ...message, timestamp: toIso(message.timestamp) } : null;
 
-export async function listConversationsAction({ skip = 0, take = 10 }: { skip?: number; take?: number } = {}) {
-  const conversations = await listConversations({ skip, take });
+export async function listConversationsAction({ skip = 0, take = 10, platform }: { skip?: number; take?: number; platform?: string } = {}) {
+  const conversations = await listConversations({ skip, take, platform });
+  const total = await countConversations(platform);
   return {
     items: conversations.map((conversation) => serializeConversation(conversation)!),
     hasMore: conversations.length === take,
+    total,
   };
 }
 export async function getConversationAction(id: string) { return serializeConversation(await getConversation(id)); }

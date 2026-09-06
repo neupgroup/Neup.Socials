@@ -2,11 +2,17 @@
 
 import { prisma } from '#/core/database/prisma';
 
-export const listConversations = async ({ skip = 0, take = 10 }: { skip?: number; take?: number } = {}) =>
+export const listConversations = async ({ skip = 0, take = 10, platform }: { skip?: number; take?: number; platform?: string } = {}) =>
   prisma.conversation.findMany({
+    where: platform ? { platform: { equals: platform, mode: 'insensitive' } } : undefined,
     orderBy: [{ lastMessageAt: 'desc' }, { id: 'desc' }],
     skip,
     take,
+  });
+
+export const countConversations = async (platform?: string) =>
+  prisma.conversation.count({
+    where: platform ? { platform: { equals: platform, mode: 'insensitive' } } : undefined,
   });
 
 export const getConversation = async (id: string) =>

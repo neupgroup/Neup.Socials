@@ -66,10 +66,52 @@ function ConversationSkeleton() {
         <div className="flex-1 overflow-hidden bg-muted/20 p-6">
             <MessageSkeletons />
         </div>
-        <div className="shrink-0 border-t bg-background p-4">
-            <div className="h-10 w-full animate-pulse rounded-md bg-muted" />
-        </div>
+        <ConversationComposer disabled placeholder="Loading conversation..." />
     </div>;
+}
+
+function ConversationComposer({
+    reply = '',
+    onReplyChange,
+    onSubmit,
+    sending = false,
+    replyingTo,
+    onCancelReply,
+    disabled = false,
+    placeholder = 'Type your message...',
+}: {
+    reply?: string;
+    onReplyChange?: (value: string) => void;
+    onSubmit?: () => void;
+    sending?: boolean;
+    replyingTo?: Message | null;
+    onCancelReply?: () => void;
+    disabled?: boolean;
+    placeholder?: string;
+}) {
+    return (
+        <div className="z-20 shrink-0 border-t bg-background p-4">
+            {replyingTo ? <div className="mb-2 flex items-center justify-between rounded-md border-l-2 border-primary bg-muted px-3 py-2 text-xs"><span className="truncate">Replying to: {replyingTo.text || 'Unsupported message'}</span><Button type="button" variant="ghost" size="sm" onClick={onCancelReply}>Cancel</Button></div> : null}
+            <form
+                onSubmit={(event) => {
+                    event.preventDefault();
+                    onSubmit?.();
+                }}
+                className="flex gap-2"
+            >
+                <Input
+                    placeholder={placeholder}
+                    value={reply}
+                    onChange={(event) => onReplyChange?.(event.target.value)}
+                    disabled={disabled || sending}
+                    className="flex-1"
+                />
+                <Button type="submit" disabled={disabled || sending || !reply.trim()}>
+                    {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                </Button>
+            </form>
+        </div>
+    );
 }
 
 function MessageAttachments({ attachments }: { attachments?: Message['attachments'] }) {
@@ -314,11 +356,14 @@ export default function ConversationPage() {
 
     if (!conversation) {
         return (
-            <div className="flex items-center justify-center h-full">
-                <div className="text-center space-y-2">
-                    <h2 className="text-xl font-semibold">Conversation not found</h2>
-                    <p className="text-muted-foreground">This conversation may have been deleted.</p>
+            <div className="flex h-full min-h-0 flex-col">
+                <div className="flex min-h-0 flex-1 items-center justify-center bg-muted/20 p-6">
+                    <div className="text-center space-y-2">
+                        <h2 className="text-xl font-semibold">Conversation not found</h2>
+                        <p className="text-muted-foreground">This conversation may have been deleted.</p>
+                    </div>
                 </div>
+                <ConversationComposer disabled placeholder="Conversation unavailable" />
             </div>
         );
     }
@@ -430,31 +475,14 @@ export default function ConversationPage() {
             </div>
 
             {/* Input */}
-            <div className="z-20 shrink-0 border-t bg-background p-4">
-                {replyingTo ? <div className="mb-2 flex items-center justify-between rounded-md border-l-2 border-primary bg-muted px-3 py-2 text-xs"><span className="truncate">Replying to: {replyingTo.text || 'Unsupported message'}</span><Button type="button" variant="ghost" size="sm" onClick={() => setReplyingTo(null)}>Cancel</Button></div> : null}
-                <form
-                    onSubmit={(e) => {
-                        e.preventDefault();
-                        handleSendReply();
-                    }}
-                    className="flex gap-2"
-                >
-                    <Input
-                        placeholder="Type your message..."
-                        value={reply}
-                        onChange={(e) => setReply(e.target.value)}
-                        disabled={sending}
-                        className="flex-1"
-                    />
-                    <Button type="submit" disabled={sending || !reply.trim()}>
-                        {sending ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                            <Send className="h-4 w-4" />
-                        )}
-                    </Button>
-                </form>
-            </div>
+            <ConversationComposer
+                reply={reply}
+                onReplyChange={setReply}
+                onSubmit={handleSendReply}
+                sending={sending}
+                replyingTo={replyingTo}
+                onCancelReply={() => setReplyingTo(null)}
+            />
         </div>
     );
 }
