@@ -45,6 +45,33 @@ function MessageSkeletons({ count = 5 }: { count?: number }) {
     </div>;
 }
 
+function ConversationSkeleton() {
+    return <div className="flex h-full flex-col" aria-label="Loading conversation">
+        <div className="shrink-0 border-b bg-background p-4">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 animate-pulse rounded-full bg-muted" />
+                    <div className="space-y-2">
+                        <div className="h-4 w-36 animate-pulse rounded bg-muted" />
+                        <div className="h-3 w-20 animate-pulse rounded bg-muted/70" />
+                    </div>
+                </div>
+                <div className="flex gap-2">
+                    <div className="h-9 w-9 animate-pulse rounded-md bg-muted" />
+                    <div className="h-9 w-9 animate-pulse rounded-md bg-muted" />
+                    <div className="h-9 w-9 animate-pulse rounded-md bg-muted" />
+                </div>
+            </div>
+        </div>
+        <div className="flex-1 overflow-hidden bg-muted/20 p-6">
+            <MessageSkeletons />
+        </div>
+        <div className="shrink-0 border-t bg-background p-4">
+            <div className="h-10 w-full animate-pulse rounded-md bg-muted" />
+        </div>
+    </div>;
+}
+
 function MessageAttachments({ attachments }: { attachments?: Message['attachments'] }) {
     if (!attachments?.length) return null;
     return <div className="mt-2 space-y-2">{attachments.map((attachment, index) => {
@@ -282,11 +309,7 @@ export default function ConversationPage() {
     };
 
     if (loading) {
-        return (
-            <div className="flex items-center justify-center h-full">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-        );
+        return <ConversationSkeleton />;
     }
 
     if (!conversation) {
@@ -301,7 +324,7 @@ export default function ConversationPage() {
     }
 
     return (
-        <div className="flex flex-col h-full">
+        <div className="flex h-full min-h-0 flex-col">
             {/* Header */}
             <div className="sticky top-0 z-20 shrink-0 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
                 <div className="flex items-center justify-between p-4">
@@ -351,7 +374,7 @@ export default function ConversationPage() {
             </div>
 
             {/* Messages */}
-            <div onScroll={handleMessagesScroll} className="flex-1 overflow-y-auto p-6 space-y-4 bg-muted/20">
+            <div onScroll={handleMessagesScroll} className="min-h-0 flex-1 overflow-y-auto p-6 space-y-4 bg-muted/20">
                 {loadingOlder ? <MessageSkeletons count={2} /> : null}
                 {messagesLoading && messages.length === 0 ? <MessageSkeletons /> : messages.length === 0 ? (
                     <div className="flex items-center justify-center h-full">
@@ -407,7 +430,7 @@ export default function ConversationPage() {
             </div>
 
             {/* Input */}
-            <div className="sticky bottom-0 z-20 shrink-0 border-t bg-background p-4">
+            <div className="z-20 shrink-0 border-t bg-background p-4">
                 {replyingTo ? <div className="mb-2 flex items-center justify-between rounded-md border-l-2 border-primary bg-muted px-3 py-2 text-xs"><span className="truncate">Replying to: {replyingTo.text || 'Unsupported message'}</span><Button type="button" variant="ghost" size="sm" onClick={() => setReplyingTo(null)}>Cancel</Button></div> : null}
                 <form
                     onSubmit={(e) => {
