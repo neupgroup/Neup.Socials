@@ -163,6 +163,7 @@ async function saveIncomingFacebookItem(params: {
 
     await dataStore.messages.create({
         conversationId: conversation.id,
+        platform: 'Facebook',
         platformMessageId,
         text,
         sender: 'user',
@@ -424,20 +425,7 @@ async function handleChangeEvent(pageId: string, change: any) {
         if (field === 'page_change_proposal' || field === 'page_upcoming_change') {
             const value = change?.value ?? {};
 
-            await dataStore.systemAlerts.create({
-                type: field,
-                platform: 'Facebook',
-                payload: {
-                    field,
-                    pageId: value?.page_id ?? value?.page ?? null,
-                    proposalId: value?.proposal_id ?? value?.id ?? null,
-                    verb: value?.verb ?? null,
-                    actorId: value?.actor_id ?? null,
-                    effectiveTime: value?.effective_time ?? null,
-                    raw: value,
-                },
-                timestamp: new Date(),
-            });
+            console.info('[Facebook system alert]', { field, pageId: value?.page_id ?? value?.page ?? null, value });
 
             return;
         }

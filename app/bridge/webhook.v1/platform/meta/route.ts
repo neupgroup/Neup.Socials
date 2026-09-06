@@ -3,6 +3,7 @@ import { processFacebookMessagesWebhook } from '@/services/inbox/facebook';
 import { verifyWebhookRequest } from '@/app/bridge/webhook.v1/_helpers';
 import { logError } from '@/services/error-logging';
 import { logger } from '#/logica/logger';
+import { processInstagramWebhook } from '@/services/inbox/instagram';
 
 const ENDPOINT = '/bridge/webhook.v1/platform/meta';
 
@@ -21,6 +22,8 @@ export async function GET(request: Request) {
     return response;
   }
 
+  const instagramResponse = await verifyWebhookRequest(request, 'SOCIALS_INSTAGRAM_TOKEN', ENDPOINT);
+  if (instagramResponse.status !== 500) return instagramResponse;
   return verifyWebhookRequest(request, 'SOCIALS_FACEBOOK_VERIFY_TOKEN', ENDPOINT);
 }
 
@@ -46,9 +49,10 @@ export async function POST(request: Request) {
   }
 
   const isPageWebhook = body?.object === 'page';
+  const isInstagramWebhook = body?.object === 'instagram';
   const isMessageSample = (body?.sample ?? body)?.field === 'messages';
 
-  if (!isPageWebhook && !isMessageSample) {
+  if (!isPageWebhook && !isInstagramWebhook && !isMessageSample) {
     return new NextResponse('Not Found', { status: 404 });
   }
 
@@ -67,7 +71,8 @@ export async function POST(request: Request) {
     .log()
     .catch(() => undefined);
 
-  const processing = processFacebookMessagesWebhook(body).catch(async (error: any) => {
+  const processWebhook = isInstagramWebhook ? processInstagramWebhook : processFacebookMessagesWebhook;
+  const processing = processWebhook(body).catch(async (error: any) => {
     await logError({
       process: 'facebook-platform-webhook-processing',
       location: ENDPOINT,

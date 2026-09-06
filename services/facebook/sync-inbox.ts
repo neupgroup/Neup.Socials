@@ -82,6 +82,7 @@ async function upsertConversationMessage(params: {
 
   await dataStore.messages.create({
     conversationId: conversation.id,
+    platform: 'Facebook',
     platformMessageId,
     text,
     sender,

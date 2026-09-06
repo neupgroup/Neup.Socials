@@ -7,7 +7,7 @@ import { decrypt } from '#/core/helpers/crypto';
 import { getInstagramConversations } from '@/services/platform/instagram/conversations.list';
 import { getInstagramConversationMessages, type InstagramConversationMessagesResponse } from '@/services/platform/instagram/conversation.messages.list';
 import { findConversationByContactAndChannel, findConversationByPlatformId, createConversation, updateConversation } from '@/services/conversations';
-import { listCachedMessages, upsertCachedMessage } from '@/services/message-cache';
+import { upsertCachedMessage } from '@/services/message-cache';
 
 const toIso = (value?: Date | null) => (value ? value.toISOString() : null);
 const serializeConversation = (conversation: Awaited<ReturnType<typeof getConversation>>) => conversation ? { ...conversation, lastMessageAt: toIso(conversation.lastMessageAt), createdAt: toIso(conversation.createdAt) } : null;
@@ -27,6 +27,19 @@ export async function listConversationsAction({ skip = 0, take = 10, platform, f
   };
 }
 export async function getConversationAction(id: string) { return serializeConversation(await getConversation(id)); }
+export async function updateConversationFetchMetadataAction(id: string, metadata: { conversationStart?: string; fetchedSince?: string; fetchedUpto?: string }) {
+  const conversation = await getConversation(id);
+  if (!conversation) return null;
+  return serializeConversation(await updateConversation(id, {
+    moreDetails: {
+      ...((conversation.moreDetails as Record<string, unknown> | null) ?? {}),
+      fetchState: {
+        ...(((conversation.moreDetails as { fetchState?: Record<string, unknown> } | null)?.fetchState) ?? {}),
+        ...metadata,
+      },
+    },
+  }));
+}
 export async function listConversationMessagesAction(conversationId: string) { return (await listMessagesByConversationId(conversationId)).map((message) => serializeMessage(message)!); }
 
 export async function listInstagramConversationsAction() {
@@ -125,25 +138,6 @@ export async function listInstagramConversationMessagesAction(conversationId: st
 
   if (!instagramConversationId) {
     throw new Error('Instagram conversation ID is missing from the local conversation record.');
-  }
-
-  if (!after) {
-    const cached = await listCachedMessages(conversationId);
-    if (cached.length > 0) {
-      return {
-        id: instagramConversationId,
-        messages: {
-          data: cached.map((message) => ({
-            id: message.platformMessageId,
-            message: message.text,
-            created_time: message.timestamp.toISOString(),
-            from: { id: message.sender },
-            attachments: (message.moreDetails as { attachments?: { data?: unknown[] } } | null)?.attachments,
-            reply_to: (message.moreDetails as { replyTo?: { id: string; message?: string } } | null)?.replyTo,
-          })) as NonNullable<InstagramConversationMessagesResponse['messages']>['data'],
-        },
-      };
-    }
   }
 
   const response = await getInstagramConversationMessages({ conversationId: instagramConversationId, accessToken, after });

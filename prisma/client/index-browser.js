@@ -231,17 +231,6 @@ exports.Prisma.ConversationScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
-exports.Prisma.ConversationMessageScalarFieldEnum = {
-  id: 'id',
-  conversationId: 'conversationId',
-  platformMessageId: 'platformMessageId',
-  text: 'text',
-  sender: 'sender',
-  timestamp: 'timestamp',
-  type: 'type',
-  callEvent: 'callEvent'
-};
-
 exports.Prisma.MessageScalarFieldEnum = {
   id: 'id',
   conversationId: 'conversationId',
@@ -252,22 +241,6 @@ exports.Prisma.MessageScalarFieldEnum = {
   timestamp: 'timestamp',
   type: 'type',
   moreDetails: 'moreDetails',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-};
-
-exports.Prisma.SystemAlertScalarFieldEnum = {
-  id: 'id',
-  type: 'type',
-  platform: 'platform',
-  payload: 'payload',
-  timestamp: 'timestamp'
-};
-
-exports.Prisma.SystemConfigScalarFieldEnum = {
-  id: 'id',
-  key: 'key',
-  value: 'value',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -344,31 +317,6 @@ exports.Prisma.InstagramLiveCommentScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
-exports.Prisma.InstagramMessageScalarFieldEnum = {
-  id: 'id',
-  senderId: 'senderId',
-  recipientId: 'recipientId',
-  eventTimestamp: 'eventTimestamp',
-  messageMid: 'messageMid',
-  messageText: 'messageText',
-  numEdit: 'numEdit',
-  payload: 'payload',
-  createdAt: 'createdAt',
-  reactionSummary: 'reactionSummary'
-};
-
-exports.Prisma.InstagramMessageAttachmentScalarFieldEnum = {
-  id: 'id',
-  instagramMessageId: 'instagramMessageId',
-  platformAttachmentId: 'platformAttachmentId',
-  attachmentType: 'attachmentType',
-  mediaUrl: 'mediaUrl',
-  thumbnailUrl: 'thumbnailUrl',
-  permalink: 'permalink',
-  metadata: 'metadata',
-  createdAt: 'createdAt'
-};
-
 exports.Prisma.AccountScalarFieldEnum = {
   id: 'id',
   connectionId: 'connectionId',
@@ -418,10 +366,7 @@ exports.Prisma.ModelName = {
   Space: 'Space',
   SpaceAsset: 'SpaceAsset',
   Conversation: 'Conversation',
-  ConversationMessage: 'ConversationMessage',
   Message: 'Message',
-  SystemAlert: 'SystemAlert',
-  SystemConfig: 'SystemConfig',
   Commentor: 'Commentor',
   Comment: 'Comment',
   IdentityUnified: 'IdentityUnified',
@@ -429,8 +374,6 @@ exports.Prisma.ModelName = {
   FacebookComment: 'FacebookComment',
   PostComment: 'PostComment',
   InstagramLiveComment: 'InstagramLiveComment',
-  InstagramMessage: 'InstagramMessage',
-  InstagramMessageAttachment: 'InstagramMessageAttachment',
   Account: 'Account'
 };
 

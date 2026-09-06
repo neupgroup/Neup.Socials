@@ -63,7 +63,7 @@ export async function sendReplyAction(
             const accountData = await getInboxAccount(channelId);
             if (!accountData?.encryptedToken || !accountData.platformId) throw new Error(`Instagram account with ID ${channelId} is missing credentials.`);
             const accessToken = await decrypt(accountData.encryptedToken);
-            const { sendInstagramMessage } = await import('@/services/platform/instagram/message.send');
+            const { sendInstagramMessageFromInbox } = await import('@/services/instagram/send-message');
             let instagramRecipientId = recipientId;
             if (conversationId) {
                 const { getConversation } = await import('@/services/conversations');
@@ -81,8 +81,8 @@ export async function sendReplyAction(
                     instagramRecipientId = platformInfo.platformInfo.recipientId;
                 }
             }
-            const result = await sendInstagramMessage({ igUserId: accountData.platformId, recipientId: instagramRecipientId, accessToken, text: message, replyToMessageId });
-            return { success: true, messageId: result.message_id, statusCode: result.statusCode };
+            const result = await sendInstagramMessageFromInbox({ channelId, recipientId: instagramRecipientId, message, conversationId, replyToMessageId });
+            return { success: true, messageId: result.message_id };
         } else if (platform === 'Facebook') {
             if (!channelId) {
                 throw new Error("Facebook channel ID is missing.");

@@ -18,7 +18,7 @@ export async function recordOutgoingMessageAction({ conversationId, channelId, c
   } else {
     conversation = await updateConversation(conversation.id, { contactName, lastMessage: text, lastMessageAt: new Date(), unread: false, avatar: avatar ?? conversation.avatar });
   }
-  const message = await createMessage({ conversationId: conversation.id, text, sender: 'agent', timestamp: new Date() });
+  const message = await createMessage({ conversationId: conversation.id, platform, text, sender: 'agent', timestamp: new Date(), platformMessageId });
   if (platformMessageId) {
     await upsertCachedMessage({ conversationId: conversation.id, platform, platformMessageId, text, sender: channelId, timestamp: new Date() });
   }

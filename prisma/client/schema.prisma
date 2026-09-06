@@ -156,19 +156,22 @@ model Conversation {
   @@map("conversations")
 }
 
-model ConversationMessage {
-  id                String   @id @default(cuid())
-  conversationId    String
-  platformMessageId String?  @unique
-  text              String
-  sender            String
-  timestamp         DateTime @default(now())
-  type              String   @default("text")
-  callEvent         String?
-
-  @@index([conversationId, timestamp])
-  @@map("conversation_messages")
-}
+/**
+ * removed ConversationMessage table
+ */
+/**
+ * id                String   @id @default(cuid())
+ * conversationId    String
+ * platformMessageId String?  @unique
+ * text              String
+ * sender            String
+ * timestamp         DateTime @default(now())
+ * type              String   @default("text")
+ * callEvent         String?
+ * @@index([conversationId, timestamp])
+ * @@map("conversation_messages")
+ * }
+ */
 
 model Message {
   id                String   @id @default(cuid())
@@ -186,27 +189,6 @@ model Message {
   @@index([conversationId, timestamp])
   @@index([platform, conversationId])
   @@map("messages")
-}
-
-model SystemAlert {
-  id        String   @id @default(cuid())
-  type      String
-  platform  String
-  payload   Json?
-  timestamp DateTime @default(now())
-
-  @@index([timestamp])
-  @@map("system_alerts")
-}
-
-model SystemConfig {
-  id        String   @id @default(cuid())
-  key       String   @unique
-  value     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("system_config")
 }
 
 model Commentor {
@@ -311,39 +293,45 @@ model InstagramLiveComment {
   @@map("instagram_live_comments")
 }
 
-model InstagramMessage {
-  id              String   @id @default(cuid())
-  senderId        String?  @map("sender_id")
-  recipientId     String?  @map("recipient_id")
-  eventTimestamp  DateTime @map("event_timestamp")
-  messageMid      String?  @map("message_mid")
-  messageText     String?  @map("message_text")
-  numEdit         Int?     @map("num_edit")
-  payload         Json?
-  createdAt       DateTime @default(now()) @map("created_at")
-  reactionSummary Json?    @map("reaction_summary")
+/**
+ * removed InstagramMessage table
+ */
+/**
+ * id              String   @id @default(cuid())
+ * senderId        String?  @map("sender_id")
+ * recipientId     String?  @map("recipient_id")
+ * eventTimestamp  DateTime @map("event_timestamp")
+ * messageMid      String?  @map("message_mid")
+ * messageText     String?  @map("message_text")
+ * numEdit         Int?     @map("num_edit")
+ * payload         Json?
+ * createdAt       DateTime @default(now()) @map("created_at")
+ * reactionSummary Json?    @map("reaction_summary")
+ * @@index([messageMid])
+ * @@index([eventTimestamp])
+ * @@index([createdAt])
+ * @@map("instagram_messages")
+ * }
+ */
 
-  @@index([messageMid])
-  @@index([eventTimestamp])
-  @@index([createdAt])
-  @@map("instagram_messages")
-}
-
-model InstagramMessageAttachment {
-  id                   String   @id @default(cuid())
-  instagramMessageId   String   @map("instagram_message_id")
-  platformAttachmentId String?  @map("platform_attachment_id")
-  attachmentType       String   @map("attachment_type")
-  mediaUrl             String?  @map("media_url")
-  thumbnailUrl         String?  @map("thumbnail_url")
-  permalink            String?
-  metadata             Json?
-  createdAt            DateTime @default(now()) @map("created_at")
-
-  @@index([instagramMessageId])
-  @@index([attachmentType])
-  @@map("instagram_message_attachments")
-}
+/**
+ * removed InstagramMessageAttachment table
+ */
+/**
+ * id                   String   @id @default(cuid())
+ * instagramMessageId   String   @map("instagram_message_id")
+ * platformAttachmentId String?  @map("platform_attachment_id")
+ * attachmentType       String   @map("attachment_type")
+ * mediaUrl             String?  @map("media_url")
+ * thumbnailUrl         String?  @map("thumbnail_url")
+ * permalink            String?
+ * metadata             Json?
+ * createdAt            DateTime @default(now()) @map("created_at")
+ * @@index([instagramMessageId])
+ * @@index([attachmentType])
+ * @@map("instagram_message_attachments")
+ * }
+ */
 
 model Account {
   id           String       @id

@@ -134,8 +134,8 @@ const stores: Record<string, Record<string, (...args: any[]) => Promise<any>>> =
     }),
   },
   messages: {
-    findByPlatformMessageId: (platformMessageId) => model('conversationMessage').findUnique({ where: { platformMessageId } }),
-    create: (data) => model('conversationMessage').create({ data }),
+    findByPlatformMessageId: (platformMessageId) => model('message').findUnique({ where: { platformMessageId } }),
+    create: (data) => model('message').create({ data }),
   },
   syncLogs: {
     listByAccountId: (accountId, take = 100) => model('syncLog').findMany({
@@ -165,17 +165,6 @@ const stores: Record<string, Record<string, (...args: any[]) => Promise<any>>> =
     getById: (id) => model('upload').findUnique(byId(id)),
     create: (data) => model('upload').create({ data }),
     update: (id, data) => model('upload').update({ where: { id }, data }),
-  },
-  systemConfig: {
-    getByKey: (key) => model('systemConfig').findUnique({ where: { key } }),
-    upsert: (data) => model('systemConfig').upsert({
-      where: { key: data.key },
-      create: data,
-      update: data,
-    }),
-  },
-  systemAlerts: {
-    create: (data) => model('systemAlert').create({ data }),
   },
 };
 

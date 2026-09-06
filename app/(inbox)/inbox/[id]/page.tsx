@@ -19,9 +19,9 @@ import {
     getConversationAction,
     listConversationMessagesAction,
     listInstagramConversationMessagesAction,
+    updateConversationFetchMetadataAction,
 } from '@/services/conversations/actions';
 import { recordOutgoingMessageAction } from '@/services/messages/actions';
-import application from '$/application.json';
 import { normalizeInstagramAttachment } from '@/services/platform/instagram/attachments';
 
 type Message = {
@@ -90,7 +90,7 @@ function ConversationComposer({
     placeholder?: string;
 }) {
     return (
-        <div className="z-20 shrink-0 border-t bg-background p-4">
+        <div className="sticky bottom-0 z-20 shrink-0 border-t bg-background p-4">
             {replyingTo ? <div className="mb-2 flex items-center justify-between rounded-md border-l-2 border-primary bg-muted px-3 py-2 text-xs"><span className="truncate">Replying to: {replyingTo.text || 'Unsupported message'}</span><Button type="button" variant="ghost" size="sm" onClick={onCancelReply}>Cancel</Button></div> : null}
             <form
                 onSubmit={(event) => {
@@ -181,7 +181,8 @@ export default function ConversationPage() {
     const [olderCursor, setOlderCursor] = React.useState<string | null>(null);
     const [loadingOlder, setLoadingOlder] = React.useState(false);
 
-    const messagesEndRef = React.useRef<HTMLDivElement>(null);
+    const messagesContainerRef = React.useRef<HTMLDivElement>(null);
+    const isAtBottomRef = React.useRef(true);
     const { toast } = useToast();
 
     React.useEffect(() => {
@@ -209,20 +210,24 @@ export default function ConversationPage() {
                 setMessagesLoading(true);
                 if (conversation?.platform === 'Instagram') {
                     try {
-                    const result = await fetch(`${application.appBasePath}/api/inbox/${conversationId}/messages`, { cache: 'no-store' }).then((response) => response.json());
-                    const msgs = [...(result?.messages?.data ?? [])].sort((a, b) => {
-                        return timestampValue(a.created_time) - timestampValue(b.created_time);
-                    });
+                    const msgs = await listConversationMessagesAction(conversationId);
                     if (active) {
-                        setOlderCursor(result?.messages?.paging?.next ?? null);
-                        setMessages(msgs.map((message) => ({
-                            id: message.id,
-                            text: message.message ?? '',
-                            sender: message.from?.id === conversation.channelId ? 'agent' as const : 'user' as const,
-                            timestamp: message.created_time ?? null,
-                            attachments: message.attachments?.data,
-                            replyTo: message.reply_to ? { id: message.reply_to.id, text: message.reply_to.message ?? '' } : undefined,
-                        })));
+                        const sortedMessages = [...msgs]
+                            .sort((a, b) => timestampValue(a.timestamp) - timestampValue(b.timestamp))
+                            .map((message) => ({
+                                id: message.id,
+                                text: message.text ?? '',
+                                sender: message.sender === 'agent' ? 'agent' as const : 'user' as const,
+                                timestamp: message.timestamp ?? null,
+                            }));
+                        setMessages(sortedMessages);
+                        const timestamps = sortedMessages.map((message) => message.timestamp).filter(Boolean) as string[];
+                        if (timestamps.length) {
+                            void updateConversationFetchMetadataAction(conversationId, {
+                                fetchedSince: timestamps[0],
+                                fetchedUpto: timestamps[timestamps.length - 1],
+                            });
+                        }
                     }
                     } finally {
                         if (active) setMessagesLoading(false);
@@ -238,8 +243,10 @@ export default function ConversationPage() {
                 }
             };
 
-            fetchMessages();
-            const interval = window.setInterval(fetchMessages, 5000);
+            if (isAtBottomRef.current) void fetchMessages();
+            const interval = window.setInterval(() => {
+                if (isAtBottomRef.current) void fetchMessages();
+            }, 5000);
 
             return () => {
                 active = false;
@@ -248,8 +255,12 @@ export default function ConversationPage() {
         }
     }, [conversationId, conversation]);
 
-    const handleMessagesScroll = async (event: React.UIEvent<HTMLDivElement>) => {
+    const handleMessagesScroll = async (event: React.UIEvent<HTMLDivElement>, preservePosition = false) => {
         const element = event.currentTarget;
+        const atBottom = element.scrollHeight - element.scrollTop - element.clientHeight < 48;
+        if (!preservePosition) {
+            isAtBottomRef.current = atBottom;
+        }
         if (element.scrollTop > 48 || !olderCursor || loadingOlder || conversation?.platform !== 'Instagram') return;
 
         const previousHeight = element.scrollHeight;
@@ -269,6 +280,13 @@ export default function ConversationPage() {
                 ...current.filter((currentMessage) => !olderMessages.some((message) => message.id === currentMessage.id)),
             ]);
             setOlderCursor(result?.messages?.paging?.next ?? null);
+            const oldest = olderMessages[0]?.created_time;
+            if (oldest) {
+                void updateConversationFetchMetadataAction(conversationId, {
+                    fetchedSince: oldest,
+                    ...(result?.messages?.paging?.next ? {} : { conversationStart: oldest }),
+                });
+            }
             requestAnimationFrame(() => {
                 element.scrollTop += element.scrollHeight - previousHeight;
             });
@@ -277,9 +295,24 @@ export default function ConversationPage() {
         }
     };
 
+    React.useEffect(() => {
+        const element = messagesContainerRef.current;
+        if (!element || messagesLoading || loadingOlder || !olderCursor || messages.length === 0) return;
+
+        // A short conversation may not produce a scroll event at all. Keep pulling
+        // older pages until the pane can scroll or the API reports its beginning.
+        if (element.scrollHeight <= element.clientHeight + 1) {
+            isAtBottomRef.current = false;
+            void handleMessagesScroll({ currentTarget: element } as React.UIEvent<HTMLDivElement>, true);
+        }
+    }, [messages, messagesLoading, loadingOlder, olderCursor]);
+
     // Auto-scroll to bottom
     React.useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        const element = messagesContainerRef.current;
+        if (element && isAtBottomRef.current) {
+            element.scrollTop = element.scrollHeight;
+        }
     }, [messages]);
 
     const handleSendReply = async () => {
@@ -315,7 +348,7 @@ export default function ConversationPage() {
         setReplyingTo(null);
 
         if (result.success && result.messageId && conversation) {
-            if (conversation.platform !== 'Facebook') {
+            if (conversation.platform !== 'Facebook' && conversation.platform !== 'Instagram') {
                 const saved = await recordOutgoingMessageAction({
                     conversationId,
                     channelId: conversation.channelId,
@@ -419,7 +452,7 @@ export default function ConversationPage() {
             </div>
 
             {/* Messages */}
-            <div onScroll={handleMessagesScroll} className="min-h-0 flex-1 overflow-y-auto p-6 space-y-4 bg-muted/20">
+            <div ref={messagesContainerRef} onScroll={handleMessagesScroll} className="relative min-h-0 flex-1 overflow-y-auto p-6 space-y-4 bg-muted/20">
                 {loadingOlder ? <MessageSkeletons count={2} /> : null}
                 {messagesLoading && messages.length === 0 ? <MessageSkeletons /> : messages.length === 0 ? (
                     <div className="flex items-center justify-center h-full">
@@ -471,7 +504,6 @@ export default function ConversationPage() {
                         </div>
                     ))
                 )}
-                <div ref={messagesEndRef} />
             </div>
 
             {/* Input */}

@@ -156,7 +156,8 @@ model Conversation {
   @@map("conversations")
 }
 
-model ConversationMessage {
+/* removed ConversationMessage table */
+/*
   id                String   @id @default(cuid())
   conversationId    String
   platformMessageId String?  @unique
@@ -169,6 +170,7 @@ model ConversationMessage {
   @@index([conversationId, timestamp])
   @@map("conversation_messages")
 }
+*/
 
 model Message {
   id                String   @id @default(cuid())
@@ -186,27 +188,6 @@ model Message {
   @@index([conversationId, timestamp])
   @@index([platform, conversationId])
   @@map("messages")
-}
-
-model SystemAlert {
-  id        String   @id @default(cuid())
-  type      String
-  platform  String
-  payload   Json?
-  timestamp DateTime @default(now())
-
-  @@index([timestamp])
-  @@map("system_alerts")
-}
-
-model SystemConfig {
-  id        String   @id @default(cuid())
-  key       String   @unique
-  value     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("system_config")
 }
 
 model Commentor {
@@ -311,7 +292,8 @@ model InstagramLiveComment {
   @@map("instagram_live_comments")
 }
 
-model InstagramMessage {
+/* removed InstagramMessage table */
+/*
   id              String   @id @default(cuid())
   senderId        String?  @map("sender_id")
   recipientId     String?  @map("recipient_id")
@@ -328,8 +310,10 @@ model InstagramMessage {
   @@index([createdAt])
   @@map("instagram_messages")
 }
+*/
 
-model InstagramMessageAttachment {
+/* removed InstagramMessageAttachment table */
+/*
   id                   String   @id @default(cuid())
   instagramMessageId   String   @map("instagram_message_id")
   platformAttachmentId String?  @map("platform_attachment_id")
@@ -344,6 +328,7 @@ model InstagramMessageAttachment {
   @@index([attachmentType])
   @@map("instagram_message_attachments")
 }
+*/
 
 model Account {
   id           String       @id

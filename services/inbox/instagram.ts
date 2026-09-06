@@ -1,8 +1,7 @@
 import { prisma } from '#/core/database/prisma';
 import { logError } from '@/services/error-logging';
 import { processInstagramLiveCommentsWebhook } from '@/services/inbox/instagram-live-comments';
-import { processInstagramMessagesWebhook } from '@/services/inbox/instagram-messages';
-import { processInstagramMessageReactionsWebhook } from '@/services/inbox/instagram-message-reactions';
+import { receiveInstagramMessages } from '@/services/instagram/receive-messages';
 
 type InstagramCommentPayload = {
   from?: {
@@ -107,8 +106,7 @@ export async function processInstagramWebhook(payload: any) {
     }
 
     await processInstagramLiveCommentsWebhook(payload);
-    await processInstagramMessagesWebhook(payload);
-    await processInstagramMessageReactionsWebhook(payload);
+    await receiveInstagramMessages(payload);
   } catch (error: any) {
     await logError({
       process: 'processInstagramWebhook',

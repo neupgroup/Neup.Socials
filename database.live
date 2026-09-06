@@ -111,15 +111,6 @@ Fields:
 > avatar: string, nullable;
 > createdAt: timestamp, default: now;
 
-Table: conversation_messages, Model: ConversationMessage
-Fields:
-> id: string, cuid;
-> conversationId: string, references conversations.id;
-> platformMessageId: string, nullable, unique;
-> text: string;
-> sender: string;
-> timestamp: timestamp, default: now;
-
 Table: messages, Model: Message
 Fields:
 > id: string, cuid;
@@ -135,22 +126,6 @@ Fields:
 > updatedAt: timestamp, default: auto update;
 > type: string, default: text;
 > callEvent: string, nullable;
-
-Table: system_alerts, Model: SystemAlert
-Fields:
-> id: string, cuid;
-> type: string;
-> platform: string;
-> payload: json, nullable;
-> timestamp: timestamp, default: now;
-
-Table: system_config, Model: SystemConfig
-Fields:
-> id: string, cuid;
-> key: string, unique;
-> value: string, nullable;
-> createdAt: timestamp, default: now;
-> updatedAt: timestamp, auto-updated;
 
 Table: commentors, Model: Commentor
 Fields:
@@ -225,31 +200,6 @@ Fields:
 > payload: json, nullable;
 > createdAt: timestamp, default: now;
 > updatedAt: timestamp, default: now;
-
-Table: instagram_messages, Model: InstagramMessage
-Fields:
-> id: string, cuid;
-> senderId: string, nullable;
-> recipientId: string, nullable;
-> eventTimestamp: timestamp;
-> messageMid: string, nullable;
-> messageText: string, nullable;
-> numEdit: int, nullable;
-> payload: json, nullable;
-> createdAt: timestamp, default: now;
-> reactionSummary: json, nullable;
-
-Table: instagram_message_attachments, Model: InstagramMessageAttachment
-Fields:
-> id: string, cuid;
-> instagramMessageId: string, references instagram_messages.id;
-> platformAttachmentId: string, nullable;
-> attachmentType: string;
-> mediaUrl: string, nullable;
-> thumbnailUrl: string, nullable;
-> permalink: string, nullable;
-> metadata: json, nullable;
-> createdAt: timestamp, default: now;
 
 Table: accounts, Model: Account
 Fields:

@@ -86,6 +86,7 @@ async function saveMessageToConversation(context: MessageContext) {
 
   await dataStore.messages.create({
     conversationId: conversation.id,
+    platform: 'WhatsApp',
     platformMessageId: platformMessageId,
     text: text,
     sender: 'user',
