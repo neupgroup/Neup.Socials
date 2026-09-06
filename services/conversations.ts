@@ -2,17 +2,27 @@
 
 import { prisma } from '#/core/database/prisma';
 
-export const listConversations = async ({ skip = 0, take = 10, platform }: { skip?: number; take?: number; platform?: string } = {}) =>
+export type ConversationFilter = 'unread' | 'sent' | 'starred' | 'archived' | 'trash';
+
+export const listConversations = async ({ skip = 0, take = 10, platform, filter }: { skip?: number; take?: number; platform?: string; filter?: ConversationFilter } = {}) =>
   prisma.conversation.findMany({
-    where: platform ? { platform: { equals: platform, mode: 'insensitive' } } : undefined,
+    where: {
+      ...(platform ? { platform: { equals: platform, mode: 'insensitive' as const } } : {}),
+      ...(filter === 'unread' ? { unread: true } : {}),
+      ...(filter && filter !== 'unread' ? { moreDetails: { path: ['inboxFilter'], equals: filter } } : {}),
+    },
     orderBy: [{ lastMessageAt: 'desc' }, { id: 'desc' }],
     skip,
     take,
   });
 
-export const countConversations = async (platform?: string) =>
+export const countConversations = async (platform?: string, filter?: ConversationFilter) =>
   prisma.conversation.count({
-    where: platform ? { platform: { equals: platform, mode: 'insensitive' } } : undefined,
+    where: {
+      ...(platform ? { platform: { equals: platform, mode: 'insensitive' as const } } : {}),
+      ...(filter === 'unread' ? { unread: true } : {}),
+      ...(filter && filter !== 'unread' ? { moreDetails: { path: ['inboxFilter'], equals: filter } } : {}),
+    },
   });
 
 export const getConversation = async (id: string) =>

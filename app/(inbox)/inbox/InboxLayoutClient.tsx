@@ -35,20 +35,21 @@ import { Sheet, SheetContent } from '#/components/ui/sheet';
 import { Userbar } from '#/components/element/userbar';
 import { formatDistanceToNow } from 'date-fns';
 import { listConversationsAction } from '@/services/conversations/actions';
+import type { ConversationFilter } from '@/services/conversations';
 import { listInstagramConversationsAction } from '@/services/conversations/actions';
 import { application } from '@/base/application';
 
 const inboxNavItems = [
-    { href: '/inbox', icon: MessageSquare, label: 'All Messages' },
-    { href: '/inbox/unread', icon: Bell, label: 'Unread', count: 12 },
+    { href: '/inbox', filter: undefined, icon: MessageSquare, label: 'All Messages' },
+    { href: '/inbox?filter=unread', filter: 'unread' as const, icon: Bell, label: 'Unread' },
 ];
 
 // Filter tags
 const filterTags = [
-    { href: '/inbox/starred', icon: Star, label: 'Starred', count: 5 },
-    { href: '/inbox/sent', icon: Send, label: 'Sent' },
-    { href: '/inbox/archived', icon: Archive, label: 'Archived' },
-    { href: '/inbox/trash', icon: Trash2, label: 'Trash' },
+    { href: '/inbox?filter=starred', filter: 'starred' as const, icon: Star, label: 'Starred' },
+    { href: '/inbox?filter=sent', filter: 'sent' as const, icon: Send, label: 'Sent' },
+    { href: '/inbox?filter=archived', filter: 'archived' as const, icon: Archive, label: 'Archived' },
+    { href: '/inbox?filter=trash', filter: 'trash' as const, icon: Trash2, label: 'Trash' },
 ];
 
 // Channel tags
@@ -111,7 +112,9 @@ function InboxSidebarContent({
     hasMore,
     account,
     platform,
+    filter,
     allMessagesCount,
+    unreadCount,
     onLoadMore,
 }: {
     pathname: string;
@@ -121,7 +124,9 @@ function InboxSidebarContent({
     hasMore: boolean;
     account: CurrentAccount;
     platform?: string;
+    filter?: ConversationFilter;
     allMessagesCount: number;
+    unreadCount: number;
     onLoadMore: () => void;
 }) {
     const router = useRouter();
@@ -167,19 +172,19 @@ function InboxSidebarContent({
                                 <li key={item.href}>
                                     <NavButton
                                         type="button"
-                                        active={pathname === item.href}
+                                        active={item.filter ? filter === item.filter : pathname === item.href}
                                         variant="text"
                                         className="w-full justify-start hover:!bg-transparent hover:!text-foreground active:!bg-transparent active:!text-foreground data-[active=true]:!bg-primary/20 data-[active=true]:!text-primary data-[active=true]:hover:!bg-primary/30"
                                         onClick={() => router.push(item.href)}
                                     >
                                         <item.icon className="h-4 w-4" />
                                         <span>{item.label}</span>
-                                        {(item.count !== undefined || item.label === 'All Messages') && (
+                                        {(item.count !== undefined || item.label === 'All Messages' || item.filter === 'unread') && (
                                             <Badge
                                                 variant="secondary"
                                                 className="ml-auto h-5 px-1.5 text-xs"
                                             >
-                                                {item.label === 'All Messages' ? allMessagesCount : item.count}
+                                                {item.label === 'All Messages' ? allMessagesCount : item.filter === 'unread' ? unreadCount : item.count}
                                             </Badge>
                                         )}
                                     </NavButton>
@@ -194,14 +199,13 @@ function InboxSidebarContent({
                     <div>
                         <div className="flex flex-wrap gap-1.5 px-2">
                             {filterTags.map((tag) => (
-                                <Link key={tag.href} href={tag.href}>
+                                <Link key={tag.filter} href={tag.href}>
                                     <Badge
-                                        variant={pathname === tag.href ? "default" : "outline"}
+                                        variant={filter === tag.filter ? "default" : "outline"}
                                         className="cursor-pointer hover:bg-accent transition-colors"
                                     >
                                         <tag.icon className="h-3 w-3 mr-1" />
                                         {tag.label}
-                                        {tag.count !== undefined && ` (${tag.count})`}
                                     </Badge>
                                 </Link>
                             ))}
@@ -244,8 +248,11 @@ function InboxSidebarContent({
                                 {conversations.map((conversation) => (
                                     <Link
                                         key={conversation.id}
-                                        href={platform
-                                            ? `/inbox/${conversation.id}?platform=${encodeURIComponent(platform)}`
+                                        href={platform || filter
+                                            ? `/inbox/${conversation.id}?${new URLSearchParams({
+                                                ...(platform ? { platform } : {}),
+                                                ...(filter ? { filter } : {}),
+                                            }).toString()}`
                                             : `/inbox/${conversation.id}`}
                                         className="block"
                                     >
@@ -317,6 +324,7 @@ export default function InboxLayoutClient({
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const platform = searchParams.get('platform')?.toLowerCase() || undefined;
+    const filter = (searchParams.get('filter') as ConversationFilter | null) || undefined;
     const [conversations, setConversations] = React.useState<Conversation[]>([]);
     const [loading, setLoading] = React.useState(true);
     const [loadingMore, setLoadingMore] = React.useState(false);
@@ -324,16 +332,18 @@ export default function InboxLayoutClient({
     const [mobileOpen, setMobileOpen] = React.useState(false);
     const [account] = React.useState<CurrentAccount>(initialAccount);
     const [allMessagesCount, setAllMessagesCount] = React.useState(0);
+    const [unreadCount, setUnreadCount] = React.useState(0);
     const fetchRequestRef = React.useRef(0);
 
     const fetchConversations = React.useCallback(async () => {
         const requestId = ++fetchRequestRef.current;
         try {
-            const result = await listConversationsAction({ skip: 0, take: 10, platform });
+            const result = await listConversationsAction({ skip: 0, take: 10, platform, filter });
             if (requestId === fetchRequestRef.current) {
                 setConversations(result.items as Conversation[]);
                 setHasMore(result.hasMore);
                 setAllMessagesCount(result.total);
+                setUnreadCount(result.unreadTotal);
             }
         } catch (error) {
             console.error('Error fetching conversations:', error);
@@ -342,13 +352,13 @@ export default function InboxLayoutClient({
                 setLoading(false);
             }
         }
-    }, [platform]);
+    }, [platform, filter]);
 
     const loadMoreConversations = React.useCallback(async () => {
         if (loadingMore || !hasMore) return;
         setLoadingMore(true);
         try {
-            const result = await listConversationsAction({ skip: conversations.length, take: 10, platform });
+            const result = await listConversationsAction({ skip: conversations.length, take: 10, platform, filter });
             setConversations((current) => [...current, ...(result.items as Conversation[])]);
             setHasMore(result.hasMore);
         } catch (error) {
@@ -356,7 +366,7 @@ export default function InboxLayoutClient({
         } finally {
             setLoadingMore(false);
         }
-    }, [conversations.length, hasMore, loadingMore, platform]);
+    }, [conversations.length, hasMore, loadingMore, platform, filter]);
 
     React.useEffect(() => {
         fetchRequestRef.current += 1;
@@ -364,7 +374,7 @@ export default function InboxLayoutClient({
         setHasMore(true);
         setLoading(true);
         setLoadingMore(false);
-    }, [platform]);
+    }, [platform, filter]);
 
     React.useEffect(() => {
         // Instagram must sync first so the initial list cannot race the database update.
@@ -378,7 +388,7 @@ export default function InboxLayoutClient({
         return () => {
             window.clearInterval(interval);
         };
-    }, [platform, fetchConversations]);
+    }, [platform, filter, fetchConversations]);
 
     React.useEffect(() => {
         if (platform !== 'instagram') return;
@@ -400,7 +410,7 @@ export default function InboxLayoutClient({
         return () => {
             active = false;
         };
-    }, [platform, fetchConversations]);
+    }, [platform, filter, fetchConversations]);
 
     return (
         <SidebarProvider>
@@ -415,7 +425,9 @@ export default function InboxLayoutClient({
                         hasMore={hasMore}
                         account={account}
                         platform={platform}
+                        filter={filter}
                         allMessagesCount={allMessagesCount}
+                        unreadCount={unreadCount}
                         onLoadMore={() => void loadMoreConversations()}
                     />
                 </Sidebar>
@@ -432,7 +444,9 @@ export default function InboxLayoutClient({
                                 hasMore={hasMore}
                                 account={account}
                                 platform={platform}
+                                filter={filter}
                                 allMessagesCount={allMessagesCount}
+                                unreadCount={unreadCount}
                                 onLoadMore={() => void loadMoreConversations()}
                             />
                         </div>
