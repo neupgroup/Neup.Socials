@@ -120,7 +120,7 @@ function InboxSidebarContent({
     return (
         <div className="flex h-full flex-col bg-background">
             <div className="border-b border-border p-5">
-                <Link href="/" className="flex items-center gap-2">
+                <Link href="/home" className="flex items-center gap-2">
                     <div className="flex items-center justify-center size-8 bg-primary rounded-lg text-primary-foreground">
                         <MessageSquareText className="size-5" />
                     </div>
