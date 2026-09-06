@@ -20,7 +20,7 @@ export async function recordOutgoingMessageAction({ conversationId, channelId, c
   }
   const message = await createMessage({ conversationId: conversation.id, platform, content: text, senderId: channelId, direction: 'sent', messageTime: new Date(), platformMessageId, platformInfo: { sender: channelId, receiver: contactId } });
   if (platformMessageId) {
-    await upsertCachedMessage({ conversationId: conversation.id, platform, platformMessageId, text, sender: channelId, timestamp: new Date() });
+    await upsertCachedMessage({ conversationId: conversation.id, platform, platformMessageId, text, sender: channelId, timestamp: new Date(), direction: 'sent' });
   }
   return { conversation: serializeConversation(conversation), message: serializeMessage(message) };
 }

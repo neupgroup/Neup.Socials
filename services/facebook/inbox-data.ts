@@ -58,8 +58,8 @@ export const listFacebookInboxConversations = async (channelIds: string[], take 
   });
 
 export const listFacebookInboxMessages = async (conversationIds: string[], take = 1200) =>
-  prisma.conversationMessage.findMany({
+  prisma.message.findMany({
     where: { conversationId: { in: conversationIds } },
-    orderBy: [{ timestamp: 'desc' }, { id: 'desc' }],
+    orderBy: [{ messageTime: 'desc' }, { id: 'desc' }],
     take,
   });

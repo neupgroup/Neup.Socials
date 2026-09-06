@@ -125,7 +125,7 @@ export async function listFacebookInboxFeedAction(): Promise<FacebookInboxItem[]
   }
 
   const mappedMessages: FacebookInboxItem[] = conversations
-    .map((conversation) => {
+    .map((conversation): FacebookInboxItem | null => {
       const account = accountById.get(conversation.channelId);
       if (!account) {
         return null;
@@ -144,9 +144,9 @@ export async function listFacebookInboxFeedAction(): Promise<FacebookInboxItem[]
         pageName: account.name || 'Facebook Page',
         fromId: conversation.contactId,
         fromName: conversation.contactName || `Facebook User ${conversation.contactId.slice(-6)}`,
-        text: latest.text,
-        createdTime: latest.timestamp.toISOString(),
-      } as FacebookInboxItem;
+        text: latest.content,
+        createdTime: latest.messageTime.toISOString(),
+      };
     })
     .filter((item): item is FacebookInboxItem => item !== null);
 
@@ -161,7 +161,7 @@ export async function listFacebookInboxFeedAction(): Promise<FacebookInboxItem[]
 
   const mappedComments: FacebookInboxItem[] = savedComments
     .filter((comment) => isReplyWindowOpen(comment.commentedOn))
-    .map((comment) => {
+    .map((comment): FacebookInboxItem | null => {
       const post = postById.get(comment.postId);
       if (!post?.accountId) {
         return null;

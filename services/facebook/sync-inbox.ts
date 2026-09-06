@@ -84,11 +84,11 @@ async function upsertConversationMessage(params: {
     conversationId: conversation.id,
     platform: 'Facebook',
     platformMessageId,
-    text,
+    content: text,
     senderId: null,
-    direction: 'received',
+    direction: sender === 'page' ? 'sent' : 'received',
     platformInfo: { sender: params.contactId, receiver: pageId },
-    timestamp,
+    messageTime: timestamp,
     type,
   });
 

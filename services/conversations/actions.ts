@@ -8,10 +8,66 @@ import { getInstagramConversations } from '@/services/platform/instagram/convers
 import { getInstagramConversationMessages, type InstagramConversationMessagesResponse } from '@/services/platform/instagram/conversation.messages.list';
 import { findConversationByContactAndChannel, findConversationByPlatformId, createConversation, updateConversation } from '@/services/conversations';
 import { upsertCachedMessage } from '@/services/message-cache';
+import { getFacebookConversationMessages } from '@/services/platform/facebook/conversation.messages.list';
 
 const toIso = (value?: Date | null) => (value ? value.toISOString() : null);
 const serializeConversation = (conversation: Awaited<ReturnType<typeof getConversation>>) => conversation ? { ...conversation, lastMessageAt: toIso(conversation.lastMessageAt), createdAt: toIso(conversation.createdAt) } : null;
 const serializeMessage = (message: Awaited<ReturnType<typeof listMessagesByConversationId>>[number]) => message ? { ...message, messageTime: toIso(message.messageTime) } : null;
+
+async function restoreConversationMessages(conversation: NonNullable<Awaited<ReturnType<typeof getConversation>>>) {
+  const platformInfo = (conversation.moreDetails as { platformInfo?: { conversationId?: string; pageId?: string } } | null)?.platformInfo;
+  const platformConversationId = platformInfo?.conversationId;
+  if (!platformConversationId) return;
+
+  const account = (await listAccounts()).find((item) => item.id === conversation.channelId);
+  if (!account?.encryptedToken) return;
+  const accessToken = await decrypt(account.encryptedToken);
+  const platform = conversation.platform.toLowerCase();
+
+  if (platform === 'facebook') {
+    const response = await getFacebookConversationMessages({ conversationId: platformConversationId, accessToken });
+    await Promise.all((response.messages?.data ?? []).slice(0, 50).map((message) => upsertCachedMessage({
+      conversationId: conversation.id,
+      platform: 'Facebook',
+      platformMessageId: `fb_msg:${account.id}:${message.id}`,
+      text: message.message ?? '',
+      sender: message.from?.id ?? 'unknown',
+      direction: message.from?.id === (platformInfo.pageId ?? account.platformId) ? 'sent' : 'received',
+      timestamp: message.created_time ? new Date(message.created_time) : new Date(),
+      moreDetails: { from: message.from, to: message.to, attachments: message.attachments },
+    })));
+  } else if (platform === 'instagram') {
+    const response = await getInstagramConversationMessages({ conversationId: platformConversationId, accessToken });
+    await Promise.all((response.messages?.data ?? []).slice(0, 50).map((message) => upsertCachedMessage({
+      conversationId: conversation.id,
+      platform: 'Instagram',
+      platformMessageId: message.id,
+      text: message.message ?? '',
+      sender: message.from?.id ?? 'unknown',
+      direction: message.from?.id === account.platformId ? 'sent' : 'received',
+      timestamp: message.created_time ? new Date(message.created_time) : new Date(),
+      moreDetails: { from: message.from, to: message.to, attachments: message.attachments, replyTo: message.reply_to },
+    })));
+  } else {
+    return;
+  }
+
+  const restored = await listMessagesByConversationId(conversation.id);
+  const latest = restored[restored.length - 1];
+  if (latest) {
+    await updateConversation(conversation.id, {
+      lastMessage: latest.content,
+      lastMessageAt: latest.messageTime,
+      moreDetails: {
+        ...((conversation.moreDetails as Record<string, unknown> | null) ?? {}),
+        fetchState: {
+          messageSince: restored[0].messageTime.toISOString(),
+          messageUpto: latest.messageTime.toISOString(),
+        },
+      },
+    });
+  }
+}
 
 export async function listConversationsAction({ skip = 0, take = 10, platform, filter }: { skip?: number; take?: number; platform?: string; filter?: ConversationFilter } = {}) {
   const conversations = await listConversations({ skip, take, platform, filter });
@@ -40,7 +96,29 @@ export async function updateConversationFetchMetadataAction(id: string, metadata
     },
   }));
 }
-export async function listConversationMessagesAction(conversationId: string) { return (await listMessagesByConversationId(conversationId)).map((message) => serializeMessage(message)!); }
+export async function listConversationMessagesAction(conversationId: string) {
+  const conversation = await getConversation(conversationId);
+  const fetchState = (conversation?.moreDetails as { fetchState?: { messageSince?: string; messageUpto?: string; firstMessageOn?: string } } | null)?.fetchState;
+  const messages = await listMessagesByConversationId(conversationId, fetchState?.messageSince && fetchState?.messageUpto ? undefined : 30);
+  if (messages.length === 0 && conversation) {
+    await restoreConversationMessages(conversation);
+    return (await listMessagesByConversationId(conversationId)).map((message) => serializeMessage(message)!);
+  }
+  const serialized = messages.map((message) => serializeMessage(message)!).sort((a, b) =>
+    new Date(a.messageTime ?? 0).getTime() - new Date(b.messageTime ?? 0).getTime()
+  );
+
+  if (serialized.length > 0 && (!fetchState?.messageSince || !fetchState?.messageUpto)) {
+    const first = serialized[0].messageTime;
+    const last = serialized[serialized.length - 1].messageTime;
+    await updateConversationFetchMetadataAction(conversationId, {
+      messageSince: first ?? undefined,
+      messageUpto: last ?? undefined,
+    });
+  }
+
+  return serialized;
+}
 
 export async function listInstagramConversationsAction() {
   const accounts = await listAccounts({ owner: 'neupkishor' });

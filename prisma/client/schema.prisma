@@ -161,7 +161,7 @@ model Conversation {
  */
 /**
  * id                String   @id @default(cuid())
- * conversationId    String
+ * conversationId    String   @map("conversation_id")
  * platformMessageId String?  @unique
  * content           String
  * sender            String
@@ -175,16 +175,16 @@ model Conversation {
 
 model Message {
   id                String           @id @default(cuid())
-  conversationId    String
+  conversationId    String           @map("conversation_id")
   platform          String
-  platformMessageId String           @unique
+  platformMessageId String           @unique @map("platform_message_id")
   content           String
-  senderId          String?
+  senderId          String?          @map("sender_id")
   direction         MessageDirection
-  messageTime       DateTime
+  messageTime       DateTime         @map("message_time")
   type              String           @default("text")
-  platformInfo      Json?
-  updatedAt         DateTime         @updatedAt
+  platformInfo      Json?            @map("platform_info")
+  updatedAt         DateTime         @updatedAt @map("updated_at")
 
   @@index([conversationId, messageTime])
   @@index([platform, conversationId])

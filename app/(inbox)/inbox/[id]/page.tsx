@@ -203,7 +203,7 @@ export default function ConversationPage() {
     }, [conversationId]);
 
     React.useEffect(() => {
-        if (conversationId) {
+        if (conversationId && conversation) {
             let active = true;
 
             const fetchMessages = async () => {

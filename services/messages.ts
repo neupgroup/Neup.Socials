@@ -2,10 +2,21 @@
 
 import { prisma } from '#/core/database/prisma';
 
-export const listMessagesByConversationId = async (conversationId: string) =>
+export type MessageContentType =
+  | 'reaction.like'
+  | 'text'
+  | 'voice_message'
+  | 'link'
+  | 'reels'
+  | 'media_image'
+  | 'media_video'
+  | 'media_story';
+
+export const listMessagesByConversationId = async (conversationId: string, take?: number) =>
   prisma.message.findMany({
     where: { conversationId },
-    orderBy: [{ messageTime: 'asc' }, { id: 'asc' }],
+    orderBy: take ? [{ messageTime: 'desc' }, { id: 'desc' }] : [{ messageTime: 'asc' }, { id: 'asc' }],
+    ...(take ? { take } : {}),
   });
 
 export const listMessagesByConversationIds = async ({
@@ -33,7 +44,7 @@ export const createMessage = async (data: {
   direction: 'system' | 'received' | 'sent';
   messageTime?: Date;
   platformInfo?: any;
-  type?: string;
+  type?: MessageContentType | string;
   callEvent?: string | null;
 }) =>
   prisma.message.create({

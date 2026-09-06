@@ -4,7 +4,7 @@ import { prisma } from '#/core/database/prisma';
 
 export const listCachedMessages = async (conversationId: string) => prisma.message.findMany({
   where: { conversationId },
-  orderBy: [{ timestamp: 'asc' }, { id: 'asc' }],
+  orderBy: [{ messageTime: 'asc' }, { id: 'asc' }],
 });
 
 export const upsertCachedMessage = async (data: {
@@ -16,8 +16,26 @@ export const upsertCachedMessage = async (data: {
   timestamp: Date;
   type?: string;
   moreDetails?: any;
+  direction?: 'system' | 'received' | 'sent';
 }) => prisma.message.upsert({
   where: { platformMessageId: data.platformMessageId },
-  create: data,
-  update: data,
+  create: {
+    conversationId: data.conversationId,
+    platform: data.platform,
+    platformMessageId: data.platformMessageId,
+    content: data.text,
+    senderId: null,
+    messageTime: data.timestamp,
+    type: data.type ?? 'text',
+    platformInfo: { ...(data.moreDetails ?? {}), sender: data.sender },
+    direction: data.direction ?? 'received',
+  },
+  update: {
+    content: data.text,
+    senderId: null,
+    direction: data.direction ?? 'received',
+    messageTime: data.timestamp,
+    type: data.type ?? 'text',
+    platformInfo: { ...(data.moreDetails ?? {}), sender: data.sender },
+  },
 });
