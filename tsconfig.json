@@ -9,7 +9,6 @@
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
-    "noImplicitAny": false,
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
@@ -24,15 +23,9 @@
       }
     ],
     "paths": {
-      "@/*": [
-        "./*"
-      ],
-      "#/*": [
-        "./.neup/*"
-      ],
-      "$/*": [
-        "./base/*"
-      ]
+      "@/*": ["./*"],
+      "@neup/*": ["./@neup/*"],
+      "@base/*": ["./@base/*"]
     }
   },
   "include": [
@@ -41,8 +34,8 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
-    ".neup/**/*.ts",
-    ".neup/**/*.tsx"
+    "@neup/**/*.ts",
+    "@neup/**/*.tsx"
   ],
   "exclude": [
     "node_modules"
