@@ -46,9 +46,16 @@ next-env.d.ts
 firebase-debug.log
 firestore-debug.log
 
-# neup.standard files
-/.neup
-core
-neup.core
-logica
-neup.logica
+# # neup.standard files
+# /.neup
+# core
+# neup.core
+# logica
+# neup.logica
+
+# Neup.Standard Files
+.neup/core
+.neup/components
+.neup/logica
+
+@neup
