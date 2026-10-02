@@ -4,14 +4,14 @@ import * as React from 'react';
 import { Controller, useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Button } from '#/components/ui/button';
-import { Textarea } from '#/components/ui/textarea';
-import { Label } from '#/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '#/components/ui/select';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#/components/ui/card';
+import { Button } from '@neup/components/ui/button';
+import { Textarea } from '@neup/components/ui/textarea';
+import { Label } from '@neup/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@neup/components/ui/select';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@neup/components/ui/card';
 import { Sparkles, Clipboard, Copy, Loader2 } from 'lucide-react';
 import { generatePostVariationsAction } from '@/services/ai/generatePostVariations';
-import { useToast } from '#/core/hooks/useToast';
+import { useToast } from '@neup/core/hooks/useToast';
 
 const formSchema = z.object({
   initialPostIdea: z.string().min(10, 'Please enter a post idea of at least 10 characters.'),
