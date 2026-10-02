@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { self } from '#/logica/account/self';
+import { self } from '@neup/logica/account/self';
 
 const AUTH_START_URL = 'https://neupgroup.com/account/auth/start';
 

@@ -1,5 +1,5 @@
 import type {Config} from 'tailwindcss';
-import application from './base/application.json';
+import application from './@base/application.json';
 
 const defaultFont = 'ui-sans-serif, system-ui, sans-serif';
 const primaryFont = application.appFont?.primaryFont ?? defaultFont;

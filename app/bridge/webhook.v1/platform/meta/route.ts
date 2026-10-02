@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { processFacebookMessagesWebhook } from '@/services/inbox/facebook';
 import { verifyWebhookRequest } from '@/app/bridge/webhook.v1/_helpers';
 import { logError } from '@/services/error-logging';
-import { logger } from '#/logica/logger';
+import { logger } from '@neup/logica/logger';
 import { processInstagramWebhook } from '@/services/inbox/instagram';
 
 const ENDPOINT = '/bridge/webhook.v1/platform/meta';

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { handleLinkedInCallback } from '@/services/linkedin/callback';
 import { logError } from '@/services/error-logging';
-import { Link } from '#/components/ui/link';
+import { Link } from '@neup/components/ui/link';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);

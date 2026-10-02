@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { handleFacebookCallback } from '@/services/facebook/callback';
 import { handleInstagramCallback } from '@/services/instagram/callback';
 import { logError } from '@/services/error-logging';
-import { Link } from '#/components/ui/link';
+import { Link } from '@neup/components/ui/link';
 
 function escapeHtml(value: string) {
   return value
