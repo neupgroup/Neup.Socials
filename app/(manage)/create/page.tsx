@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
-import { cn } from '#/core/utils';
+import { cn } from '@neup/core/utils';
 import {
   Sidebar,
   SidebarProvider,
@@ -26,8 +26,8 @@ import {
 
   SidebarTrigger,
 
-} from '#/components/ui/sidebar';
-import { Button } from '#/components/ui/button';
+} from '@neup/components/ui/sidebar';
+import { Button } from '@neup/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,8 +35,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '#/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '#/components/ui/avatar';
+} from '@neup/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@neup/components/ui/avatar';
 
 const navItems = [
   { href: '/analytics', icon: LayoutGrid, label: 'Analytics' },

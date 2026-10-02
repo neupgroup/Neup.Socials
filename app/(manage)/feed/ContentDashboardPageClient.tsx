@@ -4,8 +4,8 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Button } from '#/components/ui/button';
-import { Card, CardContent } from '#/components/ui/card';
+import { Button } from '@neup/components/ui/button';
+import { Card, CardContent } from '@neup/components/ui/card';
 import {
   PlusCircle,
   Loader2,
@@ -22,8 +22,8 @@ import {
   Eye,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { Input } from '#/components/ui/input';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '#/components/ui/dropdown-menu';
+import { Input } from '@neup/components/ui/input';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@neup/components/ui/dropdown-menu';
 import { listPostsAction } from '@/services/posts/actions';
 import { refreshPostAnalyticsAction } from '@/services/facebook/post-insights';
 

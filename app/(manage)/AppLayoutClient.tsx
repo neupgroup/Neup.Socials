@@ -4,8 +4,8 @@ import * as React from 'react';
 import Link from 'next/link';
 import { Calendar, Inbox, LayoutGrid, Settings, Users, PlusSquare, FileText, Upload, ArrowRightLeft, Boxes, Activity } from 'lucide-react';
 import { usePathname, notFound } from 'next/navigation';
-import { Userbar } from '#/components/element/userbar';
-import { cn } from '#/core/utils';
+import { Userbar } from '@neup/components/element/userbar';
+import { cn } from '@neup/core/utils';
 
 const navItems = [
   { href: '/home', icon: LayoutGrid, label: 'Dashboard' }, { href: '/analytics', icon: LayoutGrid, label: 'Analytics' },

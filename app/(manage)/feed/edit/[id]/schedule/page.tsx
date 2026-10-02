@@ -3,18 +3,18 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { Button } from '#/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '#/components/ui/card';
-import { Calendar } from '#/components/ui/calendar';
-import { RadioGroup, RadioGroupItem } from '#/components/ui/radio-group';
-import { Label } from '#/components/ui/label';
-import { Popover, PopoverContent, PopoverTrigger } from '#/components/ui/popover';
-import { Input } from '#/components/ui/input';
+import { Button } from '@neup/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@neup/components/ui/card';
+import { Calendar } from '@neup/components/ui/calendar';
+import { RadioGroup, RadioGroupItem } from '@neup/components/ui/radio-group';
+import { Label } from '@neup/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@neup/components/ui/popover';
+import { Input } from '@neup/components/ui/input';
 import { Calendar as CalendarIcon, Clock, Send, Loader2 } from 'lucide-react';
 	import { format } from 'date-fns';
-	import { cn } from '#/core/utils';
+	import { cn } from '@neup/core/utils';
 	import { useRouter, useParams } from 'next/navigation';
-	import { useToast } from '#/core/hooks/useToast';
+	import { useToast } from '@neup/core/hooks/useToast';
 	import { publishPostAction } from '@/services/content/publish';
 	import { getPostCollectionAction, updatePostCollectionAction } from '@/services/posts/actions';
 

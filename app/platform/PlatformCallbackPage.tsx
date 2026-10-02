@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import data from '$/data.json';
+import data from '@base/data.json';
 
 type Platform = 'facebook' | 'instagram' | 'whatsapp' | 'linkedin';
 

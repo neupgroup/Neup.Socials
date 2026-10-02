@@ -3,8 +3,8 @@
 import * as React from 'react';
 import { useSearchParams } from 'next/navigation';
 import { CheckCircle2, Loader2, XCircle } from 'lucide-react';
-import { Card, CardContent } from '#/components/ui/card';
-import { application } from '@/base/application';
+import { Card, CardContent } from '@neup/components/ui/card';
+import { application } from '@base/application';
 
 export default function FacebookOAuthProcessor() {
   const params = useSearchParams();

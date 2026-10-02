@@ -3,18 +3,18 @@
 
 import * as React from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { Card, CardContent } from '#/components/ui/card';
+import { Card, CardContent } from '@neup/components/ui/card';
 import { Loader2, Upload, Search, FileText, MoreHorizontal } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { Input } from '#/components/ui/input';
-import { Button } from '#/components/ui/button';
+import { Input } from '@neup/components/ui/input';
+import { Button } from '@neup/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '#/components/ui/dropdown-menu';
-import { useToast } from '#/core/hooks/useToast';
+} from '@neup/components/ui/dropdown-menu';
+import { useToast } from '@neup/core/hooks/useToast';
 import { listUploadsAction } from '@/services/uploads/actions';
 
 type UploadRecord = {

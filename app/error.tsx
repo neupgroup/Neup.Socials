@@ -1,10 +1,10 @@
 'use client';
 
 import * as React from 'react';
-import { Button } from '#/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '#/components/ui/card';
+import { Button } from '@neup/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@neup/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
-import application from '@/base/application.json';
+import application from '@base/application.json';
 
 export default function GlobalError({
   error,

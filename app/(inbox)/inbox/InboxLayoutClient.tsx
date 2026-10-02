@@ -25,19 +25,19 @@ import {
 
 
 
-} from '#/components/ui/sidebar';
-import { NavButton } from '#/components/ui/navbutton';
-import { Button } from '#/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '#/components/ui/avatar';
-import { Input } from '#/components/ui/input';
-import { Badge } from '#/components/ui/badge';
-import { Sheet, SheetContent } from '#/components/ui/sheet';
-import { Userbar } from '#/components/element/userbar';
+} from '@neup/components/ui/sidebar';
+import { NavButton } from '@neup/components/ui/navbutton';
+import { Button } from '@neup/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@neup/components/ui/avatar';
+import { Input } from '@neup/components/ui/input';
+import { Badge } from '@neup/components/ui/badge';
+import { Sheet, SheetContent } from '@neup/components/ui/sheet';
+import { Userbar } from '@neup/components/element/userbar';
 import { formatDistanceToNow } from 'date-fns';
 import { listConversationsAction } from '@/services/conversations/actions';
 import type { ConversationFilter } from '@/services/conversations';
 import { listInstagramConversationsAction } from '@/services/conversations/actions';
-import { application } from '@/base/application';
+import { application } from '@base/application';
 
 const inboxNavItems = [
     { href: '/inbox', filter: undefined, icon: MessageSquare, label: 'All Messages' },

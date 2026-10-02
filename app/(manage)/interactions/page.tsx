@@ -1,5 +1,5 @@
 import { MessageCircle, ThumbsUp, Users, Send, Share2 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '#/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@neup/components/ui/card';
 import { getFacebookInteractions } from '@/services/facebook/interactions';
 
 function relativeTime(value: string) {

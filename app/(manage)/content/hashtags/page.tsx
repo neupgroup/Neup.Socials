@@ -2,9 +2,9 @@
 
 import * as React from 'react';
 import { Plus, Hash, Trash2 } from 'lucide-react';
-import { Button } from '#/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#/components/ui/card';
-import { Input } from '#/components/ui/input';
+import { Button } from '@neup/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@neup/components/ui/card';
+import { Input } from '@neup/components/ui/input';
 
 const normalizeHashtag = (value: string) => {
   const trimmed = value.trim();

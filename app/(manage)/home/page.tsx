@@ -1,8 +1,8 @@
 
 import { ArrowDown, ArrowUp, CalendarCheck2, MessageCircle, Share2, ThumbsUp, Users } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '#/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@neup/components/ui/card';
 import Link from 'next/link';
-import { Button } from '#/components/ui/button';
+import { Button } from '@neup/components/ui/button';
 import { getFacebookInteractions, type InteractionItem } from '@/services/facebook/interactions';
 import { ensureCurrentAccountAction } from '@/services/accounts/actions';
 

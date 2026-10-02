@@ -4,9 +4,9 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Button } from '#/components/ui/button';
-import { Card, CardContent } from '#/components/ui/card';
-import { Badge } from '#/components/ui/badge';
+import { Button } from '@neup/components/ui/button';
+import { Card, CardContent } from '@neup/components/ui/card';
+import { Badge } from '@neup/components/ui/badge';
 import { PlusCircle, Twitter, Facebook, Linkedin, Instagram, MoreHorizontal, Loader2, Search, RefreshCw, Edit, Trash2 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -14,7 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
-} from '#/components/ui/dropdown-menu';
+} from '@neup/components/ui/dropdown-menu';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,16 +25,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "#/components/ui/alert-dialog"
+} from "@neup/components/ui/alert-dialog"
 
 import { format, formatDistanceToNow } from 'date-fns';
-import { useToast } from '#/core/hooks/useToast';
-import { Input } from '#/components/ui/input';
+import { useToast } from '@neup/core/hooks/useToast';
+import { Input } from '@neup/components/ui/input';
 import { syncPostsAction as syncFacebookPostsAction } from '@/services/facebook/sync-posts';
 import { syncLinkedInPostsAction } from '@/services/linkedin/sync-posts';
 import { disconnectAccountAction } from '@/services/accounts';
 import { listAccountsAction } from '@/services/accounts/actions';
-import { application } from '@/base/application';
+import { application } from '@base/application';
 
 type Account = {
   id: string;

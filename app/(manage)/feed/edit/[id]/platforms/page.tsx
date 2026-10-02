@@ -4,12 +4,12 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
-import { Button } from '#/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '#/components/ui/card';
-import { Checkbox } from '#/components/ui/checkbox';
+import { Button } from '@neup/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@neup/components/ui/card';
+import { Checkbox } from '@neup/components/ui/checkbox';
 import { Facebook, Instagram, Twitter, Linkedin, Loader2 } from 'lucide-react';
-import { useToast } from '#/core/hooks/useToast';
-import { Avatar, AvatarFallback } from '#/components/ui/avatar';
+import { useToast } from '@neup/core/hooks/useToast';
+import { Avatar, AvatarFallback } from '@neup/components/ui/avatar';
 import { listAccountsAction } from '@/services/accounts/actions';
 import { getPostCollectionAction, updatePostCollectionAction } from '@/services/posts/actions';
 

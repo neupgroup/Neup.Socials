@@ -4,17 +4,17 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
-import { Button } from '#/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '#/components/ui/card';
-import { Textarea } from '#/components/ui/textarea';
+import { Button } from '@neup/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@neup/components/ui/card';
+import { Textarea } from '@neup/components/ui/textarea';
 import { UploadCloud, ArrowLeft, Loader2, Image as ImageIcon, Search, CheckCircle, Facebook } from 'lucide-react';
-import { Label } from '#/components/ui/label';
-import { useToast } from '#/core/hooks/useToast';
+import { Label } from '@neup/components/ui/label';
+import { useToast } from '@neup/core/hooks/useToast';
 import { recordUpload, UploadRecord } from '@/services/uploads/recordUpload';
-import { Progress } from '#/components/ui/progress';
+import { Progress } from '@neup/components/ui/progress';
 import Image from 'next/image';
-import { Input } from '#/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '#/components/ui/select';
+import { Input } from '@neup/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@neup/components/ui/select';
 import { getPostCollectionAction, updatePostCollectionAction } from '@/services/posts/actions';
 import { listAllUploadsAction } from '@/services/uploads/actions';
 

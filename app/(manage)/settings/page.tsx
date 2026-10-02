@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ArrowRight, BookUser, MessageCircle, Settings2, Users } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '#/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@neup/components/ui/card';
 
 const settingsSections = [
   { href: '/settings/accounts', title: 'Platform accounts', description: 'View accounts created and stored on this platform.', icon: BookUser },

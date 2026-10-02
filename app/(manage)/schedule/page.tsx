@@ -1,20 +1,20 @@
 'use client';
 
 import * as React from 'react';
-import { Button } from '#/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '#/components/ui/card';
-import { Calendar } from '#/components/ui/calendar';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from '#/components/ui/sheet';
-import { Textarea } from '#/components/ui/textarea';
-import { Label } from '#/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '#/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '#/components/ui/popover';
+import { Button } from '@neup/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@neup/components/ui/card';
+import { Calendar } from '@neup/components/ui/calendar';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from '@neup/components/ui/sheet';
+import { Textarea } from '@neup/components/ui/textarea';
+import { Label } from '@neup/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@neup/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@neup/components/ui/popover';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, isSameDay } from 'date-fns';
-import { cn } from '#/core/utils';
+import { cn } from '@neup/core/utils';
 import { AIContentAssistant } from '@/components/ai-content-assistant';
-import { Separator } from '#/components/ui/separator';
-import { Badge } from '#/components/ui/badge';
+import { Separator } from '@neup/components/ui/separator';
+import { Badge } from '@neup/components/ui/badge';
 
 // Mock scheduled posts data
 const mockScheduledPosts = [

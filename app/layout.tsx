@@ -3,8 +3,8 @@
 
 import * as React from 'react';
 import './globals.css';
-import RootLayoutShell from '#/components/layout/RootLayout';
-import { application, getApplicationRadius, getGoogleFontUrl, getHslChannels } from '@/base/application';
+import RootLayoutShell from '@neup/components/layout/RootLayout';
+import { application, getApplicationRadius, getGoogleFontUrl, getHslChannels } from '@base/application';
 
 const FacebookSdkLoader = () => {
   React.useEffect(() => {

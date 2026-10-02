@@ -1,7 +1,7 @@
 import Link from 'next/link';
-import { Badge } from '#/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '#/components/ui/avatar';
+import { Badge } from '@neup/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@neup/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@neup/components/ui/avatar';
 import { listLocalAccountsAction } from '@/services/accounts/actions';
 
 type LocalAccount = {
