@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -21,10 +20,6 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
     Sidebar,
     SidebarProvider,
-
-
-
-
 } from '@neup/components/ui/sidebar';
 import { NavButton } from '@neup/components/ui/navbutton';
 import { Button } from '@neup/components/ui/button';
@@ -89,18 +84,22 @@ const getPlatformColor = (platform: string) => {
 };
 
 function ConversationListSkeleton() {
-    return <div className="space-y-1 px-1" aria-label="Loading conversations">
-        {Array.from({ length: 6 }, (_, index) => <div key={index} className="flex items-start gap-3 rounded-lg px-3 py-2.5">
-            <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-muted" />
-            <div className="min-w-0 flex-1 space-y-2 pt-1">
-                <div className="flex justify-between gap-2">
-                    <div className="h-3.5 w-28 animate-pulse rounded bg-muted" />
-                    <div className="h-3 w-12 animate-pulse rounded bg-muted/70" />
+    return (
+        <div className="space-y-1 px-1" aria-label="Loading conversations">
+            {Array.from({ length: 6 }, (_, index) => (
+                <div key={index} className="flex items-start gap-3 rounded-lg px-3 py-2.5">
+                    <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-muted" />
+                    <div className="min-w-0 flex-1 space-y-2 pt-1">
+                        <div className="flex justify-between gap-2">
+                            <div className="h-3.5 w-28 animate-pulse rounded bg-muted" />
+                            <div className="h-3 w-12 animate-pulse rounded bg-muted/70" />
+                        </div>
+                        <div className="h-3 w-40 animate-pulse rounded bg-muted/70" />
+                    </div>
                 </div>
-                <div className="h-3 w-40 animate-pulse rounded bg-muted/70" />
-            </div>
-        </div>)}
-    </div>;
+            ))}
+        </div>
+    );
 }
 
 // Sidebar content component for reuse
@@ -136,7 +135,9 @@ function InboxSidebarContent({
         const element = scrollRef.current;
         if (!element || loading || loadingMore || !hasMore) return;
 
-        const scrollProgress = (element.scrollTop + element.clientHeight) / element.scrollHeight;
+        const scrollProgress =
+            (element.scrollTop + element.clientHeight) / element.scrollHeight;
+
         if (scrollProgress >= 0.7) onLoadMore();
     };
 
@@ -151,7 +152,11 @@ function InboxSidebarContent({
                 </Link>
             </div>
 
-            <div ref={scrollRef} onScroll={handleScroll} className="flex-1 space-y-6 overflow-y-auto p-3">
+            <div
+                ref={scrollRef}
+                onScroll={handleScroll}
+                className="flex-1 space-y-6 overflow-y-auto p-3"
+            >
                 {/* Search Bar */}
                 <div className="px-3 py-2">
                     <div className="relative">
@@ -166,36 +171,48 @@ function InboxSidebarContent({
 
                 {/* Navigation Items */}
                 <section className="space-y-2">
-                    <p className="px-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Messages</p>
+                    <p className="px-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                        Messages
+                    </p>
                     <div className="space-y-1">
-                            {inboxNavItems.map((item) => (
-                                <li key={item.href}>
-                                    <NavButton
-                                        type="button"
-                                        active={item.filter ? filter === item.filter : pathname === item.href}
-                                        variant="text"
-                                        className="w-full justify-start hover:!bg-transparent hover:!text-foreground active:!bg-transparent active:!text-foreground data-[active=true]:!bg-primary/20 data-[active=true]:!text-primary data-[active=true]:hover:!bg-primary/30"
-                                        onClick={() => router.push(item.href)}
-                                    >
-                                        <item.icon className="h-4 w-4" />
-                                        <span>{item.label}</span>
-                                        {(item.count !== undefined || item.label === 'All Messages' || item.filter === 'unread') && (
-                                            <Badge
-                                                variant="secondary"
-                                                className="ml-auto h-5 px-1.5 text-xs"
-                                            >
-                                                {item.label === 'All Messages' ? allMessagesCount : item.filter === 'unread' ? unreadCount : item.count}
-                                            </Badge>
-                                        )}
-                                    </NavButton>
-                                </li>
-                            ))}
-                        </div>
+                        {inboxNavItems.map((item) => (
+                            <li key={item.href}>
+                                <NavButton
+                                    type="button"
+                                    active={
+                                        item.filter
+                                            ? filter === item.filter
+                                            : pathname === item.href
+                                    }
+                                    variant="text"
+                                    className="w-full justify-start hover:!bg-transparent hover:!text-foreground active:!bg-transparent active:!text-foreground data-[active=true]:!bg-primary/20 data-[active=true]:!text-primary data-[active=true]:hover:!bg-primary/30"
+                                    onClick={() => router.push(item.href)}
+                                >
+                                    <item.icon className="h-4 w-4" />
+                                    <span>{item.label}</span>
+
+                                    {(item.label === 'All Messages' ||
+                                        item.filter === 'unread') && (
+                                        <Badge
+                                            variant="secondary"
+                                            className="ml-auto h-5 px-1.5 text-xs"
+                                        >
+                                            {item.label === 'All Messages'
+                                                ? allMessagesCount
+                                                : unreadCount}
+                                        </Badge>
+                                    )}
+                                </NavButton>
+                            </li>
+                        ))}
+                    </div>
                 </section>
 
                 {/* Filter Tags */}
                 <section className="space-y-2">
-                    <p className="px-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Filters</p>
+                    <p className="px-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                        Filters
+                    </p>
                     <div>
                         <div className="flex flex-wrap gap-1.5 px-2">
                             {filterTags.map((tag) => (
@@ -215,16 +232,27 @@ function InboxSidebarContent({
 
                 {/* Channel Tags */}
                 <section className="space-y-2">
-                    <p className="px-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Channels</p>
+                    <p className="px-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                        Channels
+                    </p>
                     <div>
                         <div className="flex flex-wrap gap-1.5 px-2">
                             {channelTags.map((tag) => (
-                                <Link key={tag.platform} href={`/inbox?platform=${tag.platform}`}>
+                                <Link
+                                    key={tag.platform}
+                                    href={`/inbox?platform=${tag.platform}`}
+                                >
                                     <Badge
-                                        variant={platform === tag.platform ? "default" : "outline"}
+                                        variant={
+                                            platform === tag.platform
+                                                ? "default"
+                                                : "outline"
+                                        }
                                         className="cursor-pointer hover:bg-accent transition-colors"
                                     >
-                                        <div className={`h-2 w-2 rounded-full ${tag.color} mr-1.5`} />
+                                        <div
+                                            className={`h-2 w-2 rounded-full ${tag.color} mr-1.5`}
+                                        />
                                         {tag.label}
                                     </Badge>
                                 </Link>
@@ -235,7 +263,9 @@ function InboxSidebarContent({
 
                 {/* Conversations List */}
                 <section className="space-y-2">
-                    <p className="px-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Conversations</p>
+                    <p className="px-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                        Conversations
+                    </p>
                     <div>
                         {loading ? (
                             <ConversationListSkeleton />
@@ -248,41 +278,64 @@ function InboxSidebarContent({
                                 {conversations.map((conversation) => (
                                     <Link
                                         key={conversation.id}
-                                        href={platform || filter
-                                            ? `/inbox/${conversation.id}?${new URLSearchParams({
-                                                ...(platform ? { platform } : {}),
-                                                ...(filter ? { filter } : {}),
-                                            }).toString()}`
-                                            : `/inbox/${conversation.id}`}
+                                        href={
+                                            platform || filter
+                                                ? `/inbox/${conversation.id}?${new URLSearchParams({
+                                                      ...(platform ? { platform } : {}),
+                                                      ...(filter ? { filter } : {}),
+                                                  }).toString()}`
+                                                : `/inbox/${conversation.id}`
+                                        }
                                         className="block"
                                     >
-                                        <div className={`flex items-start gap-3 rounded-lg px-3 py-2.5 transition-colors cursor-pointer ${pathname === `/inbox/${conversation.id}` ? 'bg-accent' : 'hover:bg-accent'}`}>
+                                        <div
+                                            className={`flex items-start gap-3 rounded-lg px-3 py-2.5 transition-colors cursor-pointer ${
+                                                pathname === `/inbox/${conversation.id}`
+                                                    ? 'bg-accent'
+                                                    : 'hover:bg-accent'
+                                            }`}
+                                        >
                                             <div className="relative flex-shrink-0">
                                                 <Avatar className="h-10 w-10">
                                                     <AvatarImage
                                                         src={`https://placehold.co/40x40?text=${conversation.avatar}`}
                                                         alt={conversation.contactName}
                                                     />
-                                                    <AvatarFallback>{conversation.avatar}</AvatarFallback>
+                                                    <AvatarFallback>
+                                                        {conversation.avatar}
+                                                    </AvatarFallback>
                                                 </Avatar>
-                                                <div className={`absolute -top-1 -right-1 h-4 w-4 rounded-full ${getPlatformColor(conversation.platform)} border-2 border-background`} />
+
+                                                <div
+                                                    className={`absolute -top-1 -right-1 h-4 w-4 rounded-full ${getPlatformColor(
+                                                        conversation.platform
+                                                    )} border-2 border-background`}
+                                                />
                                             </div>
+
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center justify-between gap-2 mb-0.5">
                                                     <p className="text-sm font-semibold truncate">
                                                         {conversation.contactName}
                                                     </p>
+
                                                     <span className="text-xs text-muted-foreground flex-shrink-0">
                                                         {conversation.lastMessageAt
-                                                            ? formatDistanceToNow(new Date(conversation.lastMessageAt), { addSuffix: true })
-                                                            : ''
-                                                        }
+                                                            ? formatDistanceToNow(
+                                                                  new Date(
+                                                                      conversation.lastMessageAt
+                                                                  ),
+                                                                  { addSuffix: true }
+                                                              )
+                                                            : ''}
                                                     </span>
                                                 </div>
+
                                                 <div className="flex items-center justify-between gap-2">
                                                     <p className="text-xs text-muted-foreground truncate">
                                                         {conversation.lastMessage}
                                                     </p>
+
                                                     {conversation.unread && (
                                                         <div className="h-2 w-2 rounded-full bg-primary flex-shrink-0" />
                                                     )}
@@ -291,6 +344,7 @@ function InboxSidebarContent({
                                         </div>
                                     </Link>
                                 ))}
+
                                 {loadingMore && (
                                     <div className="px-3 py-3 text-center text-xs text-muted-foreground">
                                         Loading more...
@@ -314,7 +368,7 @@ function InboxSidebarContent({
     );
 }
 
-export default function InboxLayoutClient({
+function InboxLayoutClientContent({
     children,
     initialAccount,
 }: Readonly<{
@@ -324,7 +378,9 @@ export default function InboxLayoutClient({
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const platform = searchParams.get('platform')?.toLowerCase() || undefined;
-    const filter = (searchParams.get('filter') as ConversationFilter | null) || undefined;
+    const filter =
+        (searchParams.get('filter') as ConversationFilter | null) || undefined;
+
     const [conversations, setConversations] = React.useState<Conversation[]>([]);
     const [loading, setLoading] = React.useState(true);
     const [loadingMore, setLoadingMore] = React.useState(false);
@@ -337,8 +393,15 @@ export default function InboxLayoutClient({
 
     const fetchConversations = React.useCallback(async () => {
         const requestId = ++fetchRequestRef.current;
+
         try {
-            const result = await listConversationsAction({ skip: 0, take: 10, platform, filter });
+            const result = await listConversationsAction({
+                skip: 0,
+                take: 10,
+                platform,
+                filter,
+            });
+
             if (requestId === fetchRequestRef.current) {
                 setConversations(result.items as Conversation[]);
                 setHasMore(result.hasMore);
@@ -356,10 +419,22 @@ export default function InboxLayoutClient({
 
     const loadMoreConversations = React.useCallback(async () => {
         if (loadingMore || !hasMore) return;
+
         setLoadingMore(true);
+
         try {
-            const result = await listConversationsAction({ skip: conversations.length, take: 10, platform, filter });
-            setConversations((current) => [...current, ...(result.items as Conversation[])]);
+            const result = await listConversationsAction({
+                skip: conversations.length,
+                take: 10,
+                platform,
+                filter,
+            });
+
+            setConversations((current) => [
+                ...current,
+                ...(result.items as Conversation[]),
+            ]);
+
             setHasMore(result.hasMore);
         } catch (error) {
             console.error('Error loading more conversations:', error);
@@ -381,6 +456,7 @@ export default function InboxLayoutClient({
         if (platform === 'instagram') return;
 
         void fetchConversations();
+
         const interval = window.setInterval(() => {
             void fetchConversations();
         }, 10000);
@@ -392,6 +468,7 @@ export default function InboxLayoutClient({
 
     React.useEffect(() => {
         if (platform !== 'instagram') return;
+
         let active = true;
 
         const syncInstagramConversations = async () => {
@@ -414,7 +491,7 @@ export default function InboxLayoutClient({
 
     return (
         <SidebarProvider>
-                <div className="flex min-h-screen w-full">
+            <div className="flex min-h-screen w-full">
                 {/* Desktop Sidebar */}
                 <Sidebar className="hidden md:flex border-r">
                     <InboxSidebarContent
@@ -465,11 +542,14 @@ export default function InboxLayoutClient({
                         >
                             <Menu className="h-5 w-5" />
                         </Button>
+
                         <h1 className="text-lg font-semibold">Inbox</h1>
+
                         <div className="ml-auto flex items-center gap-2">
                             <Button variant="ghost" size="icon">
                                 <Search className="h-4 w-4" />
                             </Button>
+
                             <Userbar
                                 displayName={account?.displayName ?? ''}
                                 displayImage={account?.displayImage}
@@ -481,7 +561,20 @@ export default function InboxLayoutClient({
                     {/* Page Content */}
                     <div className="flex-1">{children}</div>
                 </main>
-                </div>
+            </div>
         </SidebarProvider>
+    );
+}
+
+export default function InboxLayoutClient(
+    props: Readonly<{
+        children: React.ReactNode;
+        initialAccount: CurrentAccount;
+    }>
+) {
+    return (
+        <React.Suspense fallback={null}>
+            <InboxLayoutClientContent {...props} />
+        </React.Suspense>
     );
 }
