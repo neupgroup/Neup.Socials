@@ -2,7 +2,7 @@
 
 import { getConversation } from '@/services/conversations';
 import { recordOutgoingMessageAction } from '@/services/messages/actions';
-import { decrypt } from '#/core/helpers/crypto';
+import { decrypt } from '@neup/core/helpers/crypto';
 import { getInboxAccount } from '@/services/inbox/account-data';
 import { sendInstagramReply } from './send-reply';
 

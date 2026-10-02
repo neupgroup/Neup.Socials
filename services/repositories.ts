@@ -8,8 +8,8 @@ data-store dependency.
 ::end
 */
 
-import { prisma } from '#/core/database/prisma';
-import { logger } from '#/logica/logger';
+import { prisma } from '@neup/core/database/prisma';
+import { logger } from '@neup/logica/logger';
 
 type Delegate = any;
 const model = (name: string): Delegate => (prisma as any)[name];

@@ -1,6 +1,6 @@
 'use server';
 
-import data from '$/data.json';
+import data from '@base/data.json';
 
 const GRAPH_API_BASE_URL = 'https://graph.instagram.com/v23.0';
 

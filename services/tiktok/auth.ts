@@ -1,9 +1,9 @@
 'use server';
 
 import crypto from 'crypto';
-import { generateRandomState } from '#/core/helpers/crypto';
-import { getEnvVariable } from '#/core/helpers/env';
-import data from '$/data.json';
+import { generateRandomState } from '@neup/core/helpers/crypto';
+import { getEnvVariable } from '@neup/core/helpers/env';
+import data from '@base/data.json';
 
 export function getTikTokCredentials() {
   const clientKey = getEnvVariable('SOCIALS_TIKTOK_CLIENT_KEY');

@@ -1,6 +1,6 @@
 'use server';
 
-import { prisma } from '#/core/database/prisma';
+import { prisma } from '@neup/core/database/prisma';
 
 /** Resolve either the connected-account record ID or the platform's account ID. */
 export const getInboxAccount = async (id: string) => {

@@ -1,5 +1,5 @@
 import { dataStore } from '@/services/repositories';
-import { decrypt } from '#/core/helpers/crypto';
+import { decrypt } from '@neup/core/helpers/crypto';
 
 export const FACEBOOK_GRAPH_API_VERSION = 'v26.0';
 const GRAPH_API_BASE_URL = `https://graph.facebook.com/${FACEBOOK_GRAPH_API_VERSION}`;

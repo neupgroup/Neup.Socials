@@ -1,8 +1,8 @@
 'use server';
 
-import { self } from '#/logica/account/self';
-import { getAccountBasics } from '#/logica/account/lookup';
-import { logger } from '#/logica/logger';
+import { self } from '@neup/logica/account/self';
+import { getAccountBasics } from '@neup/logica/account/lookup';
+import { logger } from '@neup/logica/logger';
 import { buildTextSearchWhere } from '@/services/searches/text-search';
 import {
   countAccounts,

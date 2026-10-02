@@ -4,9 +4,9 @@
  */
 'use server';
 
-import { generateRandomState } from '#/core/helpers/crypto';
+import { generateRandomState } from '@neup/core/helpers/crypto';
 import { logError } from '@/services/error-logging';
-import data from '$/data.json';
+import data from '@base/data.json';
 
 const INSTAGRAM_OAUTH_BASE_URL = 'https://www.instagram.com/oauth/authorize';
 const INSTAGRAM_AUTH_SCOPES = [

@@ -3,10 +3,10 @@
 
 import { dataStore } from '@/services/repositories';
 import { logError } from '@/services/error-logging';
-import { decrypt } from '#/core/helpers/crypto';
+import { decrypt } from '@neup/core/helpers/crypto';
 import { getPageCommentById } from '@/services/facebook/comments-api';
 import { getPageScopedProfile } from '@/services/facebook/comments-api';
-import { logger } from '#/logica/logger';
+import { logger } from '@neup/logica/logger';
 
 /**
  * Processes the incoming webhook payload from Facebook.

@@ -1,4 +1,4 @@
-import { prisma } from '#/core/database/prisma';
+import { prisma } from '@neup/core/database/prisma';
 import { logError } from '@/services/error-logging';
 import { processInstagramLiveCommentsWebhook } from '@/services/inbox/instagram-live-comments';
 import { receiveInstagramMessages } from '@/services/instagram/receive-messages';

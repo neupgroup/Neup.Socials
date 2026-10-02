@@ -2,7 +2,7 @@
 
 import * as mime from 'mime-types';
 
-import { Link } from '#/components/ui/link';
+import { Link } from '@neup/components/ui/link';
 
 const INSTAGRAM_GRAPH_API_BASE_URL = 'https://graph.instagram.com/v25.0';
 

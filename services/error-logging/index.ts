@@ -4,7 +4,7 @@
  * @fileoverview Application error logging adapter backed by Logica's logger object.
  */
 
-import { logger } from '#/logica/logger';
+import { logger } from '@neup/logica/logger';
 
 export type ErrorLog = {
   timestamp: any;

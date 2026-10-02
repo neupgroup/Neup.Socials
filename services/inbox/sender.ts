@@ -3,7 +3,7 @@
 import { logError } from "@/services/error-logging";
 import { sendTextMessage as sendWhatsAppMessage } from '@/services/whatsapp/api.send-message';
 import { sendFacebookMessage } from '@/services/platform/facebook/message.send';
-import { decrypt } from "#/core/helpers/crypto";
+import { decrypt } from "@neup/core/helpers/crypto";
 import { recordOutgoingMessageAction } from '@/services/messages/actions';
 import { getInboxAccount } from '@/services/inbox/account-data';
 

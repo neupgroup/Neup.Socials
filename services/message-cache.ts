@@ -1,6 +1,6 @@
 'use server';
 
-import { prisma } from '#/core/database/prisma';
+import { prisma } from '@neup/core/database/prisma';
 
 export const listCachedMessages = async (conversationId: string) => prisma.message.findMany({
   where: { conversationId },

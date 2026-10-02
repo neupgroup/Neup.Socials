@@ -1,7 +1,7 @@
 'use server';
 
 import { dataStore } from '@/services/repositories';
-import { decrypt } from '#/core/helpers/crypto';
+import { decrypt } from '@neup/core/helpers/crypto';
 import { instagramRequest } from '@/services/instagram/comments/shared';
 
 type InstagramDeleteResponse = {

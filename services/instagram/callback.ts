@@ -9,10 +9,10 @@ import {
   exchangeForLongLivedToken,
   getUserProfile,
 } from '../../services/instagram/api';
-import { validateState, encrypt } from '#/core/helpers/crypto';
+import { validateState, encrypt } from '@neup/core/helpers/crypto';
 import { dataStore } from '@/services/repositories';
 import { logError } from '@/services/error-logging';
-import data from '$/data.json';
+import data from '@base/data.json';
 
 /**
  * Handles the OAuth callback from Instagram. It exchanges the authorization code

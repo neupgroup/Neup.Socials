@@ -3,7 +3,7 @@
 import { countConversations, getConversation, listConversations, type ConversationFilter } from '@/services/conversations';
 import { listMessagesByConversationId } from '@/services/messages';
 import { listAccounts } from '@/services/accounts';
-import { decrypt } from '#/core/helpers/crypto';
+import { decrypt } from '@neup/core/helpers/crypto';
 import { getInstagramConversations } from '@/services/platform/instagram/conversations.list';
 import { getInstagramConversationMessages, type InstagramConversationMessagesResponse } from '@/services/platform/instagram/conversation.messages.list';
 import { findConversationByContactAndChannel, findConversationByPlatformId, createConversation, updateConversation } from '@/services/conversations';

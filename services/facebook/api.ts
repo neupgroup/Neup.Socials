@@ -11,7 +11,7 @@
  */
 'use server';
 import * as mime from 'mime-types';
-import data from '$/data.json';
+import data from '@base/data.json';
 
 const API_VERSION = 'v25.0';
 const GRAPH_API_BASE_URL = `https://graph.facebook.com/${API_VERSION}`;
