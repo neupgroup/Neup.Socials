@@ -6,7 +6,7 @@
     "setup": "chmod +x ./setup.sh && ./setup.sh",
     "prebuild": "npm run setup",
     "predev": "npm run setup",
-    "dev": "next dev --experimental-https --turbopack --port 7624",
+    "dev": "next dev --hostname dev.neupgroup.com --experimental-https --turbopack --port 7624",
     "build": "next build",
     "start": "next start --port 7624",
     "lint": "next lint",
