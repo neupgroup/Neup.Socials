@@ -53,7 +53,10 @@ export async function listAccountsAction({ owner, search, skip = 0 }: {
   ]);
 
   return {
-    items: accounts.map((account) => serializeAccount(account)!),
+    items: accounts.map(
+      (account: NonNullable<Awaited<ReturnType<typeof getAccount>>>) =>
+        serializeAccount(account)!
+    ),
     hasMore: skip + accounts.length < total,
   };
 }
@@ -159,12 +162,18 @@ export async function getAccountAction(id: string) {
 
 export async function getAccountsByIdsAction(ids: string[]) {
   const accounts = await getAccountsByIds(ids);
-  return accounts.map((account) => serializeAccount(account)!);
+  return accounts.map(
+    (account: NonNullable<Awaited<ReturnType<typeof getAccount>>>) =>
+      serializeAccount(account)!
+  );
 }
 
 export async function getWhatsAppAccountsAction() {
   const accounts = await getWhatsAppAccounts();
-  return accounts.map((account) => serializeAccount(account)!);
+  return accounts.map(
+    (account: NonNullable<Awaited<ReturnType<typeof getAccount>>>) =>
+      serializeAccount(account)!
+  );
 }
 
 export async function createConnectedAccountAction(data: {

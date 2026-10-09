@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@neup/components/ui/button';
 import { Card, CardContent } from '@neup/components/ui/card';
+import { listAllAccountsAction } from '@/services/accounts/actions';
 import {
   PlusCircle,
   Loader2,
@@ -105,6 +106,8 @@ const PAGE_SIZE = 15;
 
 export default function ContentDashboardPageClient() {
   const [posts, setPosts] = React.useState<Post[]>([]);
+  const [accounts, setAccounts] = React.useState<any[]>([]);
+  const [accountsLoading, setAccountsLoading] = React.useState(true);
   const [loading, setLoading] = React.useState(true);
   const [loadingMore, setLoadingMore] = React.useState(false);
   const [hasMore, setHasMore] = React.useState(true);
@@ -115,6 +118,32 @@ export default function ContentDashboardPageClient() {
   const [searchTerm, setSearchTerm] = React.useState(queryFromUrl);
 
   const router = useRouter();
+
+React.useEffect(() => {
+  let cancelled = false;
+
+  const loadAccounts = async () => {
+    try {
+      const result = await listAllAccountsAction();
+
+      if (!cancelled) {
+        setAccounts(result);
+      }
+    } catch (error) {
+      console.error('Error loading accounts:', error);
+    } finally {
+      if (!cancelled) {
+        setAccountsLoading(false);
+      }
+    }
+  };
+
+  void loadAccounts();
+
+  return () => {
+    cancelled = true;
+  };
+}, []);
 
   React.useEffect(() => {
     if (queryFromUrl !== searchTerm) {
@@ -225,6 +254,42 @@ export default function ContentDashboardPageClient() {
           <h1 className="text-3xl font-bold">Feed</h1>
           <p className="text-muted-foreground">A unified feed of all your published posts.</p>
         </div>
+      </div>
+      <div className="space-y-2">
+        <label
+          htmlFor="feed-account-filter"
+          className="text-sm font-medium"
+        >
+          Filter by account
+        </label>
+
+        <select
+          id="feed-account-filter"
+          value={accountIdFromUrl}
+          disabled={accountsLoading}
+          onChange={(event) => {
+            const params = new URLSearchParams(searchParams.toString());
+            const selectedAccountId = event.target.value;
+
+            if (selectedAccountId) {
+              params.set('accountId', selectedAccountId);
+            } else {
+              params.delete('accountId');
+            }
+
+            const queryString = params.toString();
+            router.push(queryString ? `${pathname}?${queryString}` : pathname);
+          }}
+          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+        >
+          <option value="">All Accounts</option>
+
+          {accounts.map((account) => (
+            <option key={account.id} value={account.id}>
+              {account.name || account.username || account.platform || account.id}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="relative">
