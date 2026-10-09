@@ -32,7 +32,13 @@ const nextConfig: NextConfig = {
         hostname: 'cdn.neupgroup.com',
         port: '',
         pathname: '/**',
-      }
+      },
+      {
+        protocol: 'https',
+        hostname: '**.fbcdn.net',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 };
