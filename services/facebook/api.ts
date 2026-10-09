@@ -119,12 +119,37 @@ export type PageInsightsQueryContext = {
   showDescription?: boolean;
 };
 
+type FacebookAttachment = {
+  media?: {
+    image?: {
+      src?: string;
+      width?: number;
+      height?: number;
+    };
+    source?: string;
+    type?: string;
+  };
+  target?: {
+    id?: string;
+    url?: string;
+  };
+  type?: string;
+  url?: string;
+  subattachments?: {
+    data?: FacebookAttachment[];
+  };
+};
+
 type PagePost = {
   id: string;
   created_time: string;
   message?: string;
   story?: string;
   permalink_url: string;
+  full_picture?: string;
+  attachments?: {
+    data?: FacebookAttachment[];
+  };
   shares?: {
     count?: number;
   };
@@ -138,7 +163,8 @@ type PagePost = {
       total_count?: number;
     };
   };
-}
+};
+
 
 export type PageFeedResponse = {
   data: PagePost[];
@@ -365,6 +391,7 @@ export async function getPagePostInsights(
  * @param until The end unix timestamp for the query.
  * @returns The response from the Facebook API containing the feed data.
  */
+
 export async function getPosts(
   pageId: string,
   pageToken: string,
@@ -373,20 +400,26 @@ export async function getPosts(
 ): Promise<PageFeedResponse> {
   const params = new URLSearchParams({
     access_token: pageToken,
-    fields: 'id,created_time,message,story,permalink_url,shares,reactions.summary(total_count).limit(0),comments.summary(total_count).limit(0)',
-    limit: '100', // Fetch up to 100 posts per request
+    fields:
+      'id,created_time,message,story,permalink_url,full_picture,attachments{media,type,target,url,subattachments},shares,reactions.summary(total_count).limit(0),comments.summary(total_count).limit(0)',
+    limit: '100',
   });
 
   if (since) {
     params.append('since', String(since));
   }
+
   if (until) {
     params.append('until', String(until));
   }
 
-  const res = await fetch(`${GRAPH_API_BASE_URL}/${pageId}/feed?${params.toString()}`);
+  const res = await fetch(
+    `${GRAPH_API_BASE_URL}/${pageId}/feed?${params.toString()}`
+  );
+
   return handleApiResponse<PageFeedResponse>(res);
 }
+
 
 /**
  * Installs this app on the page for webhook delivery with selected fields.
