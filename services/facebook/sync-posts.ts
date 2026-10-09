@@ -85,7 +85,7 @@ export async function syncPostsAction(accountId: string, options?: { since?: num
 
     const pageToken = await decrypt(account.encryptedToken);
     const pageId = account.platformId;
-    
+
     let since: number;
     let until: number;
 
@@ -127,9 +127,44 @@ export async function syncPostsAction(accountId: string, options?: { since?: num
 
     const platformPostIds = fetchedPosts.map(p => p.id);
     const existingPosts = await dataStore.posts.findExistingPlatformPostIds(accountId, platformPostIds);
-    const existingPostIds = new Set(existingPosts.map((post) => post.platformPostId).filter(Boolean) as string[]);
 
-    const newPosts = fetchedPosts.filter(p => !existingPostIds.has(p.id));
+    const existingPostIds = new Set<string>(
+      existingPosts
+        .map((post: { platformPostId: string | null }) => post.platformPostId)
+        .filter((id: string | null): id is string => Boolean(id))
+    );
+
+    const existingPostsByPlatformId = new Map<
+      string,
+      { id: string; platformPostId: string | null; mediaUrls: string[] }
+    >(
+      existingPosts
+        .filter(
+          (post: { id: string; platformPostId: string | null; mediaUrls: string[] }) =>
+            Boolean(post.platformPostId)
+        )
+        .map(
+          (post: { id: string; platformPostId: string | null; mediaUrls: string[] }) =>
+            [post.platformPostId as string, post]
+        )
+    );
+
+    for (const facebookPost of fetchedPosts) {
+      const existingPost = existingPostsByPlatformId.get(facebookPost.id);
+
+      if (
+        existingPost &&
+        (!existingPost.mediaUrls || existingPost.mediaUrls.length === 0) &&
+        facebookPost.full_picture
+      ) {
+        await dataStore.posts.update(existingPost.id, {
+          mediaUrls: [facebookPost.full_picture],
+        });
+      }
+    }
+
+    const newPosts = fetchedPosts.filter((post) => !existingPostIds.has(post.id));
+
 
     if (newPosts.length > 0) {
       await dataStore.posts.createMany(
@@ -139,6 +174,7 @@ export async function syncPostsAction(accountId: string, options?: { since?: num
           platformPostId: post.id,
           message: post.message || post.story || '',
           postLink: post.permalink_url,
+          mediaUrls: post.full_picture ? [post.full_picture] : [],
           createdOn: new Date(post.created_time),
           createdBy: account.owner,
           analytics: {
@@ -150,14 +186,14 @@ export async function syncPostsAction(accountId: string, options?: { since?: num
         }))
       );
     }
-    
+
     if (!options) {
       await dataStore.accounts.update(accountId, {
         lastSyncedAt: new Date(),
         updatedAt: new Date(),
       });
     }
-    
+
     await createSyncLog(accountId, 'Success', {
       postsSynced: newPosts.length,
       range: {

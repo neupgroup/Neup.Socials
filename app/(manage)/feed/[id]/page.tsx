@@ -516,7 +516,10 @@ export default function ViewPostPage() {
 
         if (!postData.accountId && isFacebookPlatform(postData.platform) && collectionData?.accountIds?.length) {
           const accounts = await getAccountsByIdsAction(collectionData.accountIds);
-          const facebookAccount = accounts.find((account) => (account.platform || '').toLowerCase() === 'facebook');
+          const facebookAccount = accounts.find(
+            (account: { platform?: string | null; id: string }) =>
+              (account.platform || '').toLowerCase() === 'facebook'
+          );
           if (facebookAccount?.id) {
             postData.accountId = facebookAccount.id;
           }
@@ -603,7 +606,29 @@ export default function ViewPostPage() {
             <p className="whitespace-pre-wrap text-muted-foreground p-4 border rounded-lg bg-muted/20">{post.message}</p>
 
             {isFacebookPlatform(post.platform) && (
-              <FacebookPostVideo postId={post.id} platform={post.platform} />
+              post.postLink ? (
+                <div className="flex justify-center overflow-hidden rounded-lg border bg-muted/20 p-3">
+                  <iframe
+                    title="Facebook published post"
+                    src={
+                      `https://www.facebook.com/plugins/${
+                       /\/(reel|videos?)\//i.test(post.postLink ?? '')
+                        ? 'video'
+                        : 'post'
+                      }.php?href=${encodeURIComponent(post.postLink)}&show_text=true&width=500`
+                    }
+                    width="500"
+                    height="650"
+                    style={{ border: 'none', overflow: 'hidden', maxWidth: '100%' }}
+                    scrolling="no"
+                    frameBorder="0"
+                    allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                    allowFullScreen
+                  />
+                </div>
+              ) : (
+                <FacebookPostVideo postId={post.id} platform={post.platform} />
+              )
             )}
 
             {isInstagramPlatform(post.platform) && (

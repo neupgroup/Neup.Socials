@@ -77,10 +77,15 @@ const stores: Record<string, Record<string, (...args: any[]) => Promise<any>>> =
     }),
     getById: (id) => model('post').findUnique(byId(id)),
     getByIds: (ids) => model('post').findMany({ where: { id: { in: ids } } }),
-    findExistingPlatformPostIds: (accountId, platformPostIds) => model('post').findMany({
-      where: { accountId, platformPostId: { in: platformPostIds } },
-      select: { platformPostId: true },
-    }),
+    findExistingPlatformPostIds: (accountId, platformPostIds) =>
+      model('post').findMany({
+        where: { accountId, platformPostId: { in: platformPostIds } },
+        select: {
+          id: true,
+          platformPostId: true,
+          mediaUrls: true,
+        },
+      }),
     create: (data) => model('post').create({ data }),
     createMany: (data) => model('post').createMany({ data }),
     update: (id, data) => model('post').update({ where: { id }, data }),
@@ -119,7 +124,7 @@ const stores: Record<string, Record<string, (...args: any[]) => Promise<any>>> =
     replaceForSpace: async (spaceId, assets) => {
       await model('spaceAsset').deleteMany({ where: { spaceId } });
       if (assets.length > 0) {
-        await model('spaceAsset').createMany({ data: assets.map((asset) => ({ ...asset, spaceId })) });
+        await model('spaceAsset').createMany({ data: assets.map((asset: { platform: string; assetId: string }) => ({ ...asset, spaceId,})) });
       }
     },
   },
