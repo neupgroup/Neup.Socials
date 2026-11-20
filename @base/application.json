@@ -1,43 +1,11 @@
 {
-    "appName": "Neup.Socials",
-    "appId": "neup.socials",
-    "appBasePath": "/socials",
-    "appDescription": "Neup.Socials is a social media management service that allows users to manage their social media presence across multiple platforms.",
-    "appLogo" : {
-        "mainlogo": "/socials/logo.svg",
-        "favicon": "/socials/favicon.ico",
-        "apple-touch-icon": "/socials/apple-touch-icon.png",
-        "android-chrome-192x192": "/socials/android-chrome-192x192.png",
-        "android-chrome-512x512": "/socials/android-chrome-512x512.png",
-        "mstile-150x150": "/socials/mstile-150x150.png",
-        "safari-pinned-tab": "/socials/safari-pinned-tab.svg"
-    },
-    "appVersion": "1.0.0",
-    "socialChannels" : {
-        "github": "https://github.com/neupgroup",
-        "twitter": "https://twitter.com/neupgroup",
-        "linkedin": "https://www.linkedin.com/company/neupgroup",
-        "facebook": "https://www.facebook.com/neupgroup",
-        "instagram": "https://www.instagram.com/neupgroup"
-    },
-    "appTheme": {
-        "primaryColor": "#305CDE",
-        "secondaryColor": "#FFC107",
-        "backgroundColor": "#ffffff",
-        "textColor": "#212121"
-    },
-    "appFont": {
-        "primaryFont": "'Outfit', sans-serif",
-        "secondaryFont": "'Roboto', sans-serif"
-    },
-    "appInterface": {
-        "borderRadius": "medium",
-        "boxShadow": "0 6px 18px rgba(15, 23, 42, 0.15)",
-        "fontSize": "14px",
-        "lineHeight": "1.5"
-    },
-    "updateInfo": {
-        "lastUpdate": "2024-06-01:00:00:00Z",
-        "updateNotes": "Initial release of Neup.Socials with core features for social media management."
-    }
+    "type": "web",
+    "exists": true,
+    "domain": "neupgroup.com",
+    "basepath": "/",
+    "projectId": "0a40228e-a331-4c83-8ef4-6a443a84a8db",
+    "permissions": [
+        "geolocation",
+        "notifications"
+    ]
 }
