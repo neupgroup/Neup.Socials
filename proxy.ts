@@ -4,7 +4,11 @@ import { self } from '@neup/logica/account/self';
 const AUTH_START_URL = 'https://neupgroup.com/account/auth/start';
 
 export async function proxy(request: NextRequest) {
-  const token = request.cookies.get('auth_account')?.value ?? null;
+  const token = request.cookies.get('auth')?.value ?? null;
+  if (!token) {
+    return NextResponse.redirect(AUTH_START_URL);
+  }
+
   const authentication = await self.isAuthenticated('local', token);
 
   const payload = 'payload' in authentication ? authentication.payload : undefined;

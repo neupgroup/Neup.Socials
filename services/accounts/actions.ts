@@ -1,5 +1,6 @@
 'use server';
 
+import { cookies } from 'next/headers';
 import { self } from '@neup/logica/account/self';
 import { getAccountBasics } from '@neup/logica/account/lookup';
 import { logger } from '@neup/logica/logger';
@@ -30,14 +31,32 @@ const serializeAccount = (account: Awaited<ReturnType<typeof getAccount>>) =>
       }
     : null;
 
+// Resolves the visible account profile from the authenticated app cookie.
 export async function ensureCurrentAccountAction() {
-  const basics = (await self.getBasics())[0] ?? null;
-  if (!basics) return null;
+  const authToken = (await cookies()).get('auth')?.value ?? null;
+  if (!authToken) return null;
+
+  const authentication = await self.isAuthenticated('local', authToken);
+  if (!authentication.authenticated || !('payload' in authentication)) return null;
+
+  const accountId = authentication.payload.aid?.trim();
+  if (!accountId) return null;
+
+  let accountInfo;
+  try {
+    accountInfo = await getAccountBasics({
+      accountId,
+      fields: ['displayName', 'displayImage', 'neupid'],
+    });
+  } catch {
+    return null;
+  }
+  if (!accountInfo.ok || !accountInfo.body.success) return null;
 
   return {
-    displayName: basics.displayName,
-    displayImage: basics.displayImage,
-    neupId: basics.neupid,
+    displayName: accountInfo.body.displayName ?? null,
+    displayImage: accountInfo.body.displayImage ?? null,
+    neupId: accountInfo.body.neupid ?? null,
   };
 }
 
