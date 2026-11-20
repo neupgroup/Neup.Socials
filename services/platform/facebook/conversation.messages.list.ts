@@ -17,17 +17,22 @@ export type FacebookConversationMessagesResponse = {
   messages?: { data?: FacebookConversationMessage[]; paging?: { next?: string; previous?: string } };
 };
 
-export async function getFacebookConversationMessages({ conversationId, accessToken }: {
+export async function getFacebookConversationMessages({ conversationId, accessToken, after, before }: {
   conversationId: string;
   accessToken: string;
+  after?: string;
+  before?: string;
 }): Promise<FacebookConversationMessagesResponse> {
   if (!conversationId.trim()) throw new Error('Facebook conversation ID is required.');
   if (!accessToken.trim()) throw new Error('Facebook Page access token is required.');
 
   const fields = 'id,participants,messages{message,from,to,created_time,attachments}';
   try {
+    const params = new URLSearchParams({ fields });
+    if (after?.trim()) params.set('after', after.trim());
+    if (before?.trim()) params.set('before', before.trim());
     return await getFacebookApi<FacebookConversationMessagesResponse>(
-      `${FACEBOOK_GRAPH_API_BASE_URL}/${encodeURIComponent(conversationId)}?fields=${encodeURIComponent(fields)}`,
+      `${FACEBOOK_GRAPH_API_BASE_URL}/${encodeURIComponent(conversationId)}?${params.toString()}`,
       accessToken,
     );
   } catch (error) {

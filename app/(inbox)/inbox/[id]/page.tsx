@@ -20,9 +20,13 @@ import {
     listConversationMessagesAction,
     listInstagramConversationMessagesAction,
     updateConversationFetchMetadataAction,
+    getOlderFacebookMessages, getNewerFacebookMessages,
+    getNewerInstagramMessages,
+    getOlderMessagesFromDatabase, getNewerMessagesFromDatabase,
 } from '@/services/conversations/actions';
 import { recordOutgoingMessageAction } from '@/services/messages/actions';
 import { normalizeInstagramAttachment } from '@/services/platform/instagram/attachments';
+import { application } from '@/base/application';
 
 type Message = {
     id: string;
@@ -179,9 +183,13 @@ export default function ConversationPage() {
     const [messagesLoading, setMessagesLoading] = React.useState(true);
     const [sending, setSending] = React.useState(false);
     const [olderCursor, setOlderCursor] = React.useState<string | null>(null);
+    const [newerCursor, setNewerCursor] = React.useState<string | null>(null);
     const [loadingOlder, setLoadingOlder] = React.useState(false);
 
     const messagesContainerRef = React.useRef<HTMLDivElement>(null);
+    const topSentinelRef = React.useRef<HTMLDivElement>(null);
+    const loadingOlderRef = React.useRef(false);
+    const topLoadArmedRef = React.useRef(true);
     const isAtBottomRef = React.useRef(true);
     const { toast } = useToast();
 
@@ -221,6 +229,8 @@ export default function ConversationPage() {
                                 timestamp: message.messageTime ?? null,
                             }));
                         setMessages(sortedMessages);
+                        setOlderCursor((conversation.moreDetails as any)?.fetchState?.olderCursor ?? '');
+                        setNewerCursor((conversation.moreDetails as any)?.fetchState?.newerCursor ?? '');
                         const timestamps = sortedMessages.map((message) => message.timestamp).filter(Boolean) as string[];
                         if (timestamps.length) {
                             void updateConversationFetchMetadataAction(conversationId, {
@@ -245,6 +255,8 @@ export default function ConversationPage() {
                             timestamp: message.messageTime,
                             attachments: (message.platformInfo as { attachments?: Message['attachments'] } | null)?.attachments,
                         })));
+                        setOlderCursor((conversation.moreDetails as any)?.fetchState?.olderCursor ?? '');
+                        setNewerCursor((conversation.moreDetails as any)?.fetchState?.newerCursor ?? '');
                     }
                 } finally {
                     if (active) setMessagesLoading(false);
@@ -268,27 +280,45 @@ export default function ConversationPage() {
         const atBottom = element.scrollHeight - element.scrollTop - element.clientHeight < 48;
         if (!preservePosition) {
             isAtBottomRef.current = atBottom;
+            if (element.scrollTop > 48) topLoadArmedRef.current = true;
         }
-        if (element.scrollTop > 48 || !olderCursor || loadingOlder || conversation?.platform !== 'Instagram') return;
+        if (atBottom && newerCursor !== null && !loadingOlder) void handleMessagesEnd();
+        if (element.scrollTop > 48 || loadingOlder || loadingOlderRef.current || !conversation) return;
+        loadingOlderRef.current = true;
 
         const previousHeight = element.scrollHeight;
         setLoadingOlder(true);
         try {
-            const result = await listInstagramConversationMessagesAction(conversationId, olderCursor);
-            const olderMessages = [...(result?.messages?.data ?? [])].sort((a, b) => timestampValue(a.created_time) - timestampValue(b.created_time));
+            const oldestStored = messages[0]?.timestamp;
+            if (conversation.platform !== 'Instagram' && oldestStored) {
+                const dbMessages = await getOlderMessagesFromDatabase(conversationId, oldestStored);
+                if (dbMessages.length) {
+                    setMessages((current) => [...dbMessages.map((message) => ({ id: message.id, text: message.content, sender: message.direction === 'sent' || message.direction === 'system' ? 'agent' as const : 'user' as const, timestamp: message.messageTime, attachments: (message.platformInfo as any)?.attachments })), ...current]);
+                    requestAnimationFrame(() => { element.scrollTop += element.scrollHeight - previousHeight; });
+                    return;
+                }
+            }
+            const result = conversation.platform === 'Instagram'
+                ? await fetch(`${application.appBasePath}/api/inbox/${conversationId}/instagram/older?before=${encodeURIComponent(messages[0]?.timestamp ?? '')}&cursor=${encodeURIComponent(olderCursor ?? '')}`).then((response) => response.json())
+                : await getOlderFacebookMessages({ localConversationId: conversationId, cursor: olderCursor ?? undefined });
+            const olderMessages = [...(result?.messages?.data ?? [])].sort((a: any, b: any) =>
+                timestampValue(a.created_time ?? a.messageTime) - timestampValue(b.created_time ?? b.messageTime)
+            );
             setMessages((current) => [
                 ...olderMessages.map((message) => ({
                     id: message.id,
-                    text: message.message ?? '',
-                    sender: message.from?.id === conversation.channelId ? 'agent' as const : 'user' as const,
-                    timestamp: message.created_time ?? null,
-                    attachments: message.attachments?.data,
+                    text: message.content ?? message.message ?? '',
+                    sender: message.direction
+                        ? (message.direction === 'sent' || message.direction === 'system' ? 'agent' as const : 'user' as const)
+                        : (message.from?.id === conversation.channelId ? 'agent' as const : 'user' as const),
+                    timestamp: message.messageTime ?? message.created_time ?? null,
+                    attachments: message.platformInfo?.attachments ?? message.attachments?.data,
                     replyTo: message.reply_to ? { id: message.reply_to.id, text: message.reply_to.message ?? '' } : undefined,
                 })),
                 ...current.filter((currentMessage) => !olderMessages.some((message) => message.id === currentMessage.id)),
             ]);
             setOlderCursor(result?.messages?.paging?.next ?? null);
-            const oldest = olderMessages[0]?.created_time;
+            const oldest = olderMessages[0]?.created_time ?? olderMessages[0]?.messageTime;
             if (oldest) {
                 void updateConversationFetchMetadataAction(conversationId, {
                     messageSince: oldest,
@@ -300,8 +330,50 @@ export default function ConversationPage() {
             });
         } finally {
             setLoadingOlder(false);
+            loadingOlderRef.current = false;
         }
     };
+
+    const handleMessagesEnd = async () => {
+        if (!conversation || newerCursor === null || loadingOlder) return;
+        setLoadingOlder(true);
+        try {
+            const newest = messages[messages.length - 1]?.timestamp;
+            if (newest) {
+                const dbMessages = await getNewerMessagesFromDatabase(conversationId, newest);
+                if (dbMessages.length) {
+                    setMessages((current) => [...current, ...dbMessages.map((message) => ({ id: message.id, text: message.content, sender: message.direction === 'sent' || message.direction === 'system' ? 'agent' as const : 'user' as const, timestamp: message.messageTime, attachments: (message.platformInfo as any)?.attachments }))]);
+                    return;
+                }
+            }
+            const result = conversation.platform === 'Facebook'
+                ? await getNewerFacebookMessages({ localConversationId: conversationId, cursor: newerCursor })
+                : await getNewerInstagramMessages({ localConversationId: conversationId, cursor: newerCursor });
+            const newerMessages = result?.messages?.data ?? [];
+            setMessages((current) => [...current, ...newerMessages.map((message: any) => ({
+                id: message.id,
+                text: message.message ?? '',
+                sender: message.from?.id === conversation.channelId ? 'agent' as const : 'user' as const,
+                timestamp: message.created_time ?? null,
+                attachments: message.attachments?.data,
+            })).filter((message) => !current.some((item) => item.id === message.id))]);
+            setNewerCursor(result?.messages?.paging?.previous ?? null);
+        } finally { setLoadingOlder(false); }
+    };
+
+    React.useEffect(() => {
+        const sentinel = topSentinelRef.current;
+        const container = messagesContainerRef.current;
+        if (!sentinel || !container || !conversation) return;
+        const observer = new IntersectionObserver(([entry]) => {
+            if (entry.isIntersecting && container.scrollTop <= 48 && topLoadArmedRef.current && !loadingOlder && !messagesLoading) {
+                topLoadArmedRef.current = false;
+                void handleMessagesScroll({ currentTarget: container } as React.UIEvent<HTMLDivElement>);
+            }
+        }, { root: container, threshold: 1 });
+        observer.observe(sentinel);
+        return () => observer.disconnect();
+    }, [conversation, loadingOlder, messagesLoading, olderCursor]);
 
     React.useEffect(() => {
         const element = messagesContainerRef.current;
@@ -458,6 +530,7 @@ export default function ConversationPage() {
 
             {/* Messages */}
             <div ref={messagesContainerRef} onScroll={handleMessagesScroll} className="relative min-h-0 flex-1 overflow-y-auto p-6 space-y-4 bg-muted/20">
+                <div ref={topSentinelRef} className="h-px w-full" aria-hidden="true" />
                 {loadingOlder ? <MessageSkeletons count={2} /> : null}
                 {messagesLoading && messages.length === 0 ? <MessageSkeletons /> : messages.length === 0 ? (
                     <div className="flex items-center justify-center h-full">

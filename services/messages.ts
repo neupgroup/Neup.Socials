@@ -19,6 +19,18 @@ export const listMessagesByConversationId = async (conversationId: string, take?
     ...(take ? { take } : {}),
   });
 
+export const listMessagesBefore = async (conversationId: string, before: Date, take = 50) => prisma.message.findMany({
+  where: { conversationId, messageTime: { lt: before } },
+  orderBy: [{ messageTime: 'desc' }, { id: 'desc' }],
+  take,
+});
+
+export const listMessagesAfter = async (conversationId: string, after: Date, take = 50) => prisma.message.findMany({
+  where: { conversationId, messageTime: { gt: after } },
+  orderBy: [{ messageTime: 'asc' }, { id: 'asc' }],
+  take,
+});
+
 export const listMessagesByConversationIds = async ({
   conversationIds,
   take = 1000,

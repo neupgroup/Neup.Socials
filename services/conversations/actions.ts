@@ -1,7 +1,7 @@
 'use server';
 
 import { countConversations, getConversation, listConversations, type ConversationFilter } from '@/services/conversations';
-import { listMessagesByConversationId } from '@/services/messages';
+import { listMessagesByConversationId, listMessagesBefore, listMessagesAfter } from '@/services/messages';
 import { listAccounts } from '@/services/accounts';
 import { decrypt } from '@neup/core/helpers/crypto';
 import { getInstagramConversations } from '@/services/platform/instagram/conversations.list';
@@ -19,7 +19,9 @@ async function restoreConversationMessages(conversation: NonNullable<Awaited<Ret
   const platformConversationId = platformInfo?.conversationId;
   if (!platformConversationId) return;
 
-  const account = (await listAccounts()).find((item) => item.id === conversation.channelId);
+  const account = (await listAccounts()).find((item) =>
+    item.id === conversation.channelId || item.platformId === conversation.channelId
+  );
   if (!account?.encryptedToken) return;
   const accessToken = await decrypt(account.encryptedToken);
   const platform = conversation.platform.toLowerCase();
@@ -120,6 +122,84 @@ export async function listConversationMessagesAction(conversationId: string) {
   return serialized;
 }
 
+type MessagePageParams = { localConversationId: string; cursor?: string };
+
+export async function getOlderMessagesFromDatabase(conversationId: string, before: string) {
+  const rows = await listMessagesBefore(conversationId, new Date(before));
+  return rows.reverse().map((message) => serializeMessage(message)!);
+}
+
+export async function getNewerMessagesFromDatabase(conversationId: string, after: string) {
+  return (await listMessagesAfter(conversationId, new Date(after))).map((message) => serializeMessage(message)!);
+}
+
+async function saveMessagePage(localConversationId: string, platform: 'Facebook' | 'Instagram', page: any, account: any) {
+  await Promise.all((page.messages?.data ?? []).slice(0, 50).map((message: any) => upsertCachedMessage({
+    conversationId: localConversationId,
+    platform,
+    platformMessageId: platform === 'Facebook' ? `fb_msg:${account.id}:${message.id}` : message.id,
+    text: message.message ?? '',
+    sender: message.from?.id ?? 'unknown',
+    direction: message.from?.id === account.platformId ? 'sent' : 'received',
+    timestamp: message.created_time ? new Date(message.created_time) : new Date(),
+    moreDetails: { from: message.from, to: message.to, attachments: message.attachments, replyTo: message.reply_to },
+  })));
+  const saved = await listMessagesByConversationId(localConversationId);
+  const latest = saved[saved.length - 1];
+  if (latest) await updateConversation(localConversationId, { lastMessage: latest.content, lastMessageAt: latest.messageTime });
+  return page;
+}
+
+export async function getOlderFacebookMessages({ localConversationId, cursor }: MessagePageParams) {
+  const conversation = await getConversation(localConversationId);
+  if (!conversation) throw new Error('Conversation not found.');
+  const info = (conversation.moreDetails as any)?.platformInfo;
+  const account = (await listAccounts()).find((item) => item.id === conversation.channelId || item.platformId === conversation.channelId);
+  if (!account?.encryptedToken || !info?.conversationId) throw new Error('Facebook conversation credentials are missing.');
+  const page = await getFacebookConversationMessages({ conversationId: info.conversationId, accessToken: await decrypt(account.encryptedToken), before: cursor });
+  return saveMessagePage(localConversationId, 'Facebook', page, account);
+}
+
+export async function getNewerFacebookMessages({ localConversationId, cursor }: MessagePageParams) {
+  const conversation = await getConversation(localConversationId);
+  if (!conversation) throw new Error('Conversation not found.');
+  const info = (conversation.moreDetails as any)?.platformInfo;
+  const account = (await listAccounts()).find((item) => item.id === conversation.channelId || item.platformId === conversation.channelId);
+  if (!account?.encryptedToken || !info?.conversationId) throw new Error('Facebook conversation credentials are missing.');
+  const page = await getFacebookConversationMessages({ conversationId: info.conversationId, accessToken: await decrypt(account.encryptedToken), after: cursor });
+  return saveMessagePage(localConversationId, 'Facebook', page, account);
+}
+
+export async function getOlderInstagramMessages({ localConversationId, cursor }: MessagePageParams) {
+  const conversation = await getConversation(localConversationId);
+  if (!conversation) throw new Error('Conversation not found.');
+  const info = (conversation.moreDetails as any)?.platformInfo;
+  const account = (await listAccounts()).find((item) => item.id === conversation.channelId || item.platformId === conversation.channelId);
+  if (!account?.encryptedToken || !info?.conversationId) throw new Error('Instagram conversation credentials are missing.');
+  const page = await getInstagramConversationMessages({ conversationId: info.conversationId, accessToken: await decrypt(account.encryptedToken), after: cursor });
+  return saveMessagePage(localConversationId, 'Instagram', page, account);
+}
+
+export async function loadOlderInstagramMessagesAction(conversationId: string, before?: string, cursor?: string) {
+  const current = await listMessagesByConversationId(conversationId);
+  if (before) {
+    const stored = await listMessagesBefore(conversationId, new Date(before), 50);
+    if (stored.length) return { messages: stored.reverse().map((message) => serializeMessage(message)!), next: before };
+  }
+  const page = await getOlderInstagramMessages({ localConversationId: conversationId, cursor });
+  const refreshed = await listMessagesByConversationId(conversationId);
+  return {
+    messages: refreshed.slice(-50).map((message) => serializeMessage(message)!),
+    next: page.messages?.paging?.next ?? null,
+    firstMessageOn: refreshed[0]?.messageTime?.toISOString() ?? null,
+    hadDatabaseMessages: current.length > 0,
+  };
+}
+
+export async function getNewerInstagramMessages({ localConversationId, cursor }: MessagePageParams) {
+  return getOlderInstagramMessages({ localConversationId, cursor });
+}
+
 export async function listInstagramConversationsAction() {
   const accounts = await listAccounts({ owner: 'neupkishor' });
   const account = accounts.find((item) => item.platform.toLowerCase() === 'instagram');
@@ -146,15 +226,6 @@ export async function listInstagramConversationsAction() {
           accessToken,
         });
         const latestMessage = detail.messages?.data?.[0];
-        await Promise.all((detail.messages?.data ?? []).map((message) => upsertCachedMessage({
-          conversationId: conversation.id,
-          platform: 'Instagram',
-          platformMessageId: message.id,
-          text: message.message ?? '',
-          sender: message.from?.id ?? 'unknown',
-          timestamp: message.created_time ? new Date(message.created_time) : new Date(),
-          moreDetails: { from: message.from, to: message.to, attachments: message.attachments, replyTo: message.reply_to },
-        })));
         const contact = latestMessage
           ? latestMessage.from?.id === account.platformId
             ? latestMessage.to?.data?.[0]
@@ -170,20 +241,26 @@ export async function listInstagramConversationsAction() {
           avatar: (contact?.username || contact?.id || 'IG').slice(0, 2).toUpperCase(),
         };
 
-        if (existing) {
-          await updateConversation(existing.id, {
+        const localConversation = existing ? await updateConversation(existing.id, {
             ...values,
             moreDetails: { platformInfo: { conversationId: conversation.id, recipientId: contact?.id } },
-          });
-        } else {
-          await createConversation({
+          }) : await createConversation({
             contactId: conversation.id,
             channelId: account.platformId!,
             platform: 'Instagram',
             moreDetails: { platformInfo: { conversationId: conversation.id, recipientId: contact?.id } },
             ...values,
           });
-        }
+        await Promise.all((detail.messages?.data ?? []).slice(0, 50).map((message) => upsertCachedMessage({
+          conversationId: localConversation.id,
+          platform: 'Instagram',
+          platformMessageId: message.id,
+          text: message.message ?? '',
+          sender: message.from?.id ?? 'unknown',
+          direction: message.from?.id === account.platformId ? 'sent' : 'received',
+          timestamp: message.created_time ? new Date(message.created_time) : new Date(),
+          moreDetails: { from: message.from, to: message.to, attachments: message.attachments, replyTo: message.reply_to },
+        })));
         console.log('[Instagram conversations] synced conversation', { conversationId: conversation.id, latestMessage });
       } catch (error) {
         console.error('[Instagram conversations] failed to sync conversation', {
