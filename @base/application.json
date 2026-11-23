@@ -1,11 +1,47 @@
+
 {
-    "type": "web",
-    "exists": true,
-    "domain": "neupgroup.com",
-    "basepath": "/",
-    "projectId": "0a40228e-a331-4c83-8ef4-6a443a84a8db",
-    "permissions": [
-        "geolocation",
-        "notifications"
-    ]
+  "type": "web",
+  "exists": true,
+  "domain": "neupgroup.com",
+  "basepath": "/",
+  "projectId": "0a40228e-a331-4c83-8ef4-6a443a84a8db",
+  "permissions": [
+    "geolocation",
+    "notifications"
+  ],
+  "appName": "Neup Group",
+  "appId": "neup-group",
+  "appBasePath": "/",
+  "appDescription": "Neup Group official website",
+  "appLogo": {
+    "mainlogo": "/logo.png",
+    "favicon": "/favicon.ico",
+    "apple-touch-icon": "/apple-touch-icon.png",
+    "android-chrome-192x192": "/android-chrome-192x192.png",
+    "android-chrome-512x512": "/android-chrome-512x512.png",
+    "mstile-150x150": "/mstile-150x150.png",
+    "safari-pinned-tab": "/safari-pinned-tab.svg"
+  },
+  "appVersion": "1.0.0",
+  "socialChannels": {},
+  "appTheme": {
+    "primaryColor": "#2563eb",
+    "secondaryColor": "#64748b",
+    "backgroundColor": "#ffffff",
+    "textColor": "#111827"
+  },
+  "appFont": {
+    "primaryFont": "Inter",
+    "secondaryFont": "Roboto"
+  },
+  "appInterface": {
+    "borderRadius": "medium",
+    "boxShadow": "0 2px 8px rgba(0,0,0,0.1)",
+    "fontSize": "16px",
+    "lineHeight": "1.5"
+  },
+  "updateInfo": {
+    "lastUpdate": "2026-11-23",
+    "updateNotes": "Initial configuration"
+  }
 }
