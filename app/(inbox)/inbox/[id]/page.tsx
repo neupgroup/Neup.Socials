@@ -26,7 +26,7 @@ import {
 } from '@/services/conversations/actions';
 import { recordOutgoingMessageAction } from '@/services/messages/actions';
 import { normalizeInstagramAttachment } from '@/services/platform/instagram/attachments';
-import { application } from '@/base/application';
+import { makeAppPath } from '@neup/core/appconfig';
 
 type Message = {
     id: string;
@@ -299,7 +299,7 @@ export default function ConversationPage() {
                 }
             }
             const result = conversation.platform === 'Instagram'
-                ? await fetch(`${application.appBasePath}/api/inbox/${conversationId}/instagram/older?before=${encodeURIComponent(messages[0]?.timestamp ?? '')}&cursor=${encodeURIComponent(olderCursor ?? '')}`).then((response) => response.json())
+                ? await fetch(makeAppPath(`/api/inbox/${conversationId}/instagram/older?before=${encodeURIComponent(messages[0]?.timestamp ?? '')}&cursor=${encodeURIComponent(olderCursor ?? '')}`)).then((response) => response.json())
                 : await getOlderFacebookMessages({ localConversationId: conversationId, cursor: olderCursor ?? undefined });
             const olderMessages = [...(result?.messages?.data ?? [])].sort((a: any, b: any) =>
                 timestampValue(a.created_time ?? a.messageTime) - timestampValue(b.created_time ?? b.messageTime)
@@ -356,7 +356,7 @@ export default function ConversationPage() {
                 sender: message.from?.id === conversation.channelId ? 'agent' as const : 'user' as const,
                 timestamp: message.created_time ?? null,
                 attachments: message.attachments?.data,
-            })).filter((message) => !current.some((item) => item.id === message.id))]);
+            })).filter((message: any) => !current.some((item) => item.id === message.id))]);
             setNewerCursor(result?.messages?.paging?.previous ?? null);
         } finally { setLoadingOlder(false); }
     };

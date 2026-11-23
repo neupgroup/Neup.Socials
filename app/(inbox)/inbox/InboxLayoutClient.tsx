@@ -32,7 +32,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { listConversationsAction } from '@/services/conversations/actions';
 import type { ConversationFilter } from '@/services/conversations';
 import { listInstagramConversationsAction } from '@/services/conversations/actions';
-import { application } from '@base/application';
+import identityConfig from '@base/identity.json';
 
 const inboxNavItems = [
     { href: '/inbox', filter: undefined, icon: MessageSquare, label: 'All Messages' },
@@ -148,7 +148,7 @@ function InboxSidebarContent({
                     <div className="flex items-center justify-center size-8 bg-primary rounded-lg text-primary-foreground">
                         <MessageSquareText className="size-5" />
                     </div>
-                    <span className="font-semibold text-lg">{application.appName}</span>
+                    <span className="font-semibold text-lg">{identityConfig.name}</span>
                 </Link>
             </div>
 
