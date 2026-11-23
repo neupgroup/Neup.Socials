@@ -1,9 +1,9 @@
 import type {Config} from 'tailwindcss';
-import application from './@base/application.json';
+import design from './@base/design.json';
 
 const defaultFont = 'ui-sans-serif, system-ui, sans-serif';
-const primaryFont = application.appFont?.primaryFont ?? defaultFont;
-const secondaryFont = application.appFont?.secondaryFont ?? primaryFont;
+const primaryFont = design.typography.fontFamily.primary ?? defaultFont;
+const secondaryFont = design.typography.fontFamily.secondary ?? primaryFont;
 const fontStack = (font: string) => font.split(',').map((family) => family.trim());
 
 export default {

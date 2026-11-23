@@ -1,10 +1,19 @@
+
 'use client';
 
 import * as React from 'react';
 import { Button } from '@neup/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@neup/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@neup/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
-import application from '@base/application.json';
+import applicationConfig from '@base/application.json';
+
+const appBasePath = applicationConfig.basepath;
 
 export default function GlobalError({
   error,
@@ -14,7 +23,7 @@ export default function GlobalError({
   reset: () => void;
 }) {
   React.useEffect(() => {
-    void fetch(`${application.appBasePath}/api/log-error`, {
+    void fetch(`${appBasePath}/api/log-error`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
@@ -34,22 +43,27 @@ export default function GlobalError({
             <AlertTriangle className="h-8 w-8" />
             Application Error
           </CardTitle>
+
           <CardDescription>
             We're sorry, but something went wrong.
           </CardDescription>
         </CardHeader>
+
         <CardContent className="space-y-4">
           <p className="text-muted-foreground">
-            An unexpected error has occurred. Our team has been notified. Please try refreshing the page or clicking the button below.
+            An unexpected error has occurred. Our team has been notified.
+            Please try refreshing the page or clicking the button below.
           </p>
+
           <Button onClick={() => reset()}>
             Try again
           </Button>
+
           <details className="text-xs text-muted-foreground text-left p-2 bg-muted rounded-md">
-              <summary>Error Details</summary>
-              <pre className="mt-2 whitespace-pre-wrap break-all">
-                {error.message}
-              </pre>
+            <summary>Error Details</summary>
+            <pre className="mt-2 whitespace-pre-wrap break-all">
+              {error.message}
+            </pre>
           </details>
         </CardContent>
       </Card>
