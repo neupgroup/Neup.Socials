@@ -34,7 +34,7 @@ import { syncPostsAction as syncFacebookPostsAction } from '@/services/facebook/
 import { syncLinkedInPostsAction } from '@/services/linkedin/sync-posts';
 import { disconnectAccountAction } from '@/services/accounts';
 import { listAccountsAction } from '@/services/accounts/actions';
-import { application } from '@base/application';
+import identityConfig from '@base/identity.json';
 
 type Account = {
   id: string;
@@ -88,7 +88,8 @@ export default function AccountsPage() {
     try {
       const skip = loadMore ? accounts.length : 0;
       const result = await listAccountsAction({ owner, search, skip });
-      const newAccounts = result.items.map((data) => {
+      const newAccounts = result.items.map(
+        (data: Awaited<ReturnType<typeof listAccountsAction>>['items'][number]) => {
           return {
             id: data.id,
             platform: data.platform,
@@ -293,7 +294,7 @@ export default function AccountsPage() {
                                         <AlertDialogHeader>
                                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                         <AlertDialogDescription>
-                                            This will disconnect the account <span className="font-bold">{account.name}</span> from {application.appName}. You may lose access to its data. This action cannot be undone.
+                                            This will disconnect the account <span className="font-bold">{account.name}</span> from {identityConfig.name}. You may lose access to its data. This action cannot be undone.
                                         </AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
