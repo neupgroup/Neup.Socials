@@ -1,6 +1,15 @@
-import rawApplication from './application.json';
 
-export type BorderRadius = 'none' | 'small' | 'medium' | 'large' | (string & {});
+import identityConfig from './identity.json';
+import assetsConfig from './assets.json';
+import designConfig from './design.json';
+import applicationConfig from './application.json';
+
+export type BorderRadius =
+  | 'none'
+  | 'small'
+  | 'medium'
+  | 'large'
+  | (string & {});
 
 export interface ApplicationConfiguration {
   appName: string;
@@ -10,11 +19,11 @@ export interface ApplicationConfiguration {
   appLogo: {
     mainlogo: string;
     favicon: string;
-    'apple-touch-icon': string;
-    'android-chrome-192x192': string;
-    'android-chrome-512x512': string;
-    'mstile-150x150': string;
-    'safari-pinned-tab': string;
+    'apple-touch-icon'?: string;
+    'android-chrome-192x192'?: string;
+    'android-chrome-512x512'?: string;
+    'mstile-150x150'?: string;
+    'safari-pinned-tab'?: string;
   };
   appVersion: string;
   socialChannels: Record<string, string>;
@@ -40,7 +49,55 @@ export interface ApplicationConfiguration {
   };
 }
 
-export const application = rawApplication as ApplicationConfiguration;
+const primaryColors = designConfig.color.primary;
+const secondaryColors = designConfig.color.secondary;
+
+export const application: ApplicationConfiguration = {
+  appName: identityConfig.name,
+  appId: identityConfig.id,
+  appBasePath: applicationConfig.basepath,
+  appDescription: identityConfig.description,
+
+  appLogo: {
+    mainlogo: assetsConfig.logo.main,
+    favicon: assetsConfig.favicon.path,
+  },
+
+  appVersion: identityConfig.version,
+
+  socialChannels: {
+    github: 'https://github.com/neupgroup',
+    twitter: 'https://twitter.com/neupgroup',
+    linkedin: 'https://www.linkedin.com/company/neupgroup',
+    facebook: 'https://www.facebook.com/neupgroup',
+    instagram: 'https://www.instagram.com/neupgroup',
+  },
+
+  appTheme: {
+    primaryColor: primaryColors['500'],
+    secondaryColor: secondaryColors['500'],
+    backgroundColor: '#ffffff',
+    textColor: '#212121',
+  },
+
+  appFont: {
+    primaryFont: designConfig.typography.fontFamily.primary,
+    secondaryFont: designConfig.typography.fontFamily.secondary,
+  },
+
+  appInterface: {
+    borderRadius: 'medium',
+    boxShadow: '0 6px 18px rgba(15, 23, 42, 0.15)',
+    fontSize: '14px',
+    lineHeight: '1.5',
+  },
+
+  updateInfo: {
+    lastUpdate: '2024-06-01:00:00:00Z',
+    updateNotes:
+      'Initial release of Neup.Socials with core features for social media management.',
+  },
+};
 
 const borderRadiusValues: Record<string, string> = {
   none: '0',
@@ -55,21 +112,34 @@ export function getApplicationRadius(value: BorderRadius): string {
 
 export function getHslChannels(color: string): string {
   const hex = color.replace('#', '');
-  const normalized = hex.length === 3 ? hex.split('').map((part) => part + part).join('') : hex;
+  const normalized =
+    hex.length === 3
+      ? hex.split('').map((part) => part + part).join('')
+      : hex;
+
   if (!/^[0-9a-f]{6}$/i.test(normalized)) return color;
 
-  const [red, green, blue] = [0, 2, 4].map((index) => parseInt(normalized.slice(index, index + 2), 16) / 255);
+  const [red, green, blue] = [0, 2, 4].map(
+    (index) => parseInt(normalized.slice(index, index + 2), 16) / 255,
+  );
+
   const max = Math.max(red, green, blue);
   const min = Math.min(red, green, blue);
   const lightness = (max + min) / 2;
-  if (max === min) return `0 0% ${Math.round(lightness * 100)}%`;
+
+  if (max === min) {
+    return `0 0% ${Math.round(lightness * 100)}%`;
+  }
 
   const delta = max - min;
   const saturation = delta / (1 - Math.abs(2 * lightness - 1));
+
   let hue = 0;
+
   if (max === red) hue = ((green - blue) / delta) % 6;
   else if (max === green) hue = (blue - red) / delta + 2;
   else hue = (red - green) / delta + 4;
+
   hue = Math.round(hue * 60);
   if (hue < 0) hue += 360;
 
@@ -80,13 +150,20 @@ function getFontName(font: string): string {
   return font.split(',')[0].trim().replace(/^['"]|['"]$/g, '');
 }
 
-export function getGoogleFontUrl(fonts?: ApplicationConfiguration['appFont']): string | null {
+export function getGoogleFontUrl(
+  fonts?: ApplicationConfiguration['appFont'],
+): string | null {
   if (!fonts) return null;
 
   const fontNames = [getFontName(fonts.primaryFont), getFontName(fonts.secondaryFont)]
     .filter((font, index, allFonts) => font && allFonts.indexOf(font) === index)
-    .map((font) => `family=${encodeURIComponent(font)}:wght@400;500;600;700;800`)
+    .map(
+      (font) =>
+        `family=${encodeURIComponent(font)}:wght@400;500;600;700;800`,
+    )
     .join('&');
 
-  return fontNames ? `https://fonts.googleapis.com/css2?${fontNames}&display=swap` : null;
+  return fontNames
+    ? `https://fonts.googleapis.com/css2?${fontNames}&display=swap`
+    : null;
 }

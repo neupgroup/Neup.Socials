@@ -1,60 +1,74 @@
 {
-    "color": {
-        "primary": {
-            "50": "#F8FAFC",
-            "100": "#F1F5F9",
-            "200": "#E2E8F0",
-            "300": "#CBD5E1",
-            "400": "#94A3B8",
-            "500": "#64748B",
-            "600": "#475569",
-            "700": "#334155",
-            "800": "#1E293B",
-            "900": "#0F172A",
-            "950": "#020617",
-            "1000": "#000000"
-        }
+  "color": {
+    "primary": {
+      "50": "#EEF2FF",
+      "100": "#DCE5FF",
+      "200": "#B9CBFF",
+      "300": "#91ACFF",
+      "400": "#6488F5",
+      "500": "#305CDE",
+      "600": "#254BC0",
+      "700": "#1E3C9A",
+      "800": "#1B3278",
+      "900": "#192B60",
+      "950": "#111B3D",
+      "1000": "#080F24"
     },
-    "spacing": {
-        "small": "4px",
-        "medium": "8px",
-        "large": "16px",
-        "extraLarge": "32px"
-    },
-    "cornering": {
-        "small": "4px",
-        "medium": "8px",
-        "large": "16px",
-        "extraLarge": "32px"
-    },
-    "elements": {
-        "theme.dark": {
-            "seperator": "#colors.primary.500",
-            "button": {
-                "background": "#colors.primary.500",
-                "text": "#colors.primary.50"
-            }
-        },
-        "theme.light": {
-            "seperator": "#colors.primary.500",
-            "button": {
-                "background": "#colors.primary.500",
-                "text": "#colors.primary.50"
-            }
-        },
-        "theme.black": {
-            "seperator": "#colors.primary.500",
-            "button": {
-                "background": "#colors.primary.500",
-                "text": "#colors.primary.50"
-            }
-        }
-    },
-    "typography": {
-        "fontFamily": {
-            "primary": "Outfit, sans-serif",
-            "secondary": "Arial, sans-serif"
-        },
-        "customStyles": {}
+    "secondary": {
+      "50": "#FFFDF2",
+      "100": "#FFF8D9",
+      "200": "#FFF0AD",
+      "300": "#FFE477",
+      "400": "#FFD43B",
+      "500": "#FFC107",
+      "600": "#E5A900",
+      "700": "#B98500",
+      "800": "#8A6200",
+      "900": "#614500",
+      "950": "#3D2B00",
+      "1000": "#241900"
     }
+  },
+  "spacing": {
+    "small": "4px",
+    "medium": "8px",
+    "large": "16px",
+    "extraLarge": "32px"
+  },
+  "cornering": {
+    "small": "4px",
+    "medium": "8px",
+    "large": "16px",
+    "extraLarge": "32px"
+  },
+  "elements": {
+    "theme.dark": {
+      "seperator": "#colors.primary.500",
+      "button": {
+        "background": "#colors.primary.500",
+        "text": "#colors.primary.50"
+      }
+    },
+    "theme.light": {
+      "seperator": "#colors.primary.200",
+      "button": {
+        "background": "#colors.primary.500",
+        "text": "#colors.primary.50"
+      }
+    },
+    "theme.black": {
+      "seperator": "#colors.primary.500",
+      "button": {
+        "background": "#colors.primary.500",
+        "text": "#colors.primary.50"
+      }
+    }
+  },
+  "typography": {
+    "fontFamily": {
+      "primary": "Outfit, sans-serif",
+      "secondary": "Roboto, sans-serif"
+    },
+    "customStyles": {}
+  }
 }
