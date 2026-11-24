@@ -23,9 +23,8 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Bridge routes include public OAuth callbacks and third-party webhooks.
-    // They must not require an application session because Meta and other
-    // providers call them directly.
-    '/((?!api|bridge|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)',
+    // Public API, bridge, Next.js and static asset routes
+    // must not require an application session.
+    '/((?!api|bridge|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|map|woff|woff2|ttf|otf|eot|pdf|txt|xml)$).*)',
   ],
 };
