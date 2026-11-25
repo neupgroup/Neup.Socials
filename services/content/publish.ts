@@ -1,8 +1,13 @@
-
 'use server';
 
 import { publishContent } from '../../services/publishing';
 
+/**
+ * The result returned by the publish action.
+ * @property success Whether the publish request was accepted without error.
+ * @property message A human-readable summary of the outcome.
+ * @property error The caught error, present only when publishing fails.
+ */
 interface PublishResult {
   success: boolean;
   message: string;
@@ -12,7 +17,7 @@ interface PublishResult {
 /**
  * Server action to trigger the publishing of a post collection.
  * @param postCollectionId The ID of the postCollection document in Firestore.
- * @returns A result object indicating success or failure.
+ * @returns A result object indicating success or failure, with error information if the operation fails.
  */
 export async function publishPostAction(postCollectionId: string): Promise<PublishResult> {
   try {
@@ -31,5 +36,3 @@ export async function publishPostAction(postCollectionId: string): Promise<Publi
     };
   }
 }
-
-    
