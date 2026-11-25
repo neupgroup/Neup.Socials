@@ -6,6 +6,10 @@
 
 import { logger } from '@neup/logica/logger';
 
+/**
+ * Describes an application error entry, including where it happened, what
+ * went wrong, and the request or user it relates to.
+ */
 export type ErrorLog = {
   timestamp: any;
   source?: string; // e.g., 'handleFacebookCallback', 'generatePostVariationsAction'
@@ -29,6 +33,10 @@ export type ErrorLog = {
  * Sends an application error through the Logica logger object API.
  * Logging failures are swallowed so they never hide the original application
  * error or change the response status.
+ * @param errorLog The error details to log, without a timestamp. `process` falls
+ * back to `source`, `message` falls back to `errorMessage`, and `userId` falls back to `user`.
+ * @returns The activity ID of the logged entry, or an empty string if the logger
+ * returned none or logging failed.
  */
 export async function logError(errorLog: Omit<ErrorLog, 'timestamp'>): Promise<string> {
   try {
