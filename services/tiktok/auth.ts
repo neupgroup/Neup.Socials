@@ -5,6 +5,12 @@ import { generateRandomState } from '@neup/core/helpers/crypto';
 import { getEnvVariable } from '@neup/core/helpers/env';
 import data from '@base/data.json';
 
+/**
+ * Reads the TikTok app credentials from environment variables.
+ * @returns The TikTok client key, client secret, and organization ID.
+ * @throws {Error} If any of `SOCIALS_TIKTOK_CLIENT_KEY`,
+ * `SOCIALS_TIKTOK_CLIENT_SECRET`, or `SOCIALS_TIKTOK_ORGANIZATION_ID` is missing.
+ */
 export function getTikTokCredentials() {
   const clientKey = getEnvVariable('SOCIALS_TIKTOK_CLIENT_KEY');
   const clientSecret = getEnvVariable('SOCIALS_TIKTOK_CLIENT_SECRET');
@@ -17,6 +23,19 @@ export function getTikTokCredentials() {
   return { clientKey, clientSecret, organizationId };
 }
 
+/**
+ * Builds the TikTok OAuth 2.0 authorization URL using the PKCE (S256) flow.
+ *
+ * A random `codeVerifier` is generated and its SHA-256 challenge is sent to
+ * TikTok. The verifier and organization ID are packed, together with the base
+ * state from `generateRandomState`, into a base64url-encoded `state` value.
+ *
+ * Requested scopes: `user.info.profile`, `user.info.stats`, `video.list`.
+ *
+ * @param userId - ID of the user starting the connection; used to generate the OAuth state.
+ * @returns The full URL to redirect the user to for TikTok authorization.
+ * @throws {Error} If the TikTok credentials are not configured.
+ */
 export async function getTikTokAuthUrl(userId: string): Promise<string> {
   const { clientKey, organizationId } = getTikTokCredentials();
 
