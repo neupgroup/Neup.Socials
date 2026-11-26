@@ -5,6 +5,7 @@ import { logError } from '@/services/error-logging';
 const INSTAGRAM_GRAPH_API_VERSION = 'v23.0';
 const INSTAGRAM_GRAPH_API_BASE_URL = `https://graph.instagram.com/${INSTAGRAM_GRAPH_API_VERSION}`;
 
+/** Result of a successful send, plus the HTTP status code. */
 export type InstagramMessageResponse = {
   recipient_id: string;
   message_id: string;
@@ -20,6 +21,24 @@ type InstagramMessageErrorResponse = {
   };
 };
 
+/**
+ * Sends a text direct message from an Instagram account to a user.
+ *
+ * The text is trimmed before sending. When `replyToMessageId` is provided,
+ * the message is sent as a reply to that message.
+ *
+ * Failures are logged to the console and to `logError`, then re-thrown.
+ *
+ * @param {Object} params
+ * @param {string} params.igUserId - Instagram account ID sending the message.
+ * @param {string} params.recipientId - Instagram-scoped ID of the recipient.
+ * @param {string} params.accessToken - Instagram access token.
+ * @param {string} params.text - Message body. Must not be empty or whitespace-only.
+ * @param {string} [params.replyToMessageId] - ID of the message to reply to.
+ * @returns {Promise<InstagramMessageResponse>} Recipient ID, new message ID and HTTP status code.
+ * @throws {Error} If any required parameter is empty, the API request fails,
+ *   or the response lacks `recipient_id` or `message_id`.
+ */
 export async function sendInstagramMessage({
   igUserId,
   recipientId,

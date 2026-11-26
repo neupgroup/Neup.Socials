@@ -5,11 +5,14 @@ import { logError } from '@/services/error-logging';
 const INSTAGRAM_GRAPH_API_VERSION = 'v23.0';
 const INSTAGRAM_GRAPH_API_BASE_URL = `https://graph.instagram.com/${INSTAGRAM_GRAPH_API_VERSION}`;
 
+/** Summary of an Instagram conversation (thread). */
 export type InstagramConversation = {
   id: string;
+  /** ISO 8601 timestamp of the last activity in the conversation. */
   updated_time: string;
 };
 
+/** Paginated response of the conversations endpoint. */
 export type InstagramConversationsResponse = {
   data: InstagramConversation[];
   paging?: {
@@ -28,6 +31,20 @@ type InstagramApiErrorResponse = {
   };
 };
 
+/**
+ * Lists the Instagram DM conversations of an Instagram professional account.
+ * 
+ * Failures are logged to the console and to `logError`, then re-thrown.
+ *
+ * @param {Object} params
+ * @param {string} params.igUserId - Instagram account ID whose conversations are listed.
+ * @param {string} params.accessToken - Instagram access token.
+ * @param {string} [params.after] - Pagination cursor for the next page.
+ * @param {number} [params.limit] - Max conversations per page. Ignored unless a positive integer.
+ * @returns {Promise<InstagramConversationsResponse>} Conversations and paging cursors.
+ * @throws {Error} If `igUserId` or `accessToken` is empty, the request fails,
+ *   or the response does not contain a `data` array.
+ */
 export async function getInstagramConversations({
   igUserId,
   accessToken,

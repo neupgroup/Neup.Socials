@@ -5,11 +5,13 @@ import { logError } from '@/services/error-logging';
 const INSTAGRAM_GRAPH_API_VERSION = 'v23.0';
 const INSTAGRAM_GRAPH_API_BASE_URL = `https://graph.instagram.com/${INSTAGRAM_GRAPH_API_VERSION}`;
 
+/** Minimal participant (sender or recipient) of an Instagram message. */
 export type InstagramMessageParticipant = {
   id: string;
   username?: string;
 };
 
+/** A single message as returned by the Instagram Graph API. */
 export type InstagramConversationMessage = {
   id: string;
   message?: string;
@@ -32,6 +34,7 @@ export type InstagramConversationMessage = {
 };
 
 
+/** Response of the conversation endpoint when expanding `messages`. */
 export type InstagramConversationMessagesResponse = {
   id: string;
   messages?: {
@@ -42,6 +45,15 @@ export type InstagramConversationMessagesResponse = {
 
 type InstagramApiError = { error?: { message?: string } };
 
+/**
+ * Performs an authenticated GET request against the Instagram Graph API.
+ * @template T - Expected shape of a successful JSON response.
+ * @param {string} url - Fully qualified request URL.
+ * @param {string} accessToken - Instagram access token, sent as a Bearer token.
+ * @returns {Promise<T>} The parsed JSON payload.
+ * @throws {Error} If the response is not OK. Uses the API's `error.message` when
+ *   available, otherwise `'Instagram message request failed.'`.
+ */
 async function getInstagramApi<T>(url: string, accessToken: string): Promise<T> {
   const response = await fetch(url, {
     headers: { Authorization: `Bearer ${accessToken}` },
@@ -55,6 +67,19 @@ async function getInstagramApi<T>(url: string, accessToken: string): Promise<T> 
   return payload as T;
 }
 
+/**
+ * Fetches the messages of an Instagram conversation, including sender, recipient,
+ * text, timestamp, attachments and reply reference.
+ *
+ * Failures are logged to the console and to `logError`, then re-thrown.
+ *
+ * @param {Object} params
+ * @param {string} params.conversationId - Instagram conversation (thread) ID.
+ * @param {string} params.accessToken - Instagram access token.
+ * @param {string} [params.after] - Pagination cursor for the next page.
+ * @returns {Promise<InstagramConversationMessagesResponse>} The conversation with its page of messages and paging info.
+ * @throws {Error} If `conversationId` or `accessToken` is empty, or the API request fails.
+ */
 export async function getInstagramConversationMessages({
   conversationId,
   accessToken,
@@ -90,6 +115,14 @@ export async function getInstagramConversationMessages({
   }
 }
 
+/**
+ * Fetches a single Instagram message by ID, including its attachments.
+ * @param {Object} params
+ * @param {string} params.messageId - Instagram message ID.
+ * @param {string} params.accessToken - Instagram access token.
+ * @returns {Promise<InstagramConversationMessage>} The requested message.
+ * @throws {Error} If `messageId` or `accessToken` is empty, or the API request fails.
+ */
 export async function getInstagramMessage({
   messageId,
   accessToken,
