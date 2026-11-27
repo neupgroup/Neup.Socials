@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Server-side actions for retrieving, caching, publishing,
+ * and replying to Facebook post comments using connected account credentials.
+ * @module services/facebook/comments
+ */
 'use server';
 
 import { dataStore } from '@/services/repositories';
@@ -7,14 +12,24 @@ import { getPostAnalyticsAction } from '@/services/facebook/post-insights';
 import { getPostComments as getPostCommentsWithReplies } from '@/services/facebook/comments-api';
 import { postCommentOnPost, postReplyToComment } from '@/services/facebook/api';
 
+/**
+ * Checks whether a platform identifier represents Facebook, ignoring case.
+ * @param platform - Platform identifier, which may be null or undefined.
+ * @returns Whether the identifier matches Facebook.
+ */
 const isFacebookPlatform = (platform: string | null | undefined) =>
   (platform ?? '').toLowerCase() === 'facebook';
 
+/** Analytics property storing the latest comment synchronization timestamp. */
 const COMMENTS_SYNC_KEY = 'commentsSyncedAt';
+/** Maximum number of cached comments requested per repository query. */
 const COMMENTS_MAX_ITEMS = 3000;
+/** Requested limit for top-level comments in a live API request. */
 const COMMENTS_TOP_LEVEL_LIMIT = 200;
+/** Maximum number of returned replies processed per top-level comment. */
 const COMMENTS_REPLY_LIMIT = 10;
 
+/** Result of a comment retrieval operation, including optional flattened comments or an error. */
 export type FetchCommentsResult = {
   success: boolean;
   comments?: Array<{
@@ -31,6 +46,7 @@ export type FetchCommentsResult = {
   error?: string;
 };
 
+/** Result of a comment or reply publication operation. */
 export type PostCommentResult = {
   success: boolean;
   commentId?: string;
@@ -38,8 +54,23 @@ export type PostCommentResult = {
 };
 
 /**
- * Fetches recent comments on a specific post.
- * Requires the post to be linked to a Facebook account.
+ * Retrieves comments for a stored Facebook post using cached or live data.
+ *
+ * Refreshes post analytics to assess cache freshness. Unless refresh is
+ * forced, returns nonempty cached results when the expected count is unknown,
+ * matches the cached count, or is unchanged since the previous sync.
+ * Otherwise, resolves and decrypts the connected account token, fetches
+ * comments with replies, normalizes author names, and flattens the results.
+ * Attempts to upsert comments and records synchronization metadata.
+ *
+ * @param postId - Internal application identifier of the stored post.
+ * @param options - Optional retrieval configuration.
+ * @param options.refresh - Bypasses cached results when true. Defaults to false.
+ * @returns A promise resolving to a success status with comments or an error.
+ * @throws May reject if error logging fails while handling an exception.
+ * @remarks Live results include parent identifiers for replies; cached results
+ * do not reconstruct these identifiers. Cache failures are logged as warnings.
+ * Live retrieval does not automatically traverse API pagination.
  */
 export async function fetchPostCommentsAction(
   postId: string,
@@ -126,6 +157,12 @@ export async function fetchPostCommentsAction(
     });
 
     const onProfile = account.platformId ?? '';
+    /**
+     * Normalizes author identifiers and names, using stored commenter data
+     * or a generated display name when the API supplies no name.
+     * @param input - Optional author information from the API.
+     * @returns A promise resolving to the normalized author identifier and name.
+     */
     const normalizeFrom = async (input?: { id?: string; name?: string }) => {
       const commenterId = String(input?.id ?? '').trim();
       let commenterName = String(input?.name ?? '').trim();
@@ -253,8 +290,7 @@ export async function fetchPostCommentsAction(
       },
     });
 
-    // If database was successfully updated, we return from database to ensure consistency (and potentially including previous comments)
-    // but if database fails, we return the flattened results directly.
+    // Check the refreshed cache; both successful paths return the flattened API results.
     try {
       const refreshed = await dataStore.postComments.listByPostId({ postId, take: COMMENTS_MAX_ITEMS });
       const refreshedCurrent = refreshed.filter((comment) => comment.updatedAt >= syncedAt);
@@ -287,8 +323,16 @@ export async function fetchPostCommentsAction(
 }
 
 /**
- * Posts a comment on a Facebook page post.
- * Comment will be authored by the page.
+ * Submits a comment as the connected Facebook Page.
+ * Resolves the stored post and account, decrypts the access token, and
+ * appends supplied user mentions before delegating to the API service.
+ *
+ * @param postId - Internal application identifier of the stored post.
+ * @param message - Text content to publish.
+ * @param mentionedUserIds - Optional user identifiers appended as @[ID] mentions.
+ * @returns A promise resolving to the operation status, returned comment ID,
+ * or an error message.
+ * @throws May reject if error logging fails while handling an exception.
  */
 export async function postCommentAction(
   postId: string,
@@ -347,8 +391,17 @@ export async function postCommentAction(
 }
 
 /**
- * Posts a reply to a comment on a Facebook page post.
- * Reply will be authored by the page.
+ * Submits a reply as the connected Facebook Page.
+ * Resolves the stored post and account, decrypts the access token, and
+ * appends supplied user mentions before delegating to the API service.
+ *
+ * @param commentId - Facebook identifier of the comment targeted by the reply.
+ * @param postId - Internal application identifier of the stored post.
+ * @param message - Text content to publish.
+ * @param mentionedUserIds - Optional user identifiers appended as @[ID] mentions.
+ * @returns A promise resolving to the operation status, returned comment ID,
+ * or an error message.
+ * @throws May reject if error logging fails while handling an exception.
  */
 export async function postReplyAction(
   commentId: string,

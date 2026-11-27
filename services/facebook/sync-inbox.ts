@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Synchronizes Facebook messages and comments into local
+ * repositories, conversation records, identities, and synchronization logs.
+ * @module services/facebook/sync-inbox
+ */
 'use server';
 
 import { decrypt } from '@neup/core/helpers/crypto';
@@ -8,12 +13,34 @@ import { getFacebookConversationMessages } from '@/services/platform/facebook/co
 import { getPagePostComments } from '@/services/facebook/comments-api';
 import { getPageScopedProfile } from '@/services/facebook/comments-api';
 
+/** Result of a synchronization operation. */
 type SyncResult = {
+  /** Whether synchronization completed without a caught exception. */
   success: boolean;
+  /** Number of newly inserted primary records reported by the action. */
   synced: number;
+  /** Failure description, when available. */
   error?: string;
 };
 
+/**
+ * Inserts a new message and creates or updates its contact conversation.
+ * Skips blank text and existing platform message identifiers.
+ * @param params - Message and conversation information.
+ * @param params.accountId - Internal connected account identifier.
+ * @param params.contactId - External contact identifier.
+ * @param params.contactName - Contact display name.
+ * @param params.platformConversationId - External or synthetic conversation identifier.
+ * @param params.pageId - External Facebook Page identifier.
+ * @param params.text - Message content.
+ * @param params.platformMessageId - Deduplication identifier for the message.
+ * @param params.timestamp - Message timestamp.
+ * @param params.type - Message classification; defaults to text.
+ * @param params.sender - Sender classification; defaults to user.
+ * @returns True when a message is inserted; false when skipped.
+ * @throws Propagates repository errors; writes are not explicitly transactional.
+ * @remarks Conversation metadata is updated before message insertion.
+ */
 async function upsertConversationMessage(params: {
   accountId: string;
   contactId: string;
@@ -95,6 +122,18 @@ async function upsertConversationMessage(params: {
   return true;
 }
 
+/**
+ * Retrieves Facebook conversations and their text messages and stores new messages.
+ * Resolves credentials, classifies senders, and records synchronization outcomes.
+ * @param accountId - Internal connected account identifier.
+ * @returns Synchronization status and number of newly inserted messages.
+ * Non-Facebook accounts return success with zero inserts.
+ * @remarks Messages missing identifiers, text, or sender IDs are skipped.
+ * The sender ID is passed as the contact ID for both incoming and outgoing messages.
+ * Pagination depends on the delegated retrieval services.
+ * A failure may report zero even after partial writes have completed.
+ * @throws May reject if synchronization logging or error logging fails in the catch block.
+ */
 export async function syncFacebookMessagesAction(accountId: string): Promise<SyncResult> {
   try {
     const account = await dataStore.accounts.getById(accountId);
@@ -203,6 +242,20 @@ export async function syncFacebookMessagesAction(accountId: string): Promise<Syn
   }
 }
 
+/**
+ * Synchronizes recent Facebook Page comments into commenter, identity,
+ * comment, Facebook-specific comment, and conversation message repositories.
+ * Attempts to enrich commenter names and pictures with page-scoped profiles.
+ * @param accountId - Internal connected account identifier.
+ * @returns Synchronization status and count of newly created general comment records.
+ * Non-Facebook accounts return success with zero inserts.
+ * @remarks Profile lookup failures fall back to the comment payload name.
+ * General comments, Facebook-specific comments, and conversation messages use
+ * separate duplicate checks. Writes are not explicitly transactional.
+ * The reported count excludes other repository insertions and updates.
+ * A failure may report zero despite partial persistence.
+ * @throws May reject if synchronization logging or error logging fails in the catch block.
+ */
 export async function syncFacebookCommentsAction(accountId: string): Promise<SyncResult> {
   try {
     const account = await dataStore.accounts.getById(accountId);
